@@ -35,11 +35,15 @@ from standards_atlas.application.context.structured_candidates import (
     StructuredContextCandidates,
 )
 from standards_atlas.application.schema.model import SchemaBoundModel
-from standards_atlas.domain.model import EngineeringDocument
+from standards_atlas.domain.model import (
+    CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT,
+    CONTEXT_SOURCE_PACKAGE_CONTRACT,
+    CONTEXT_SOURCE_PACKAGE_SCHEMA_VERSION,
+    ContextInputFingerprints,
+    ContextSourcePackageBinding,
+    EngineeringDocument,
+)
 
-CONTEXT_SOURCE_PACKAGE_CONTRACT = "source-bound-context-input-v1"
-CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT = "source-bound-context-binding-v1"
-CONTEXT_SOURCE_PACKAGE_SCHEMA_VERSION = 1
 _SOURCE_STATE_CONTRACT = "source-bound-context-source-state-v1"
 _CANDIDATE_SPACE_CONTRACT = "source-bound-context-candidate-space-v1"
 _SELECTION_DECISION_CONTRACT = "source-bound-context-selection-decision-v1"
@@ -54,17 +58,6 @@ class ContextReuseReason(StrEnum):
     CANDIDATE_SPACE_CHANGED = "candidate_space_changed"
     SELECTION_CHANGED = "selection_changed"
     ACTUAL_INPUT_CHANGED = "actual_input_changed"
-
-
-class ContextInputFingerprints(BaseModel):
-    """Independent fingerprints of the four AP02 input-binding dimensions."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    source_state_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    candidate_space_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    selection_decision_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    actual_input_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
 
 
 class BoundContextInputSurface(BaseModel):
@@ -179,23 +172,6 @@ class ContextSourcePackage(SchemaBoundModel):
         return self
 
 
-class ContextSourcePackageBinding(BaseModel):
-    """Text-free immutable reference to a privately persisted source package."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    contract_id: Literal["source-bound-context-binding-v1"] = (
-        CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT
-    )
-    package_schema_version: Literal[1] = CONTEXT_SOURCE_PACKAGE_SCHEMA_VERSION
-    package_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    document_key: str = Field(min_length=1)
-    document_revision: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    target_clause_id: str = Field(min_length=1)
-    target_reference: str = Field(min_length=1)
-    fingerprints: ContextInputFingerprints
-
-
 class ContextReuseCheck(BaseModel):
     """Pure compatibility result; no source retrieval and no semantic approval."""
 
@@ -305,6 +281,10 @@ def context_source_package_binding(
         document_revision=package.document_revision,
         target_clause_id=package.target_clause_id,
         target_reference=package.target_reference,
+        selection_contract_id=package.selection.contract_id,
+        selection_profile_id=package.selection.profile.profile_id,
+        selection_completeness=package.selection.completeness.value,
+        selection_gap_codes=tuple(gap.code for gap in package.selection.gaps),
         fingerprints=package.fingerprints,
     )
 

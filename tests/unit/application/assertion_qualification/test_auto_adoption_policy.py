@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+
 import pytest
 
 from standards_atlas.application.assertion_qualification import (
@@ -34,8 +36,16 @@ from standards_atlas.application.assertion_qualification.policy_models import (
     AssertionAutoAdoptionReason,
     AssertionQualityThresholds,
 )
+from standards_atlas.application.knowledge_proposal_extraction.source_bound_contract import (
+    ASSERTION_VERIFIER_REQUEST_CONTRACT,
+    KNOWLEDGE_PROPOSAL_OUTPUT_CONTRACT,
+    KNOWLEDGE_PROPOSAL_REQUEST_CONTRACT,
+)
 from standards_atlas.domain.model import (
+    CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT,
     ClauseId,
+    ContextInputFingerprints,
+    ContextSourcePackageBinding,
     DocumentKnowledgeProposal,
     EntityAssertionObject,
     EvidenceAnchor,
@@ -49,6 +59,37 @@ from standards_atlas.domain.model import (
 STAT = "http://lunetix.org/standards-atlas#"
 ONTOLOGIES = ("standards-atlas-core@2.0.0", "functional-safety@2.1.0")
 HASH = "1" * 64
+
+
+def _source_binding(
+    *,
+    document: str,
+    clause_id: str,
+    seed: str,
+    completeness: str = "complete",
+    gaps: tuple[str, ...] = (),
+) -> ContextSourcePackageBinding:
+    def digest(label: str) -> str:
+        value = hashlib.sha256(f"{document}:{clause_id}:{seed}:{label}".encode()).hexdigest()
+        return f"sha256:{value}"
+
+    return ContextSourcePackageBinding(
+        package_sha256=digest("package"),
+        document_key=document,
+        document_revision=digest("document"),
+        target_clause_id=clause_id,
+        target_reference=f"{document}:{clause_id}",
+        selection_contract_id="structured-context-selection-v1",
+        selection_profile_id="assertion-context-selection-v1",
+        selection_completeness=completeness,
+        selection_gap_codes=gaps,
+        fingerprints=ContextInputFingerprints(
+            source_state_sha256=digest("source"),
+            candidate_space_sha256=digest("candidates"),
+            selection_decision_sha256=digest("selection"),
+            actual_input_sha256=digest("input"),
+        ),
+    )
 
 
 def _thresholds(**changes) -> AssertionQualityThresholds:
@@ -180,6 +221,9 @@ def _proposal(
         proposal_run_id=run_id,
         source_document_key=document,
         ontology_versions=ONTOLOGIES,
+        context_source_bindings=(
+            _source_binding(document=document, clause_id=clause_id, seed=run_id),
+        ),
         evidence_anchors=(anchor,),
         entity_proposals=(entity,),
         assertion_proposals=(assertion,),
@@ -188,7 +232,10 @@ def _proposal(
             extractor_version="1.0.0",
             model="granite",
             provider="ramalama",
-            prompt_version="ontology-guided-assertions-v1",
+            prompt_version="ontology-guided-assertions-source-bound-v1",
+            request_contract_id=KNOWLEDGE_PROPOSAL_REQUEST_CONTRACT,
+            output_contract_id=KNOWLEDGE_PROPOSAL_OUTPUT_CONTRACT,
+            source_binding_contract_id=CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT,
         ),
     )
 
@@ -235,6 +282,10 @@ def _production_inputs():
     efficient = efficient_c1.model_copy(
         update={
             "proposal_run_id": "efficient-run",
+            "context_source_bindings": (
+                *efficient_c1.context_source_bindings,
+                *efficient_c2.context_source_bindings,
+            ),
             "evidence_anchors": (
                 *efficient_c1.evidence_anchors,
                 *efficient_c2.evidence_anchors,
@@ -257,7 +308,12 @@ def _production_inputs():
         assertion_id="a3",
         label="requirement c2 escalated",
     )
+    escalation = escalation.model_copy(
+        update={"context_source_bindings": efficient_c2.context_source_bindings}
+    )
     provenance = efficient.proposal_provenance
+    c1_package = efficient_c1.context_source_bindings[0].package_sha256
+    c2_package = efficient_c2.context_source_bindings[0].package_sha256
     report = AssertionQualificationCascadeReport(
         cascade_run_id="cascade-prod",
         source_document_key="PROD",
@@ -271,6 +327,9 @@ def _production_inputs():
                 extractor_version=provenance.extractor_version,
                 model=provenance.model,
                 provider=provenance.provider,
+                request_contract_id=provenance.request_contract_id,
+                output_contract_id=provenance.output_contract_id,
+                source_binding_contract_id=provenance.source_binding_contract_id,
             ),
             AssertionCascadeProposalSource(
                 stage="escalation",
@@ -280,6 +339,11 @@ def _production_inputs():
                 extractor_version=escalation.proposal_provenance.extractor_version,
                 model=escalation.proposal_provenance.model,
                 provider=escalation.proposal_provenance.provider,
+                request_contract_id=escalation.proposal_provenance.request_contract_id,
+                output_contract_id=escalation.proposal_provenance.output_contract_id,
+                source_binding_contract_id=(
+                    escalation.proposal_provenance.source_binding_contract_id
+                ),
             ),
         ),
         verifier_provenance=AssertionVerifierProvenance(
@@ -287,7 +351,9 @@ def _production_inputs():
             verifier_version="1.0.0",
             model="verify-model",
             provider="ramalama",
-            prompt_version="ontology-guided-assertion-verifier-v1",
+            prompt_version="ontology-guided-assertion-verifier-source-bound-v1",
+            request_contract_id=ASSERTION_VERIFIER_REQUEST_CONTRACT,
+            source_binding_contract_id=CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT,
         ),
         clauses=(
             AssertionCascadeClauseReport(
@@ -307,7 +373,10 @@ def _production_inputs():
                             disposition=AssertionVerificationDisposition.SUPPORTED,
                         ),
                     ),
+                    source_package_sha256=c1_package,
                 ),
+                efficient_source_package_sha256=c1_package,
+                verifier_source_package_sha256=c1_package,
                 efficient_entities=1,
                 efficient_assertions=1,
             ),
@@ -329,7 +398,11 @@ def _production_inputs():
                             disposition=AssertionVerificationDisposition.UNCERTAIN,
                         ),
                     ),
+                    source_package_sha256=c2_package,
                 ),
+                efficient_source_package_sha256=c2_package,
+                verifier_source_package_sha256=c2_package,
+                escalation_source_package_sha256=c2_package,
                 efficient_entities=1,
                 efficient_assertions=1,
                 escalation_entities=1,
@@ -590,3 +663,140 @@ def test_partition_overlap_uses_cases_even_without_assertions(entity_only: bool)
     holdout = dev.model_copy(update={"partition": AssertionGoldenPartition.HOLDOUT})
     with pytest.raises(ValueError, match="overlap"):
         _validate_partition_separation(dev, holdout)
+
+
+def test_old_qualification_identity_does_not_authorize_source_bound_production() -> None:
+    development_suite, development_report, holdout_suite, holdout_report = _qualification_inputs()
+    cascade, efficient, escalation = _production_inputs()
+
+    def legacy_report(report):
+        return report.model_copy(
+            update={
+                "proposal_sources": tuple(
+                    source.model_copy(
+                        update={
+                            "request_contract_id": None,
+                            "output_contract_id": None,
+                            "source_binding_contract_id": None,
+                        }
+                    )
+                    for source in report.proposal_sources
+                )
+            }
+        )
+
+    report = AssertionAutoAdoptionPolicyEvaluator().evaluate(
+        policy=_policy(),
+        development_suite=development_suite,
+        development_report=legacy_report(development_report),
+        holdout_suite=holdout_suite,
+        holdout_report=legacy_report(holdout_report),
+        cascade_report=cascade,
+        efficient_proposal=efficient,
+        escalation_proposal=escalation,
+    )
+
+    assert report.pipeline_identity_gate.passed is False
+    decision = next(item for item in report.decisions if item.assertion_id == "a1")
+    assert decision.disposition is AssertionAutoAdoptionDisposition.REVIEW_REQUIRED
+    assert AssertionAutoAdoptionReason.PIPELINE_IDENTITY_MISMATCH in decision.reasons
+
+
+def test_unsupported_verifier_contract_cannot_authorize_source_bound_assertion() -> None:
+    development_suite, development_report, holdout_suite, holdout_report = _qualification_inputs()
+    cascade, efficient, escalation = _production_inputs()
+    assert cascade.verifier_provenance is not None
+    legacy_verifier = cascade.verifier_provenance.model_copy(
+        update={
+            "request_contract_id": None,
+            "source_binding_contract_id": None,
+        }
+    )
+    legacy_cascade = cascade.model_copy(update={"verifier_provenance": legacy_verifier})
+
+    report = AssertionAutoAdoptionPolicyEvaluator().evaluate(
+        policy=_policy(),
+        development_suite=development_suite,
+        development_report=development_report,
+        holdout_suite=holdout_suite,
+        holdout_report=holdout_report,
+        cascade_report=legacy_cascade,
+        efficient_proposal=efficient,
+        escalation_proposal=escalation,
+    )
+
+    assert report.qualification_gate_passed is True
+    decision = next(item for item in report.decisions if item.assertion_id == "a1")
+    assert decision.disposition is AssertionAutoAdoptionDisposition.REVIEW_REQUIRED
+    assert decision.reasons == (AssertionAutoAdoptionReason.UNSUPPORTED_SOURCE_CONTRACT,)
+
+
+def test_incomplete_source_context_requires_review_even_with_exact_grounding() -> None:
+    development_suite, development_report, holdout_suite, holdout_report = _qualification_inputs()
+    cascade, efficient, escalation = _production_inputs()
+    binding = efficient.context_source_bindings[0].model_copy(
+        update={
+            "selection_completeness": "incomplete",
+            "selection_gap_codes": ("not_authorized",),
+        }
+    )
+    degraded = efficient.model_copy(
+        update={
+            "context_source_bindings": (binding, *efficient.context_source_bindings[1:]),
+        }
+    )
+    rebound_sources = tuple(
+        source.model_copy(update={"proposal_hash": proposal_sha256(degraded)})
+        if source.stage == "efficient"
+        else source
+        for source in cascade.proposal_sources
+    )
+    rebound_cascade = cascade.model_copy(update={"proposal_sources": rebound_sources})
+
+    report = AssertionAutoAdoptionPolicyEvaluator().evaluate(
+        policy=_policy(),
+        development_suite=development_suite,
+        development_report=development_report,
+        holdout_suite=holdout_suite,
+        holdout_report=holdout_report,
+        cascade_report=rebound_cascade,
+        efficient_proposal=degraded,
+        escalation_proposal=escalation,
+    )
+
+    decision = next(item for item in report.decisions if item.assertion_id == "a1")
+    assert decision.disposition is AssertionAutoAdoptionDisposition.REVIEW_REQUIRED
+    assert decision.reasons == (AssertionAutoAdoptionReason.SOURCE_CONTEXT_INCOMPLETE,)
+
+
+def test_cross_clause_evidence_requires_confirmed_reach_before_auto_adoption() -> None:
+    development_suite, development_report, holdout_suite, holdout_report = _qualification_inputs()
+    cascade, efficient, escalation = _production_inputs()
+    foreign_anchor = efficient.evidence_anchors[0].model_copy(
+        update={"source_clause_id": ClauseId(value="parent")}
+    )
+    contextual = efficient.model_copy(
+        update={"evidence_anchors": (foreign_anchor, *efficient.evidence_anchors[1:])}
+    )
+    rebound_sources = tuple(
+        source.model_copy(update={"proposal_hash": proposal_sha256(contextual)})
+        if source.stage == "efficient"
+        else source
+        for source in cascade.proposal_sources
+    )
+    rebound_cascade = cascade.model_copy(update={"proposal_sources": rebound_sources})
+
+    report = AssertionAutoAdoptionPolicyEvaluator().evaluate(
+        policy=_policy(),
+        development_suite=development_suite,
+        development_report=development_report,
+        holdout_suite=holdout_suite,
+        holdout_report=holdout_report,
+        cascade_report=rebound_cascade,
+        efficient_proposal=contextual,
+        escalation_proposal=escalation,
+    )
+
+    decision = next(item for item in report.decisions if item.assertion_id == "a1")
+    assert decision.disposition is AssertionAutoAdoptionDisposition.REVIEW_REQUIRED
+    assert decision.reasons == (AssertionAutoAdoptionReason.UNCONFIRMED_CONTEXT_REACH,)

@@ -172,6 +172,9 @@ def _native_inputs(
             model=proposal.proposal_provenance.model,
             provider=proposal.proposal_provenance.provider,
             prompt_version=proposal.proposal_provenance.prompt_version,
+            request_contract_id=proposal.proposal_provenance.request_contract_id,
+            output_contract_id=proposal.proposal_provenance.output_contract_id,
+            source_binding_contract_id=proposal.proposal_provenance.source_binding_contract_id,
         )
         for key, proposal in sorted(by_document.items())
     )

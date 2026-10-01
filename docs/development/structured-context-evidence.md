@@ -1,9 +1,10 @@
 # AP02 structured context and evidence contract
 
-Status: Series C implemented baseline (AP02-S01-S06). This document describes the current
+Status: Series D implemented baseline (AP02-S01-S08). This document describes the current
 source-surface, structural-candidate, bounded-selection, source/input-binding and common multi-span
-grounding contracts plus the consumer migration map. It does not activate the productive
-multi-source extractor output/parser/verifier contract; that cut-over remains Series D.
+grounding contracts plus the productive source-bound extractor/verifier/cascade cut-over. Series E
+remains responsible for the wider current-source evaluation, persistence/projection roundtrip and
+provider/MCP source-resolution work.
 
 ## 1. Contract boundaries
 
@@ -15,9 +16,10 @@ AP02 keeps four identities separate:
 4. the reviewed semantic contribution of a source to an interpretation.
 
 Series A implemented source identity and resolution. Series B added candidate discovery and
-selection/reach policy. Series C now binds the complete source/candidate/selection/input state and
-provides a common technical multi-span grounding core. Productive model output, parser and verifier
-use of that contract remain assigned to Series D.
+selection/reach policy. Series C binds the complete source/candidate/selection/input state and
+provides the common technical multi-span grounding core. Series D now makes that source-bound
+contract the only productive extractor/verifier/cascade path; the historical AP01 audit path remains
+a separate frozen input.
 
 The historical AP01 review/audit path remains byte-bound to its embedded source snapshots. Its
 `FrozenSourceResolver` is not an adapter for current EngineeringDocuments and must never be
@@ -127,25 +129,25 @@ semantic reach confirmation.
 |---|---|---|---|
 | `Clause` / `EngineeringDocument` | Canonical body/heading and attribute provenance already exist. | S01-S02 | Reuse unchanged persistence shape; fix heading writer provenance where source is known. |
 | `DocumentKnowledge` / `EvidenceAnchor` | Entities/assertions already reference anchor lists; accepted anchors validate body/heading in the same document. | S06, S10 | S06 maps checked body/heading evidence uses to existing anchors; no parallel canonical anchor model or external adoption is introduced. |
-| Canonical CBox / assertion CBox | Existing `1.3` payload remains the current productive CBox. Series B adds a separate source-bound structural selection beside it. | S03-S05 | S03/S04 candidate/selection service implemented; `assertion_context_selection(...)` exposes it without changing the current extractor CBox payload. S05 binds it into a source/input package. |
-| Extraction renderer/schema/parser | Current model payload still uses single quote declarations and legacy source fields. | S07 | Intentionally unchanged through S06; the atomic productive cut-over is S07. |
-| Grounding | Legacy pre-cut-over helpers still exist; the new package-bound core never silently switches surfaces. | S06-S07 | S06 implements the common entity/assertion multi-span core; S07 replaces productive legacy payload/use atomically. |
-| Verifier | Payload/prompt still enforce local-body restrictions for assertions. | S07-S08 | Intentionally unchanged through S06; S07/S08 migrate the bound evidence-list contract. |
-| Cascade / proposal lineage | Productive lineage does not yet bind/share the new source package. | S05, S08 | S05 defines deterministic package/public binding and stale checks; S08 wires them into productive reuse. |
-| Auto-adoption policy | Current grounding gates assume old contract identity. | S07-S08 | No gate relaxation through S06; new contract identity must fail closed until S07/S08. |
+| Canonical CBox / assertion CBox | Existing `1.3` data remains structural/interpretive metadata, while source-bearing text comes only from the bound source package. | S03-S07 | S03/S04 candidate/selection service feeds the S05 package; S07 removes source-bearing heading/body fields from the separate extractor interpretation context so CBox cannot become a second source truth. |
+| Extraction renderer/schema/parser | Productive output is `source-bound-knowledge-proposal-output-v1`: entities and assertions both carry non-empty evidence-use lists over the bound package. | S07 | Cut over atomically. Legacy single-quote/source fields are not accepted by the current parser. |
+| Grounding | The package-bound multi-span core is the productive entity/assertion grounding path. | S06-S07 | Old single-quote/local-body helpers are removed; no cross-surface repair or document-wide quote fallback remains. |
+| Verifier | Verifier payloads resolve every entity/assertion anchor inside the same bound source package and may include body/heading spans from other supplied clauses. | S07-S08 | `source-bound-assertion-verifier-request-v1`; no local-body special case and no unbound document text. |
+| Cascade / proposal lineage | Proposals bind one package per processed target; extractor and verifier share it, while an explicitly different escalation package is recorded separately. | S05, S08 | Stale document revisions are rejected; cascade reports retain extractor/verifier/escalation package hashes and `source_basis_changed`. |
+| Auto-adoption policy | Runtime qualification identity includes request/output/source-binding contracts in addition to extractor/model/prompt identity. | S07-S08 | Old qualification identities cannot authorize the new contract; incomplete source context and unconfirmed cross-clause reach remain review-required. |
 | AP01 Golden/review/evaluation | `FrozenSourceResolver` intentionally resolves only frozen audit surfaces. | S09 plus permanent AP01 guard | Keep unchanged; never enrich v8 snapshots with current sources. |
-| Native evaluation | Clause-local proposal projection exists; current native proposals do not yet carry the new source-package binding. | S09 | No evaluator cut-over through S06. |
-| Proposal persistence | Current proposal schema is unchanged. Private context packages now have an immutable hash-addressed repository and text-free public binding. | S05, S07, S10 | S05 registers `context-source-package` schema v1; S07/S10 attach/use it without creating a legacy proposal format. |
-| Formal projection | Preserves evidence ids but later source-package reachability is not yet proven. | S10 | No graph/ontology change through S06. |
+| Native evaluation | Clause-local projection preserves all anchor source-clause/source-kind identities and proposal reports carry the new runtime contract IDs. | S07, S09 | S07 removes the local-evidence validator restriction needed for current proposals; S09 still owns full native source-package evaluation/resolution. |
+| Proposal persistence | `DocumentKnowledgeProposal` carries text-free package bindings and attempts carry the package hash used for that clause; private package bytes remain in the immutable repository. | S05, S07, S10 | Productive cascade CLI persists all bound source packages before proposal/report artifacts and verifies binding equality. S10 still owns the broader reload/projection proof. |
+| Formal projection | Preserves evidence ids but later source-package reachability is not yet proven. | S10 | No graph/ontology change through Series D; S10 still owns the reload-to-source reachability proof. |
 | Clause/evaluation provider | Exposes current EngineeringDocument clauses; not a general source resolver. | S02, S10 | Resolver remains application-layer and adapter-neutral. |
 | MCP | Has document allowlist, clause-text exposure and source-path redaction. | S10 | Do not route MCP through the new resolver yet; carry equivalent access concepts without bypassing adapter policy. |
 | Tables/formulas | First-class table ids and formula content blocks/source evidence already exist. | S02, S06, S10 | Preserve media handles/status; table display markers are non-citable and S06 does not invent a second extractor/transcription workflow. |
-| Schema inventory | EngineeringDocument, proposal and AP01 contracts remain current-only clean-break schemas. | S05/S07 when persistence changes | S05 adds current-only `context-source-package` schema v1; no legacy reader is added. |
+| Schema inventory | EngineeringDocument, proposal, context package and cascade/report contracts remain current-only clean-break schemas. | S05/S07 | New source-bound fields stay on schema-family version 1 as planned; strict models/tests distinguish the contract identity and no productive legacy output parser is added. |
 
-Every current restriction above has an assigned AP02 slice. Series C still does not activate the
-new productive payload: candidate availability, bounded selection, deterministic source/input
-binding and technical multi-span grounding are implemented, while S07 remains responsible for the
-atomic productive output/parser/consumer cut-over.
+Every current restriction above has an assigned AP02 slice. Series D closes the productive
+output/parser/verifier/cascade and release-boundary cut-over. Series E/F still own the broader
+evaluation/source-resolution roundtrip and end-to-end reference proof; those later capabilities are
+not implied by the Series-D transport gates.
 
 ## 7. Structural reference cases established in Series A
 
@@ -306,3 +308,61 @@ The AP01 frozen resolver, Golden expectations and historical offline evaluation/
 unchanged. Series C performs no model execution and no semantic qualification; successful grounding
 means only that declared evidence is technically bound to the delivered source text.
 
+
+
+## 14. Series D productive evidence-list cut-over
+
+The productive extractor request contract is `source-bound-knowledge-proposal-request-v1` and its
+model output contract is `source-bound-knowledge-proposal-output-v1`. The renderer supplies source
+text only through the exact `ContextSourcePackage.input_surfaces` represented in the request. The
+separate interpretation context deliberately removes source-bearing `heading`, `ancestor_headings`
+and `associative_context` fields; remaining CBox metadata may guide interpretation but is not an
+independent evidence surface.
+
+Both entities and assertions must return a non-empty list of evidence uses. Every declared use is
+parsed through the common Series-C grounding core and maps to the existing `EvidenceAnchor` lists.
+The target clause continues to own the proposal/assertion, while each anchor retains the actual
+source clause and body/heading kind. One failed declared span rejects that candidate rather than
+silently publishing its surviving subset. Legacy single-quote/source fields are not a second input
+format and are rejected by the current parser. The old productive single-quote grounding helpers
+are removed.
+
+The verifier request contract is `source-bound-assertion-verifier-request-v1`. Candidate evidence is
+re-rendered only by resolving its existing anchors inside the exact package used for verification.
+Heading and foreign-clause evidence are valid technical forms when those surfaces were delivered;
+there is no local-body test and no search elsewhere in the document. The verifier is instructed to
+judge source ownership, combined meaning, conditions/exceptions, normative force and semantic reach
+without demanding mechanical extraction of every context passage.
+
+`DocumentKnowledgeProposal` now records text-free `ContextSourcePackageBinding` values and each
+clause attempt records the concrete package hash. Request/output/source-binding contract IDs are
+part of proposal provenance and are propagated into native qualification and cascade source
+identity. Golden owner clauses remain clause-local, but Golden assertion evidence is no longer
+artificially required to be owned by the same clause; no expected Golden content is changed.
+
+## 15. Series D shared cascade basis and conservative release boundary
+
+`AssertionQualificationCascadeService` binds the selected source packages before extraction. The
+efficient extractor and verifier receive the same immutable package per clause. A supplied package
+whose document revision no longer matches the current `EngineeringDocument` is rejected before use.
+Escalation reuses the efficient package by default. If a caller deliberately supplies a different
+bound escalation context, the cascade report records both package hashes and
+`source_basis_changed: true` rather than presenting the runs as one source basis.
+
+The cascade result exposes the private packages needed for persistence. The existing CLI saves those
+packages through the private hash-addressed repository before writing the corresponding proposals
+and report, and checks that the persisted package hashes equal all public proposal bindings. This is
+source/proposal lineage only; it is not canonical knowledge adoption.
+
+The auto-adoption boundary remains fail-closed. Development, Holdout and production must share the
+full current runtime identity, including request/output/source-binding contract IDs. A qualification
+artifact without those new IDs therefore cannot release a Series-D proposal. Even with exact
+offsets/hashes, a candidate remains review-required when its bound selection is not `complete`,
+reports source gaps, or relies on foreign-clause evidence whose semantic reach has not been
+separately confirmed. Technically valid heading/context evidence is no longer misclassified as
+non-exact merely because it is not local body text.
+
+Series D does not add canonical adoption, new Golden decisions, external-evidence adoption, a new
+ontology, Applicability logic or model-quality claims. The AP01 `FrozenSourceResolver` and historical
+audit reader remain separate and unchanged. Full native source-package evaluation and persistence/
+projection/provider roundtrip remain assigned to Series E.

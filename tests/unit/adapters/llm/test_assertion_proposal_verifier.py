@@ -1,14 +1,24 @@
+import hashlib
 import json
 
 import pytest
 
 from standards_atlas.adapters.llm import OntologyGuidedAssertionProposalVerifier
-from standards_atlas.application.assertion_qualification import AssertionVerificationDisposition
+from standards_atlas.application.context import (
+    ContextSelectionProfile,
+    build_context_source_package,
+    build_structured_context_candidates,
+    select_structured_context,
+)
+from standards_atlas.application.context.input_binding import context_source_package_binding
 from standards_atlas.application.ports.llm_gateway import StructuredGenerationResult
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
     ClauseType,
+    DocumentKey,
+    DocumentType,
+    EngineeringDocument,
     EntityAssertionObject,
     EvidenceAnchor,
     EvidenceSourceKind,
@@ -21,11 +31,10 @@ from standards_atlas.domain.model import (
 
 STAT = "http://lunetix.org/standards-atlas#"
 ONTOLOGIES = ("standards-atlas-core@2.0.0", "functional-safety@2.1.0")
-TEXT = "The verification plan shall specify the verification criteria."
 
 
 class _Gateway:
-    def __init__(self, value):
+    def __init__(self, value: dict[str, object]) -> None:
         self.value = value
         self.request = None
 
@@ -33,250 +42,164 @@ class _Gateway:
         self.request = request
         return StructuredGenerationResult(
             value=self.value,
-            model="verify-model",
+            model="verifier-model",
             provider="test-provider",
             prompt_version=request.prompt_version,
-            input_hash="a" * 64,
-            raw_response_hash="b" * 64,
+            input_hash="c" * 64,
+            raw_response_hash="d" * 64,
             duration_ms=3,
         )
 
 
-def _inputs():
-    clause = Clause(
-        id=ClauseId(value="c1"),
-        reference=StandardReference(standard="TEST", clause="1"),
-        clause_type=ClauseType.REQUIREMENT,
-        content=(TextBlock(id="t1", text=TEXT),),
-    )
-    anchor = EvidenceAnchor(
-        id="anchor-1",
-        source_clause_id=clause.id,
-        source_kind=EvidenceSourceKind.BODY,
-        start_offset=0,
-        end_offset=len(TEXT),
-    )
-    entity = KnowledgeEntityProposal(
-        id="entity-1",
-        proposal_clause_ids=(clause.id,),
-        class_iri=f"{STAT}VerificationPlan",
-        normalized_label="verification plan",
-        source_anchor_ids=(anchor.id,),
-        confidence=0.8,
-    )
-    assertion = NormativeAssertionProposal(
-        id="assertion-1",
-        source_clause_id=clause.id,
-        subject_id=entity.id,
-        predicate=f"{STAT}requires",
-        object=EntityAssertionObject(entity_id=entity.id),
-        normative_force=NormativeForce.REQUIREMENT,
-        evidence_anchor_ids=(anchor.id,),
-        confidence=0.8,
-    )
-    return clause, anchor, entity, assertion
-
-
-def test_verifier_reviews_candidates_and_runs_independent_missing_check() -> None:
-    gateway = _Gateway(
-        {
-            "entity_reviews": [
-                {"candidate_id": "entity-1", "disposition": "supported", "rationale": None}
-            ],
-            "assertion_reviews": [
-                {
-                    "candidate_id": "assertion-1",
-                    "disposition": "uncertain",
-                    "rationale": "predicate needs escalation",
-                }
-            ],
-            "missing_entity_detected": False,
-            "missing_assertion_detected": True,
-            "missing_rationale": "verification criteria relation may be missing",
-        }
-    )
-    clause, anchor, entity, assertion = _inputs()
-
-    result = OntologyGuidedAssertionProposalVerifier(gateway, model="verify-model").verify(
-        clause,
-        document_key="TEST",
-        ontology_versions=ONTOLOGIES,
-        evidence_anchors=(anchor,),
-        entity_proposals=(entity,),
-        assertion_proposals=(assertion,),
-    )
-
-    assert result.entity_reviews[0].disposition is AssertionVerificationDisposition.SUPPORTED
-    assert result.assertion_reviews[0].disposition is AssertionVerificationDisposition.UNCERTAIN
-    assert result.missing_assertion_detected
-    assert result.input_hash == "a" * 64
-    payload = json.loads(gateway.request.user_prompt)
-    assert payload["entity_candidates"][0]["evidence"][0]["quote"] == TEXT
-    assert "mandatory even when the candidate arrays are empty" in gateway.request.system_prompt
-
-
-def test_verifier_resolves_ancestor_heading_evidence_from_semantic_context() -> None:
-    gateway = _Gateway(
-        {
-            "entity_reviews": [
-                {"candidate_id": "entity-heading", "disposition": "supported", "rationale": None}
-            ],
-            "assertion_reviews": [],
-            "missing_entity_detected": False,
-            "missing_assertion_detected": False,
-            "missing_rationale": None,
-        }
-    )
-    clause = Clause(
-        id=ClauseId(value="c1"),
-        reference=StandardReference(standard="TEST", clause="12.3.1.3"),
+def _fixture():
+    parent_heading = "Safety plan confirmation review"
+    statement = "The evaluation shall assess the verification criteria."
+    parent = Clause(
+        id=ClauseId(value="parent"),
+        reference=StandardReference(standard="TEST", clause="5"),
         clause_type=ClauseType.CLAUSE,
-        heading="Local heading",
-        content=(TextBlock(id="t1", text="If the method is used, the criteria apply."),),
+        heading=parent_heading,
     )
-    parent_id = ClauseId(value="parent")
-    heading = "Random hardware fault quantitative analysis"
-    anchor = EvidenceAnchor(
-        id="anchor-heading",
-        source_clause_id=parent_id,
+    target = Clause(
+        id=ClauseId(value="target"),
+        reference=StandardReference(standard="TEST", clause="5.1"),
+        clause_type=ClauseType.REQUIREMENT,
+        parent_id=parent.id,
+        heading="Evaluation",
+        content=(TextBlock(id="t", text=statement),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="TEST"),
+        title="Test",
+        document_type=DocumentType.STANDARD,
+        clauses=(parent, target),
+    )
+    inventory = build_structured_context_candidates(document, target)
+    selection = select_structured_context(
+        inventory,
+        profile=ContextSelectionProfile(character_budget=20_000, max_sequence_distance=8),
+    )
+    package = build_context_source_package(document, inventory, selection)
+    parent_surface = next(
+        item
+        for item in package.input_surfaces
+        if item.source_ref.clause_id == "parent"
+        and item.source_ref.source_kind is EvidenceSourceKind.HEADING
+    )
+    body_surface = next(
+        item
+        for item in package.input_surfaces
+        if item.source_ref.clause_id == "target"
+        and item.source_ref.source_kind is EvidenceSourceKind.BODY
+    )
+    parent_anchor = EvidenceAnchor(
+        id="a-parent",
+        source_clause_id=parent.id,
         source_kind=EvidenceSourceKind.HEADING,
         start_offset=0,
-        end_offset=len(heading),
+        end_offset=len(parent_heading),
+        content_hash=hashlib.sha256(parent_heading.encode()).hexdigest(),
     )
-    entity = KnowledgeEntityProposal(
-        id="entity-heading",
-        proposal_clause_ids=(clause.id,),
+    body_anchor = EvidenceAnchor(
+        id="a-body",
+        source_clause_id=target.id,
+        source_kind=EvidenceSourceKind.BODY,
+        start_offset=0,
+        end_offset=len(statement),
+        content_hash=hashlib.sha256(statement.encode()).hexdigest(),
+    )
+    review_entity = KnowledgeEntityProposal(
+        id="e-review",
+        proposal_clause_ids=(target.id,),
         class_iri=f"{STAT}Activity",
-        normalized_label="random hardware fault quantitative analysis",
-        source_anchor_ids=(anchor.id,),
+        normalized_label="safety plan confirmation review",
+        source_anchor_ids=(parent_anchor.id,),
         confidence=0.9,
     )
-
-    OntologyGuidedAssertionProposalVerifier(gateway).verify(
-        clause,
-        document_key="TEST",
-        ontology_versions=ONTOLOGIES,
-        evidence_anchors=(anchor,),
-        entity_proposals=(entity,),
-        assertion_proposals=(),
-        semantic_context={
-            "ancestor_headings": [
-                {"clause_id": parent_id.value, "reference": "12.3.1", "heading": heading}
-            ]
-        },
+    criterion_entity = KnowledgeEntityProposal(
+        id="e-criteria",
+        proposal_clause_ids=(target.id,),
+        class_iri=f"{STAT}VerificationCriterion",
+        normalized_label="verification criteria",
+        source_anchor_ids=(body_anchor.id,),
+        confidence=0.9,
+    )
+    assertion = NormativeAssertionProposal(
+        id="n-1",
+        source_clause_id=target.id,
+        subject_id=review_entity.id,
+        predicate=f"{STAT}assesses",
+        object=EntityAssertionObject(entity_id=criterion_entity.id),
+        normative_force=NormativeForce.REQUIREMENT,
+        evidence_anchor_ids=(parent_anchor.id, body_anchor.id),
+        confidence=0.9,
+    )
+    return (
+        target,
+        package,
+        (parent_anchor, body_anchor),
+        (review_entity, criterion_entity),
+        assertion,
+        parent_surface.package_source_ref,
+        body_surface.package_source_ref,
     )
 
-    payload = json.loads(gateway.request.user_prompt)
-    evidence = payload["entity_candidates"][0]["evidence"][0]
-    assert evidence["source_clause_id"] == parent_id.value
-    assert evidence["source_kind"] == "heading"
-    assert evidence["quote"] == heading
 
-
-def test_verifier_resolves_associative_body_entity_evidence() -> None:
+def test_verifier_preserves_cross_clause_multi_span_evidence_and_package_binding() -> None:
+    target, package, anchors, entities, assertion, parent_ref, body_ref = _fixture()
     gateway = _Gateway(
         {
             "entity_reviews": [
-                {"candidate_id": "entity-assoc", "disposition": "supported", "rationale": None}
+                {"candidate_id": "e-review", "disposition": "supported", "rationale": None},
+                {"candidate_id": "e-criteria", "disposition": "supported", "rationale": None},
             ],
-            "assertion_reviews": [],
+            "assertion_reviews": [
+                {"candidate_id": "n-1", "disposition": "supported", "rationale": None}
+            ],
             "missing_entity_detected": False,
             "missing_assertion_detected": False,
             "missing_rationale": None,
         }
     )
-    clause = Clause(
-        id=ClauseId(value="c1"),
-        reference=StandardReference(standard="TEST", clause="12.3.1.3"),
-        clause_type=ClauseType.CLAUSE,
-        content=(TextBlock(id="t1", text="If the method is used, the criteria apply."),),
-    )
-    source_id = ClauseId(value="intro-1")
-    source_text = "The Emergency Operation Tolerance Time Interval uses the PMHF."
-    quote = "Emergency Operation Tolerance Time Interval"
-    start = source_text.index(quote)
-    anchor = EvidenceAnchor(
-        id="anchor-assoc",
-        source_clause_id=source_id,
-        source_kind=EvidenceSourceKind.BODY,
-        start_offset=start,
-        end_offset=start + len(quote),
-    )
-    entity = KnowledgeEntityProposal(
-        id="entity-assoc",
-        proposal_clause_ids=(clause.id,),
-        class_iri=f"{STAT}Activity",
-        normalized_label="emergency operation tolerance time interval calculation",
-        source_anchor_ids=(anchor.id,),
-        confidence=0.9,
-    )
 
-    OntologyGuidedAssertionProposalVerifier(gateway).verify(
-        clause,
+    result = OntologyGuidedAssertionProposalVerifier(gateway).verify(
+        target,
         document_key="TEST",
         ontology_versions=ONTOLOGIES,
-        evidence_anchors=(anchor,),
-        entity_proposals=(entity,),
-        assertion_proposals=(),
-        semantic_context={
-            "associative_context": [
-                {
-                    "clause_id": source_id.value,
-                    "reference": "12.3.1.1",
-                    "heading": "Emergency Operation Tolerance Time Interval calculation method",
-                    "text": source_text,
-                    "role": "leading_substantive_descendant",
-                }
-            ]
-        },
+        evidence_anchors=anchors,
+        entity_proposals=entities,
+        assertion_proposals=(assertion,),
+        source_package=package,
     )
 
+    assert result.source_package_sha256 == context_source_package_binding(package).package_sha256
     payload = json.loads(gateway.request.user_prompt)
-    evidence = payload["entity_candidates"][0]["evidence"][0]
-    assert evidence["source_clause_id"] == source_id.value
-    assert evidence["source_kind"] == "body"
-    assert evidence["quote"] == quote
-    assert "not normative assertion evidence" in gateway.request.system_prompt
+    evidence = payload["assertion_candidates"][0]["evidence"]
+    assert [item["source_ref"] for item in evidence] == [parent_ref, body_ref]
+    assert {item["source_clause_id"] for item in evidence} == {"parent", "target"}
+    assert "clause_text" not in payload
+    assert "unclear semantic reach is uncertainty" in gateway.request.system_prompt
 
 
-def test_verifier_rejects_nonlocal_assertion_evidence_before_llm_call() -> None:
-    gateway = _Gateway(
-        {
-            "entity_reviews": [],
-            "assertion_reviews": [],
-            "missing_entity_detected": False,
-            "missing_assertion_detected": False,
-            "missing_rationale": None,
+def test_verifier_rejects_anchor_not_contained_in_bound_package_before_gateway_call() -> None:
+    target, package, anchors, entities, assertion, _parent_ref, _body_ref = _fixture()
+    invalid = anchors[0].model_copy(
+        update={
+            "id": "outside",
+            "source_clause_id": ClauseId(value="other"),
         }
     )
-    clause, local_anchor, entity, assertion = _inputs()
-    source_id = ClauseId(value="intro-1")
-    external_anchor = EvidenceAnchor(
-        id="external-anchor",
-        source_clause_id=source_id,
-        source_kind=EvidenceSourceKind.BODY,
-        start_offset=0,
-        end_offset=10,
-    )
-    assertion = assertion.model_copy(update={"evidence_anchor_ids": (external_anchor.id,)})
+    assertion = assertion.model_copy(update={"evidence_anchor_ids": (invalid.id, anchors[1].id)})
+    gateway = _Gateway({})
 
-    with pytest.raises(ValueError, match="local clause body evidence"):
+    with pytest.raises(ValueError, match="not uniquely contained"):
         OntologyGuidedAssertionProposalVerifier(gateway).verify(
-            clause,
+            target,
             document_key="TEST",
             ontology_versions=ONTOLOGIES,
-            evidence_anchors=(local_anchor, external_anchor),
-            entity_proposals=(entity,),
+            evidence_anchors=(anchors[0], invalid, anchors[1]),
+            entity_proposals=entities,
             assertion_proposals=(assertion,),
-            semantic_context={
-                "associative_context": [
-                    {
-                        "clause_id": source_id.value,
-                        "reference": "12.3.1.1",
-                        "heading": "Intro",
-                        "text": "0123456789 associative context",
-                        "role": "leading_substantive_descendant",
-                    }
-                ]
-            },
+            source_package=package,
         )
+    assert gateway.request is None

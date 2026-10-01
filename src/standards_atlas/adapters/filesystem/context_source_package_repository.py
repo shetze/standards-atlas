@@ -9,10 +9,12 @@ import tempfile
 from pathlib import Path
 
 from standards_atlas.application.context.input_binding import (
-    CONTEXT_SOURCE_PACKAGE_SCHEMA_VERSION,
     ContextSourcePackage,
-    ContextSourcePackageBinding,
     context_source_package_binding,
+)
+from standards_atlas.domain.model import (
+    CONTEXT_SOURCE_PACKAGE_SCHEMA_VERSION,
+    ContextSourcePackageBinding,
 )
 from standards_atlas.application.schema import require_current_payload, require_supported_schema
 

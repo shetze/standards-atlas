@@ -4,16 +4,42 @@ import pytest
 
 import standards_atlas.adapters.filesystem.knowledge_proposal_repository as repository_module
 from standards_atlas.adapters.filesystem import FileSystemDocumentKnowledgeProposalRepository
-from standards_atlas.domain.model import DocumentKnowledgeProposal, KnowledgeProposalProvenance
+from standards_atlas.domain.model import (
+    CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT,
+    ContextInputFingerprints,
+    ContextSourcePackageBinding,
+    DocumentKnowledgeProposal,
+    KnowledgeProposalProvenance,
+)
 
 
 def _proposal(run_id: str, document_key: str) -> DocumentKnowledgeProposal:
+    binding = ContextSourcePackageBinding(
+        package_sha256="sha256:" + ("1" * 64),
+        document_key=document_key,
+        document_revision="sha256:" + ("2" * 64),
+        target_clause_id="clause-1",
+        target_reference=f"{document_key}:1",
+        selection_contract_id="structured-context-selection-v1",
+        selection_profile_id="assertion-context-selection-v1",
+        selection_completeness="complete",
+        fingerprints=ContextInputFingerprints(
+            source_state_sha256="sha256:" + ("3" * 64),
+            candidate_space_sha256="sha256:" + ("4" * 64),
+            selection_decision_sha256="sha256:" + ("5" * 64),
+            actual_input_sha256="sha256:" + ("6" * 64),
+        ),
+    )
     return DocumentKnowledgeProposal(
         proposal_run_id=run_id,
         source_document_key=document_key,
+        context_source_bindings=(binding,),
         proposal_provenance=KnowledgeProposalProvenance(
             extractor="test-extractor",
             extractor_version="1.0.0",
+            request_contract_id="source-bound-knowledge-proposal-request-v1",
+            output_contract_id="source-bound-knowledge-proposal-output-v1",
+            source_binding_contract_id=CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT,
         ),
     )
 

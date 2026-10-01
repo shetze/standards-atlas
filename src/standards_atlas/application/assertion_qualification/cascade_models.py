@@ -50,6 +50,8 @@ class AssertionVerifierProvenance(BaseModel):
     model: str | None = None
     provider: str | None = None
     prompt_version: str | None = None
+    request_contract_id: str | None = None
+    source_binding_contract_id: str | None = None
 
 
 class AssertionCandidateVerification(BaseModel):
@@ -75,6 +77,7 @@ class AssertionClauseVerification(BaseModel):
     missing_rationale: str | None = Field(default=None, min_length=1)
     input_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     raw_response_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    source_package_sha256: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
 
     @model_validator(mode="after")
     def review_ids_are_unique(self) -> AssertionClauseVerification:
@@ -104,6 +107,9 @@ class AssertionCascadeProposalSource(BaseModel):
     extractor_version: str = Field(min_length=1)
     model: str | None = None
     provider: str | None = None
+    request_contract_id: str | None = None
+    output_contract_id: str | None = None
+    source_binding_contract_id: str | None = None
 
 
 class AssertionCascadeClauseReport(BaseModel):
@@ -117,6 +123,16 @@ class AssertionCascadeClauseReport(BaseModel):
     verification: AssertionClauseVerification | None = None
     verification_error_type: str | None = None
     verification_error_message: str | None = None
+    efficient_source_package_sha256: str | None = Field(
+        default=None, pattern=r"^sha256:[0-9a-f]{64}$"
+    )
+    verifier_source_package_sha256: str | None = Field(
+        default=None, pattern=r"^sha256:[0-9a-f]{64}$"
+    )
+    escalation_source_package_sha256: str | None = Field(
+        default=None, pattern=r"^sha256:[0-9a-f]{64}$"
+    )
+    source_basis_changed: bool = False
     efficient_entities: int = Field(ge=0)
     efficient_assertions: int = Field(ge=0)
     efficient_violations: int = Field(default=0, ge=0)
@@ -165,6 +181,20 @@ class AssertionCascadeClauseReport(BaseModel):
             AssertionCascadeReason.VERIFICATION_ERROR not in self.reasons
         ):
             raise ValueError("verification errors require verification_error escalation reason")
+        if self.verification is not None and (
+            self.verifier_source_package_sha256 != self.verification.source_package_sha256
+        ):
+            raise ValueError("cascade verifier package binding differs from verification record")
+        if self.route is AssertionCascadeRoute.EFFICIENT_ACCEPTED and (
+            self.efficient_source_package_sha256 != self.verifier_source_package_sha256
+        ):
+            raise ValueError("efficient-accepted clause must share extractor/verifier source basis")
+        expected_changed = (
+            self.escalation_source_package_sha256 is not None
+            and self.efficient_source_package_sha256 != self.escalation_source_package_sha256
+        )
+        if self.source_basis_changed is not expected_changed:
+            raise ValueError("cascade source_basis_changed does not match bound package identities")
         return self
 
 

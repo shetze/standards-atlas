@@ -1,6 +1,11 @@
 """Assertion-centred proposal extraction and deterministic source grounding."""
 
-from .context import assertion_cbox_context, assertion_context_selection
+from .context import (
+    assertion_cbox_context,
+    assertion_context_selection,
+    assertion_context_source_package,
+    assertion_interpretation_context,
+)
 from .grounding import (
     CanonicalOffsetSelector,
     EvidenceContribution,
@@ -8,15 +13,11 @@ from .grounding import (
     EvidenceGroundingFailureCode,
     EvidenceGroundingOwnerKind,
     EvidenceGroundingRequest,
-    EvidenceGroundingResult,
     EvidenceUse,
     GroundedEvidenceUse,
     MultiSpanEvidenceGroundingResult,
     QuoteOccurrenceSelector,
     UniqueQuoteSelector,
-    evidence_source_text,
-    ground_entity_evidence_quote,
-    ground_evidence_quote,
     ground_evidence_request,
 )
 from .projection import (
@@ -58,7 +59,8 @@ __all__ = [
     "is_non_evidence_projection_marker",
     "assertion_cbox_context",
     "assertion_context_selection",
-    "EvidenceGroundingResult",
+    "assertion_context_source_package",
+    "assertion_interpretation_context",
     "FormalOntologyVocabulary",
     "DocumentKnowledgeProposalUnifier",
     "KNOWLEDGE_PROPOSAL_UNIFICATION_VERSION",
@@ -70,9 +72,6 @@ __all__ = [
     "TABLE_KNOWLEDGE_PROJECTION_VERSION",
     "TableKnowledgeProposalProjector",
     "display_clause_reference",
-    "evidence_source_text",
-    "ground_entity_evidence_quote",
-    "ground_evidence_quote",
     "project_clause_content",
     "proposal_extraction_eligibility",
 ]

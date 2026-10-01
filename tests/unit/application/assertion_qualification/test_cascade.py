@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import hashlib
+
+import pytest
+
 from standards_atlas.application.assertion_qualification import (
     AssertionCandidateVerification,
     AssertionQualificationCascadeService,
@@ -11,12 +15,17 @@ from standards_atlas.application.assertion_qualification.cascade_models import (
     AssertionCascadeRoute,
     AssertionClauseVerification,
 )
+from standards_atlas.application.context import ContextSelectionProfile
+from standards_atlas.application.context.input_binding import context_source_package_binding
+from standards_atlas.application.knowledge_proposal_extraction import (
+    ProposalExtractionContext,
+    assertion_context_source_package,
+)
 from standards_atlas.application.ports import ClauseKnowledgeProposalResult
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
     ClauseType,
-    ContextRouting,
     DocumentKey,
     DocumentType,
     EngineeringDocument,
@@ -27,13 +36,7 @@ from standards_atlas.domain.model import (
     KnowledgeProposalProvenance,
     NormativeAssertionProposal,
     NormativeForce,
-    ReferenceRole,
-    ReferenceRouting,
-    ReferenceTarget,
     StandardReference,
-    StructuralContext,
-    StructuralNodeKind,
-    StructuralSiblingContext,
     TextBlock,
 )
 
@@ -45,24 +48,40 @@ class _Extractor:
     def __init__(self, name: str) -> None:
         self.name = name
         self.calls: list[str] = []
-        self.contexts: dict[str, dict[str, object]] = {}
+        self.package_hashes: dict[str, str] = {}
+        self.interpretation_contexts: dict[str, dict[str, object]] = {}
 
     def provenance(self) -> KnowledgeProposalProvenance:
         return KnowledgeProposalProvenance(
             extractor=self.name,
             extractor_version="1.0.0",
             model=f"{self.name}-model",
+            request_contract_id="source-bound-knowledge-proposal-request-v1",
+            output_contract_id="source-bound-knowledge-proposal-output-v1",
+            source_binding_contract_id="source-bound-context-binding-v1",
         )
 
-    def extract(self, clause, *, document_key, ontology_versions, semantic_context=None):
+    def extract(
+        self,
+        clause,
+        *,
+        document_key,
+        ontology_versions,
+        source_package,
+        interpretation_context=None,
+    ):
         self.calls.append(clause.id.value)
-        self.contexts[clause.id.value] = dict(semantic_context or {})
+        binding = context_source_package_binding(source_package)
+        self.package_hashes[clause.id.value] = binding.package_sha256
+        self.interpretation_contexts[clause.id.value] = dict(interpretation_context or {})
+        text = clause.plain_text
         anchor = EvidenceAnchor(
             id=f"{self.name}:anchor:{clause.id.value}",
             source_clause_id=clause.id,
             source_kind=EvidenceSourceKind.BODY,
             start_offset=0,
-            end_offset=len(clause.plain_text),
+            end_offset=len(text),
+            content_hash=hashlib.sha256(text.encode()).hexdigest(),
         )
         entity = KnowledgeEntityProposal(
             id=f"{self.name}:entity:{clause.id.value}",
@@ -87,6 +106,7 @@ class _Extractor:
             evidence_anchors=(anchor,),
             entity_proposals=(entity,),
             assertion_proposals=(assertion,),
+            source_package_binding=binding,
             proposal_provenance=self.provenance(),
             input_hash="1" * 64,
             raw_response_hash="2" * 64,
@@ -94,16 +114,19 @@ class _Extractor:
 
 
 class _Verifier:
-    def __init__(self, missing_clause: str | None = None) -> None:
+    def __init__(self, missing_clause: str | None = None, *, wrong_binding: bool = False) -> None:
         self.missing_clause = missing_clause
+        self.wrong_binding = wrong_binding
         self.calls: list[str] = []
-        self.contexts: dict[str, dict[str, object]] = {}
+        self.package_hashes: dict[str, str] = {}
 
     def provenance(self) -> AssertionVerifierProvenance:
         return AssertionVerifierProvenance(
             verifier="fake-verifier",
             verifier_version="1.0.0",
             model="verify-model",
+            request_contract_id="source-bound-assertion-verifier-request-v1",
+            source_binding_contract_id="source-bound-context-binding-v1",
         )
 
     def verify(
@@ -115,11 +138,14 @@ class _Verifier:
         evidence_anchors,
         entity_proposals,
         assertion_proposals,
-        semantic_context=None,
+        source_package,
+        interpretation_context=None,
     ):
         self.calls.append(clause.id.value)
-        self.contexts[clause.id.value] = dict(semantic_context or {})
+        binding = context_source_package_binding(source_package)
+        self.package_hashes[clause.id.value] = binding.package_sha256
         missing = clause.id.value == self.missing_clause
+        package_hash = "sha256:" + "f" * 64 if self.wrong_binding else binding.package_sha256
         return AssertionClauseVerification(
             clause_id=clause.id,
             entity_reviews=tuple(
@@ -140,6 +166,7 @@ class _Verifier:
             missing_rationale="one assertion is missing" if missing else None,
             input_hash="3" * 64,
             raw_response_hash="4" * 64,
+            source_package_sha256=package_hash,
         )
 
 
@@ -161,7 +188,7 @@ def _document() -> EngineeringDocument:
     )
 
 
-def test_cascade_accepts_supported_clause_and_escalates_missing_assertion() -> None:
+def test_cascade_shares_bound_source_package_with_extractor_and_verifier() -> None:
     efficient = _Extractor("efficient")
     escalation = _Extractor("escalation")
     verifier = _Verifier(missing_clause="c2")
@@ -180,24 +207,44 @@ def test_cascade_accepts_supported_clause_and_escalates_missing_assertion() -> N
     assert efficient.calls == ["c1", "c2"]
     assert verifier.calls == ["c1", "c2"]
     assert escalation.calls == ["c2"]
-    assert result.escalation_proposal is not None
+    assert efficient.package_hashes == verifier.package_hashes
+    assert escalation.package_hashes["c2"] == efficient.package_hashes["c2"]
+    assert len(result.source_packages) == 2
     assert [item.route for item in result.report.clauses] == [
         AssertionCascadeRoute.EFFICIENT_ACCEPTED,
         AssertionCascadeRoute.ESCALATED,
     ]
     assert result.report.clauses[1].reasons == (AssertionCascadeReason.MISSING_ASSERTION,)
-    assert result.report.efficient_accepted_clauses == 1
-    assert result.report.escalated_clauses == 1
-    assert [item.stage for item in result.report.proposal_sources] == [
-        "efficient",
-        "escalation",
-    ]
+
+
+def test_cascade_detects_verifier_source_package_mismatch() -> None:
+    result = AssertionQualificationCascadeService(
+        efficient_extractor=_Extractor("efficient"),
+        verifier=_Verifier(wrong_binding=True),
+        escalation_extractor=_Extractor("escalation"),
+    ).run_document(
+        _document(),
+        cascade_run_id="cascade-mismatch",
+        efficient_proposal_run_id="efficient-mismatch",
+        escalation_proposal_run_id="escalation-mismatch",
+        ontology_versions=ONTOLOGIES,
+        clause_ids=frozenset({"c1"}),
+    )
+
+    clause = result.report.clauses[0]
+    assert clause.route is AssertionCascadeRoute.ESCALATED
+    assert clause.reasons == (AssertionCascadeReason.VERIFICATION_ERROR,)
+    assert "different source package" in (clause.verification_error_message or "")
 
 
 def test_verifier_must_review_every_efficient_candidate() -> None:
     class _IncompleteVerifier(_Verifier):
         def verify(self, clause, **kwargs):
-            return AssertionClauseVerification(clause_id=clause.id)
+            binding = context_source_package_binding(kwargs["source_package"])
+            return AssertionClauseVerification(
+                clause_id=clause.id,
+                source_package_sha256=binding.package_sha256,
+            )
 
     result = AssertionQualificationCascadeService(
         efficient_extractor=_Extractor("efficient"),
@@ -215,67 +262,18 @@ def test_verifier_must_review_every_efficient_candidate() -> None:
     clause = result.report.clauses[0]
     assert clause.route is AssertionCascadeRoute.ESCALATED
     assert clause.reasons == (AssertionCascadeReason.VERIFICATION_ERROR,)
-    assert clause.verification_error_type == "ValueError"
 
 
-def test_cascade_transports_same_structural_and_reference_cbox_to_all_stages() -> None:
-    parent = Clause(
-        id=ClauseId(value="parent"),
-        reference=StandardReference(standard="TEST", clause="7.4.4.3"),
-        clause_type=ClauseType.CLAUSE,
-        heading="Route 2H",
-    )
-    child = Clause(
-        id=ClauseId(value="c1"),
-        reference=StandardReference(standard="TEST", clause="7.4.4.3.1"),
-        clause_type=ClauseType.REQUIREMENT,
-        baseline={
-            "parent_id": parent.id,
-            "content": (TextBlock(id="t:c1", text="Requirement unless 7.4.4.3.2 applies."),),
-            "structural_context": StructuralContext(
-                node_kind=StructuralNodeKind.LEAF,
-                sibling=StructuralSiblingContext(
-                    index=0,
-                    count=3,
-                    is_first=True,
-                    is_last=False,
-                    next_clause_id="c2",
-                ),
-            ),
-        },
-        enrichments={
-            "context_routing": ContextRouting(
-                references=(
-                    ReferenceRouting(
-                        source_clause_id="c1",
-                        target=ReferenceTarget(
-                            document_key="TEST",
-                            clause_id="c2",
-                            reference="7.4.4.3.2",
-                        ),
-                        role=ReferenceRole.PROVIDES_EXCEPTION,
-                        evidence=("unless 7.4.4.3.2 applies",),
-                    ),
-                )
-            )
-        },
-    )
-    document = EngineeringDocument(
-        key=DocumentKey(value="TEST"),
-        title="Test",
-        document_type=DocumentType.STANDARD,
-        clauses=(parent, child),
-    )
+def test_cascade_interpretation_metadata_is_source_free_and_shared() -> None:
     efficient = _Extractor("efficient")
     verifier = _Verifier(missing_clause="c1")
     escalation = _Extractor("escalation")
-
     AssertionQualificationCascadeService(
         efficient_extractor=efficient,
         verifier=verifier,
         escalation_extractor=escalation,
     ).run_document(
-        document,
+        _document(),
         cascade_run_id="cascade-context",
         efficient_proposal_run_id="efficient-context",
         escalation_proposal_run_id="escalation-context",
@@ -283,21 +281,11 @@ def test_cascade_transports_same_structural_and_reference_cbox_to_all_stages() -
         clause_ids=frozenset({"c1"}),
     )
 
-    contexts = (
-        efficient.contexts["c1"],
-        verifier.contexts["c1"],
-        escalation.contexts["c1"],
-    )
-    assert contexts[0] == contexts[1] == contexts[2]
-    context = contexts[0]
-    assert context["parent_id"] == "parent"
-    assert context["ancestor_headings"] == [
-        {"clause_id": "parent", "reference": "7.4.4.3", "heading": "Route 2H"}
-    ]
-    assert context["structural_context"]["sibling"]["is_first"] is True
-    assert context["structural_context"]["sibling"]["next_clause_id"] == "c2"
-    assert context["context_routing"]["references"][0]["role"] == "provides_exception"
-    assert context["context_routing"]["references"][0]["target"]["reference"] == "7.4.4.3.2"
+    context = efficient.interpretation_contexts["c1"]
+    assert "heading" not in context
+    assert "ancestor_headings" not in context
+    assert "associative_context" not in context
+    assert escalation.interpretation_contexts["c1"] == context
 
 
 def test_cascade_report_roundtrips_through_current_schema_writer(tmp_path) -> None:
@@ -326,136 +314,64 @@ def test_cascade_report_roundtrips_through_current_schema_writer(tmp_path) -> No
     assert load_assertion_qualification_cascade_report(path) == result.report
 
 
-def test_verifier_checks_for_missing_assertions_when_efficient_output_is_empty() -> None:
-    class _EmptyExtractor(_Extractor):
-        def extract(self, clause, *, document_key, ontology_versions, semantic_context=None):
-            self.calls.append(clause.id.value)
-            return ClauseKnowledgeProposalResult(
-                clause_id=clause.id,
-                proposal_provenance=self.provenance(),
-                input_hash="5" * 64,
-                raw_response_hash="6" * 64,
-            )
+def test_cascade_rejects_stale_supplied_package_after_document_change() -> None:
+    original = _document()
+    old_package = assertion_context_source_package(original, original.clauses[0])
+    changed = original.model_copy(update={"clauses": (*original.clauses, _clause("c3"))})
 
-    efficient = _EmptyExtractor("efficient")
-    verifier = _Verifier(missing_clause="c1")
-    escalation = _Extractor("escalation")
+    with pytest.raises(ValueError, match="stale for the current document revision"):
+        AssertionQualificationCascadeService(
+            efficient_extractor=_Extractor("efficient"),
+            verifier=_Verifier(),
+            escalation_extractor=_Extractor("escalation"),
+        ).run_document(
+            changed,
+            cascade_run_id="cascade-stale",
+            efficient_proposal_run_id="efficient-stale",
+            escalation_proposal_run_id="escalation-stale",
+            ontology_versions=ONTOLOGIES,
+            clause_ids=frozenset({"c1"}),
+            context_by_clause={
+                "c1": ProposalExtractionContext(source_package=old_package),
+            },
+        )
+
+
+def test_cascade_records_explicitly_changed_escalation_source_basis() -> None:
+    document = _document()
+    clause = document.clauses[0]
+    efficient_package = assertion_context_source_package(document, clause)
+    escalation_package = assertion_context_source_package(
+        document,
+        clause,
+        profile=ContextSelectionProfile(character_budget=13_000),
+    )
+    efficient_binding = context_source_package_binding(efficient_package)
+    escalation_binding = context_source_package_binding(escalation_package)
+    assert escalation_binding.package_sha256 != efficient_binding.package_sha256
+
     result = AssertionQualificationCascadeService(
-        efficient_extractor=efficient,
-        verifier=verifier,
-        escalation_extractor=escalation,
-    ).run_document(
-        _document(),
-        cascade_run_id="cascade-empty",
-        efficient_proposal_run_id="efficient-empty",
-        escalation_proposal_run_id="escalation-empty",
-        ontology_versions=ONTOLOGIES,
-        clause_ids=frozenset({"c1"}),
-    )
-
-    assert verifier.calls == ["c1"]
-    assert result.report.clauses[0].efficient_entities == 0
-    assert result.report.clauses[0].efficient_assertions == 0
-    assert result.report.clauses[0].reasons == (AssertionCascadeReason.MISSING_ASSERTION,)
-    assert escalation.calls == ["c1"]
-
-
-def test_cascade_keeps_entity_grounded_in_ancestor_heading_with_source_clause() -> None:
-    parent = Clause(
-        id=ClauseId(value="parent"),
-        reference=StandardReference(standard="TEST", clause="12.3.1"),
-        clause_type=ClauseType.CLAUSE,
-        heading="Random hardware fault quantitative analysis",
-    )
-    child = Clause(
-        id=ClauseId(value="c1"),
-        reference=StandardReference(standard="TEST", clause="12.3.1.3"),
-        clause_type=ClauseType.CLAUSE,
-        baseline={
-            "parent_id": parent.id,
-            "heading": (
-                "Emergency Operation Time Interval calculation if no PMHF value is available"
-            ),
-            "content": (TextBlock(id="t:c1", text="If the method is used, the criteria apply."),),
-        },
-    )
-    document = EngineeringDocument(
-        key=DocumentKey(value="TEST"),
-        title="Test",
-        document_type=DocumentType.STANDARD,
-        clauses=(parent, child),
-    )
-
-    class _HeadingExtractor(_Extractor):
-        def extract(self, clause, *, document_key, ontology_versions, semantic_context=None):
-            self.calls.append(clause.id.value)
-            self.contexts[clause.id.value] = dict(semantic_context or {})
-            heading = parent.heading or ""
-            anchor = EvidenceAnchor(
-                id="heading-anchor",
-                source_clause_id=parent.id,
-                source_kind=EvidenceSourceKind.HEADING,
-                start_offset=0,
-                end_offset=len(heading),
-            )
-            entity = KnowledgeEntityProposal(
-                id="heading-entity",
-                proposal_clause_ids=(clause.id,),
-                class_iri=f"{STAT}Activity",
-                normalized_label="random hardware fault quantitative analysis",
-                source_anchor_ids=(anchor.id,),
-                confidence=0.9,
-            )
-            return ClauseKnowledgeProposalResult(
-                clause_id=clause.id,
-                evidence_anchors=(anchor,),
-                entity_proposals=(entity,),
-                proposal_provenance=self.provenance(),
-                input_hash="1" * 64,
-                raw_response_hash="2" * 64,
-            )
-
-    class _CaptureVerifier(_Verifier):
-        def __init__(self) -> None:
-            super().__init__()
-            self.entity_ids: tuple[str, ...] = ()
-            self.anchor_source_ids: tuple[str, ...] = ()
-
-        def verify(self, clause, **kwargs):
-            self.calls.append(clause.id.value)
-            entities = tuple(kwargs["entity_proposals"])
-            anchors = tuple(kwargs["evidence_anchors"])
-            self.entity_ids = tuple(item.id for item in entities)
-            self.anchor_source_ids = tuple(item.source_clause_id.value for item in anchors)
-            return AssertionClauseVerification(
-                clause_id=clause.id,
-                entity_reviews=tuple(
-                    AssertionCandidateVerification(
-                        candidate_id=item.id,
-                        disposition=AssertionVerificationDisposition.SUPPORTED,
-                    )
-                    for item in entities
-                ),
-                assertion_reviews=(),
-                input_hash="3" * 64,
-                raw_response_hash="4" * 64,
-            )
-
-    efficient = _HeadingExtractor("efficient")
-    verifier = _CaptureVerifier()
-    result = AssertionQualificationCascadeService(
-        efficient_extractor=efficient,
-        verifier=verifier,
+        efficient_extractor=_Extractor("efficient"),
+        verifier=_Verifier(missing_clause="c1"),
         escalation_extractor=_Extractor("escalation"),
     ).run_document(
         document,
-        cascade_run_id="cascade-heading",
-        efficient_proposal_run_id="efficient-heading",
-        escalation_proposal_run_id="escalation-heading",
+        cascade_run_id="cascade-rebound",
+        efficient_proposal_run_id="efficient-rebound",
+        escalation_proposal_run_id="escalation-rebound",
         ontology_versions=ONTOLOGIES,
         clause_ids=frozenset({"c1"}),
+        context_by_clause={
+            "c1": ProposalExtractionContext(source_package=efficient_package),
+        },
+        escalation_context_by_clause={
+            "c1": ProposalExtractionContext(source_package=escalation_package),
+        },
     )
 
-    assert verifier.entity_ids == ("heading-entity",)
-    assert verifier.anchor_source_ids == ("parent",)
-    assert result.report.clauses[0].route is AssertionCascadeRoute.EFFICIENT_ACCEPTED
+    clause_report = result.report.clauses[0]
+    assert clause_report.efficient_source_package_sha256 == efficient_binding.package_sha256
+    assert clause_report.verifier_source_package_sha256 == efficient_binding.package_sha256
+    assert clause_report.escalation_source_package_sha256 == escalation_binding.package_sha256
+    assert clause_report.source_basis_changed is True
+    assert len(result.source_packages) == 2

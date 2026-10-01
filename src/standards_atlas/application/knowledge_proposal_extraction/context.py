@@ -8,6 +8,10 @@ from standards_atlas.application.context.context_selection import (
     StructuredContextSelection,
     select_structured_context,
 )
+from standards_atlas.application.context.input_binding import (
+    ContextSourcePackage,
+    build_context_source_package,
+)
 from standards_atlas.application.context.normative_context import (
     governing_scope_context,
     resolve_normative_context,
@@ -137,6 +141,45 @@ def assertion_context_selection(
         external_source_refs=external_source_refs,
     )
     return select_structured_context(inventory, profile=profile)
+
+
+def assertion_context_source_package(
+    document: EngineeringDocument,
+    clause: Clause,
+    *,
+    profile: ContextSelectionProfile | None = None,
+    resolver: SourceSurfaceResolver | None = None,
+    external_source_refs: tuple[SourceSurfaceRef, ...] = (),
+) -> ContextSourcePackage:
+    """Build the exact source-bound package supplied to current extraction/verification."""
+
+    inventory = build_structured_context_candidates(
+        document,
+        clause,
+        resolver=resolver,
+        external_source_refs=external_source_refs,
+    )
+    selection = select_structured_context(inventory, profile=profile)
+    return build_context_source_package(document, inventory, selection)
+
+
+def assertion_interpretation_context(
+    document: EngineeringDocument,
+    clause: Clause,
+    *,
+    applicability: ClauseApplicability | None = None,
+) -> dict[str, object]:
+    """Return source-free interpretive metadata that may accompany a bound package.
+
+    Source text is supplied exclusively through ``ContextSourcePackage.input_surfaces``.  This
+    projection deliberately strips headings and associative prose from the historical CBox shape
+    so the current request cannot acquire an unbound second source basis.
+    """
+
+    context = assertion_cbox_context(document, clause, applicability=applicability)
+    for key in ("heading", "ancestor_headings", "associative_context"):
+        context.pop(key, None)
+    return context
 
 
 def _ancestor_headings(document: EngineeringDocument, clause: Clause) -> list[dict[str, str]]:

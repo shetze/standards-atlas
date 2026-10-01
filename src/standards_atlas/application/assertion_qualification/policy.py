@@ -35,9 +35,14 @@ from standards_atlas.application.assertion_qualification.policy_models import (
     AssertionQualityGateOperator,
     AssertionQualityThresholds,
 )
+from standards_atlas.application.knowledge_proposal_extraction.source_bound_contract import (
+    ASSERTION_VERIFIER_REQUEST_CONTRACT,
+    KNOWLEDGE_PROPOSAL_OUTPUT_CONTRACT,
+    KNOWLEDGE_PROPOSAL_REQUEST_CONTRACT,
+)
 from standards_atlas.domain.model import (
+    CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT,
     DocumentKnowledgeProposal,
-    EvidenceSourceKind,
     NormativeAssertionProposal,
 )
 
@@ -278,6 +283,20 @@ def _validate_cascade_inputs(
 
     for clause in cascade.clauses:
         clause_id = clause.clause_id.value
+        efficient_package_sha256 = _context_binding_hash(efficient, clause_id)
+        if clause.efficient_source_package_sha256 != efficient_package_sha256:
+            raise ValueError("cascade efficient source package differs from proposal binding")
+        if clause.verification is not None and (
+            clause.verifier_source_package_sha256 != efficient_package_sha256
+        ):
+            raise ValueError(
+                "cascade verifier source package differs from efficient proposal binding"
+            )
+        if escalation is not None and clause.route is AssertionCascadeRoute.ESCALATED:
+            escalation_package_sha256 = _context_binding_hash(escalation, clause_id)
+            if clause.escalation_source_package_sha256 != escalation_package_sha256:
+                raise ValueError("cascade escalation source package differs from proposal binding")
+
         efficient_violations = sum(
             item.clause_id.value == clause_id for item in efficient.violations
         )
@@ -303,6 +322,19 @@ def _validate_cascade_inputs(
                 )
 
 
+def _context_binding_hash(proposal: DocumentKnowledgeProposal, clause_id: str) -> str:
+    matches = [
+        item.package_sha256
+        for item in proposal.context_source_bindings
+        if item.target_clause_id == clause_id
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            "source-bound proposal requires exactly one package binding per target clause"
+        )
+    return matches[0]
+
+
 def _validate_proposal_source(source, proposal: DocumentKnowledgeProposal) -> None:
     if source.proposal_run_id != proposal.proposal_run_id:
         raise ValueError(f"{source.stage} proposal run id differs from cascade report")
@@ -314,12 +346,18 @@ def _validate_proposal_source(source, proposal: DocumentKnowledgeProposal) -> No
         provenance.extractor_version,
         provenance.model,
         provenance.provider,
+        provenance.request_contract_id,
+        provenance.output_contract_id,
+        provenance.source_binding_contract_id,
     )
     actual = (
         source.extractor,
         source.extractor_version,
         source.model,
         source.provider,
+        source.request_contract_id,
+        source.output_contract_id,
+        source.source_binding_contract_id,
     )
     if actual != expected:
         raise ValueError(f"{source.stage} proposal provenance differs from cascade report")
@@ -441,6 +479,9 @@ def _pipeline_identity_gate(
         model=provenance.model,
         provider=provenance.provider,
         prompt_version=provenance.prompt_version,
+        request_contract_id=provenance.request_contract_id,
+        output_contract_id=provenance.output_contract_id,
+        source_binding_contract_id=provenance.source_binding_contract_id,
     )
     passed = (
         development_identity is not None
@@ -469,6 +510,9 @@ def _qualified_runtime_identity(
             model=source.model,
             provider=source.provider,
             prompt_version=source.prompt_version,
+            request_contract_id=source.request_contract_id,
+            output_contract_id=source.output_contract_id,
+            source_binding_contract_id=source.source_binding_contract_id,
         )
         for source in sources
     }
@@ -510,7 +554,11 @@ def _assertion_decisions(
             assertions = efficient_by_clause.get(clause_id, ())
             _validate_supported_efficient_assertions(clause, assertions, efficient)
             for assertion in assertions:
-                local_reasons = _production_assertion_reasons(efficient, assertion)
+                local_reasons = _production_assertion_reasons(
+                    efficient,
+                    assertion,
+                    verifier_contract_supported=_verifier_contract_supported(cascade),
+                )
                 reasons = tuple(dict.fromkeys((*global_reasons, *local_reasons)))
                 disposition = (
                     AssertionAutoAdoptionDisposition.AUTO_ADOPTION_ELIGIBLE
@@ -582,29 +630,68 @@ def _validate_supported_efficient_assertions(
         raise ValueError("efficient assertion references an entity missing from its proposal")
 
 
+def _verifier_contract_supported(cascade: AssertionQualificationCascadeReport) -> bool:
+    provenance = cascade.verifier_provenance
+    return (
+        provenance.request_contract_id == ASSERTION_VERIFIER_REQUEST_CONTRACT
+        and provenance.source_binding_contract_id == CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT
+    )
+
+
 def _production_assertion_reasons(
     proposal: DocumentKnowledgeProposal,
     assertion: NormativeAssertionProposal,
+    *,
+    verifier_contract_supported: bool,
 ) -> tuple[AssertionAutoAdoptionReason, ...]:
     anchor_by_id = {anchor.id: anchor for anchor in proposal.evidence_anchors}
     entity_by_id = {entity.id: entity for entity in proposal.entity_proposals}
+    reasons: list[AssertionAutoAdoptionReason] = []
+    if not verifier_contract_supported:
+        reasons.append(AssertionAutoAdoptionReason.UNSUPPORTED_SOURCE_CONTRACT)
+
     assertion_anchors = tuple(
         anchor_by_id[anchor_id] for anchor_id in assertion.evidence_anchor_ids
     )
+    required_entities = tuple(entity_by_id[item] for item in _required_entity_ids(assertion))
+    required_entity_anchors = tuple(
+        anchor_by_id[anchor_id]
+        for entity in required_entities
+        for anchor_id in entity.source_anchor_ids
+    )
     if any(
-        anchor.source_clause_id != assertion.source_clause_id
-        or anchor.source_kind is not EvidenceSourceKind.BODY
-        or not _anchor_is_exact(anchor)
-        for anchor in assertion_anchors
+        not _anchor_is_exact(anchor) for anchor in (*assertion_anchors, *required_entity_anchors)
     ):
-        return (AssertionAutoAdoptionReason.NON_EXACT_GROUNDING,)
-    for entity_id in _required_entity_ids(assertion):
-        entity = entity_by_id[entity_id]
-        if any(
-            not _anchor_is_exact(anchor_by_id[anchor_id]) for anchor_id in entity.source_anchor_ids
+        reasons.append(AssertionAutoAdoptionReason.NON_EXACT_GROUNDING)
+
+    bindings = tuple(
+        item
+        for item in proposal.context_source_bindings
+        if item.target_clause_id == assertion.source_clause_id.value
+    )
+    if len(bindings) != 1:
+        reasons.append(AssertionAutoAdoptionReason.SOURCE_BINDING_MISSING)
+    else:
+        binding = bindings[0]
+        provenance = proposal.proposal_provenance
+        if (
+            provenance.request_contract_id != KNOWLEDGE_PROPOSAL_REQUEST_CONTRACT
+            or provenance.output_contract_id != KNOWLEDGE_PROPOSAL_OUTPUT_CONTRACT
+            or provenance.source_binding_contract_id != CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT
+            or binding.contract_id != CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT
         ):
-            return (AssertionAutoAdoptionReason.NON_EXACT_GROUNDING,)
-    return ()
+            reasons.append(AssertionAutoAdoptionReason.UNSUPPORTED_SOURCE_CONTRACT)
+        if binding.selection_completeness != "complete" or binding.selection_gap_codes:
+            reasons.append(AssertionAutoAdoptionReason.SOURCE_CONTEXT_INCOMPLETE)
+
+    owner_clause_id = assertion.source_clause_id
+    if any(
+        anchor.source_clause_id != owner_clause_id
+        for anchor in (*assertion_anchors, *required_entity_anchors)
+    ):
+        reasons.append(AssertionAutoAdoptionReason.UNCONFIRMED_CONTEXT_REACH)
+
+    return tuple(dict.fromkeys(reasons))
 
 
 def _anchor_is_exact(anchor) -> bool:

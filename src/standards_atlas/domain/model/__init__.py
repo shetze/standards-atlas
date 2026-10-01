@@ -169,7 +169,12 @@ from standards_atlas.domain.model.retrieval_projection import (
     RetrievalTokenizationProfile,
 )
 from standards_atlas.domain.model.source_evidence import (
+    CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT,
+    CONTEXT_SOURCE_PACKAGE_CONTRACT,
+    CONTEXT_SOURCE_PACKAGE_SCHEMA_VERSION,
     BoundingBox,
+    ContextInputFingerprints,
+    ContextSourcePackageBinding,
     CoordinateOrigin,
     SourceEvidence,
 )
@@ -204,6 +209,11 @@ from standards_atlas.domain.model.table_structure import (
 )
 
 __all__ = [
+    "CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT",
+    "CONTEXT_SOURCE_PACKAGE_CONTRACT",
+    "CONTEXT_SOURCE_PACKAGE_SCHEMA_VERSION",
+    "ContextInputFingerprints",
+    "ContextSourcePackageBinding",
     "DOCUMENT_KNOWLEDGE_PROPOSAL_SCHEMA_VERSION",
     "DocumentKnowledgeProposal",
     "KnowledgeEntityProposal",

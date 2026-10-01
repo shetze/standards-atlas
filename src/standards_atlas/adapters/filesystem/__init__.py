@@ -1,5 +1,8 @@
 """File-system adapters."""
 
+from standards_atlas.adapters.filesystem.context_source_package_repository import (
+    FileSystemContextSourcePackageRepository,
+)
 from standards_atlas.adapters.filesystem.document_repository import (
     FileSystemEngineeringDocumentRepository,
 )
@@ -24,6 +27,7 @@ from .publication_document_provider import FileSystemPublicationDocumentProvider
 __all__ = [
     "FileSystemPublicationDocumentProvider",
     "FileSystemEngineeringDocumentRepository",
+    "FileSystemContextSourcePackageRepository",
     "FileSystemFormulaTranscriptionRepository",
     "FileSystemKnowledgeTableRepository",
     "FileSystemDocumentKnowledgeProposalRepository",

@@ -14,6 +14,7 @@ from standards_atlas.domain.model.document_knowledge import (
     NormativeForce,
 )
 from standards_atlas.domain.model.identifiers import ClauseId
+from standards_atlas.domain.model.source_evidence import ContextSourcePackageBinding
 
 DOCUMENT_KNOWLEDGE_PROPOSAL_SCHEMA_VERSION = 1
 _IRI_SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*$")
@@ -60,6 +61,9 @@ class KnowledgeProposalProvenance(BaseModel):
     semantic_task: str | None = None
     prompt_version: str | None = None
     selection_reference: str | None = None
+    request_contract_id: str | None = None
+    output_contract_id: str | None = None
+    source_binding_contract_id: str | None = None
 
 
 class KnowledgeProposalInput(BaseModel):
@@ -204,6 +208,7 @@ class KnowledgeProposalAttempt(BaseModel):
     duration_seconds: float = Field(ge=0.0)
     input_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     raw_response_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    source_package_sha256: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     error_type: str | None = None
     message: str | None = None
 
@@ -236,6 +241,7 @@ class DocumentKnowledgeProposal(BaseModel):
     source_document_key: str = Field(min_length=1)
     ontology_versions: tuple[str, ...] = ()
     input_proposals: tuple[KnowledgeProposalInput, ...] = ()
+    context_source_bindings: tuple[ContextSourcePackageBinding, ...] = ()
     evidence_anchors: tuple[EvidenceAnchor, ...] = ()
     entity_proposals: tuple[KnowledgeEntityProposal, ...] = ()
     assertion_proposals: tuple[NormativeAssertionProposal, ...] = ()
@@ -278,6 +284,22 @@ class DocumentKnowledgeProposal(BaseModel):
             raise ValueError("knowledge proposal input run ids must be unique")
         if self.proposal_run_id in set(input_run_ids):
             raise ValueError("knowledge proposal cannot directly reference its own run as input")
+
+        binding_targets = [item.target_clause_id for item in self.context_source_bindings]
+        if len(binding_targets) != len(set(binding_targets)):
+            raise ValueError("knowledge proposal context source bindings must be unique per target")
+        binding_hashes = {item.package_sha256 for item in self.context_source_bindings}
+        attempt_hashes = {
+            item.source_package_sha256
+            for item in self.attempts
+            if item.source_package_sha256 is not None
+        }
+        missing_attempt_bindings = attempt_hashes - binding_hashes
+        if missing_attempt_bindings:
+            raise ValueError(
+                "knowledge proposal attempts reference unknown context source package bindings: "
+                f"{sorted(missing_attempt_bindings)!r}"
+            )
 
         anchor_ids = [anchor.id for anchor in self.evidence_anchors]
         entity_ids = [entity.id for entity in self.entity_proposals]

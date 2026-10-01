@@ -15,10 +15,13 @@ from standards_atlas.application.assertion_qualification.cascade_models import (
     AssertionVerificationDisposition,
 )
 from standards_atlas.application.assertion_qualification.evaluation import proposal_sha256
+from standards_atlas.application.context.input_binding import ContextSourcePackage
+from standards_atlas.application.context.source_surfaces import source_document_binding
 from standards_atlas.application.knowledge_proposal_extraction import (
     KnowledgeProposalExtractionService,
     ProposalExtractionContext,
-    assertion_cbox_context,
+    assertion_context_source_package,
+    assertion_interpretation_context,
     proposal_extraction_eligibility,
 )
 from standards_atlas.application.ports.knowledge_proposals import (
@@ -42,6 +45,7 @@ class AssertionQualificationCascadeResult:
 
     efficient_proposal: DocumentKnowledgeProposal
     escalation_proposal: DocumentKnowledgeProposal | None
+    source_packages: tuple[ContextSourcePackage, ...]
     report: AssertionQualificationCascadeReport
 
 
@@ -74,16 +78,20 @@ class AssertionQualificationCascadeService:
         ontology_versions: tuple[str, ...],
         clause_ids: frozenset[str] | None = None,
         context_by_clause: Mapping[str, ProposalExtractionContext] | None = None,
+        escalation_context_by_clause: Mapping[str, ProposalExtractionContext] | None = None,
     ) -> AssertionQualificationCascadeResult:
         if len({cascade_run_id, efficient_proposal_run_id, escalation_proposal_run_id}) != 3:
             raise ValueError("cascade, efficient and escalation run ids must be distinct")
 
+        bound_context_by_clause = _bound_contexts(
+            document, clause_ids=clause_ids, context_by_clause=context_by_clause
+        )
         efficient = KnowledgeProposalExtractionService(self._efficient_extractor).extract_document(
             document,
             proposal_run_id=efficient_proposal_run_id,
             ontology_versions=ontology_versions,
             clause_ids=clause_ids,
-            context_by_clause=context_by_clause,
+            context_by_clause=bound_context_by_clause,
         )
 
         eligible = tuple(
@@ -92,7 +100,7 @@ class AssertionQualificationCascadeService:
             if _clause_is_selected(
                 clause,
                 clause_ids=clause_ids,
-                context_by_clause=context_by_clause,
+                context_by_clause=bound_context_by_clause,
             )
         )
         reports: list[AssertionCascadeClauseReport] = []
@@ -114,18 +122,19 @@ class AssertionQualificationCascadeService:
                         evidence_anchors=candidates.anchors,
                         entity_proposals=candidates.entities,
                         assertion_proposals=candidates.assertions,
-                        semantic_context=assertion_cbox_context(
+                        source_package=bound_context_by_clause[clause.id.value].source_package,
+                        interpretation_context=assertion_interpretation_context(
                             document,
                             clause,
-                            applicability=(
-                                context_by_clause[clause.id.value].applicability
-                                if context_by_clause is not None
-                                and clause.id.value in context_by_clause
-                                else None
-                            ),
+                            applicability=bound_context_by_clause[clause.id.value].applicability,
                         ),
                     )
-                    _validate_verification_completeness(verification, clause, candidates)
+                    _validate_verification_completeness(
+                        verification,
+                        clause,
+                        candidates,
+                        source_package=bound_context_by_clause[clause.id.value].source_package,
+                    )
                     reasons = _verification_escalation_reasons(verification)
                 except (LlmGatewayError, ValueError) as error:
                     reasons = (AssertionCascadeReason.VERIFICATION_ERROR,)
@@ -147,6 +156,12 @@ class AssertionQualificationCascadeService:
                     verification=verification,
                     verification_error_type=verification_error_type,
                     verification_error_message=verification_error_message,
+                    efficient_source_package_sha256=_proposal_binding_hash(
+                        efficient, clause.id.value
+                    ),
+                    verifier_source_package_sha256=(
+                        verification.source_package_sha256 if verification is not None else None
+                    ),
                     efficient_entities=len(candidates.entities),
                     efficient_assertions=len(candidates.assertions),
                     efficient_violations=_clause_violation_count(efficient, clause),
@@ -155,7 +170,14 @@ class AssertionQualificationCascadeService:
             )
 
         escalation: DocumentKnowledgeProposal | None = None
+        bound_escalation_contexts: dict[str, ProposalExtractionContext] = {}
         if escalated_clause_ids:
+            bound_escalation_contexts = _escalation_contexts(
+                document,
+                escalated_clause_ids=escalated_clause_ids,
+                efficient_contexts=bound_context_by_clause,
+                requested_contexts=escalation_context_by_clause,
+            )
             escalation = KnowledgeProposalExtractionService(
                 self._escalation_extractor
             ).extract_document(
@@ -163,7 +185,7 @@ class AssertionQualificationCascadeService:
                 proposal_run_id=escalation_proposal_run_id,
                 ontology_versions=ontology_versions,
                 clause_ids=frozenset(escalated_clause_ids),
-                context_by_clause=context_by_clause,
+                context_by_clause=bound_escalation_contexts,
             )
             updated_reports: list[AssertionCascadeClauseReport] = []
             for report in reports:
@@ -178,6 +200,13 @@ class AssertionQualificationCascadeService:
                                 escalation, source_clause
                             ),
                             "escalation_failures": _clause_failure_count(escalation, source_clause),
+                            "escalation_source_package_sha256": _proposal_binding_hash(
+                                escalation, source_clause.id.value
+                            ),
+                            "source_basis_changed": (
+                                report.efficient_source_package_sha256
+                                != _proposal_binding_hash(escalation, source_clause.id.value)
+                            ),
                         }
                     )
                 updated_reports.append(report)
@@ -201,6 +230,9 @@ class AssertionQualificationCascadeService:
         return AssertionQualificationCascadeResult(
             efficient_proposal=efficient,
             escalation_proposal=escalation,
+            source_packages=_unique_source_packages(
+                (*bound_context_by_clause.values(), *bound_escalation_contexts.values())
+            ),
             report=report,
         )
 
@@ -210,6 +242,86 @@ class _ClauseCandidates:
     anchors: tuple[EvidenceAnchor, ...]
     entities: tuple[KnowledgeEntityProposal, ...]
     assertions: tuple[NormativeAssertionProposal, ...]
+
+
+def _bound_contexts(
+    document: EngineeringDocument,
+    *,
+    clause_ids: frozenset[str] | None,
+    context_by_clause: Mapping[str, ProposalExtractionContext] | None,
+) -> dict[str, ProposalExtractionContext]:
+    bound: dict[str, ProposalExtractionContext] = {}
+    for clause in document.clauses:
+        if not _clause_is_selected(
+            clause, clause_ids=clause_ids, context_by_clause=context_by_clause
+        ):
+            continue
+        supplied = (
+            context_by_clause[clause.id.value]
+            if context_by_clause is not None
+            else ProposalExtractionContext()
+        )
+        package = supplied.source_package or assertion_context_source_package(document, clause)
+        if (
+            package.target_clause_id != clause.id.value
+            or package.document_key != document.key.value
+        ):
+            raise ValueError("cascade source package does not match selected target clause")
+        if package.document_revision != source_document_binding(document).source_revision:
+            raise ValueError("cascade source package is stale for the current document revision")
+        bound[clause.id.value] = ProposalExtractionContext(
+            applicability=supplied.applicability, source_package=package
+        )
+    return bound
+
+
+def _escalation_contexts(
+    document: EngineeringDocument,
+    *,
+    escalated_clause_ids: set[str],
+    efficient_contexts: Mapping[str, ProposalExtractionContext],
+    requested_contexts: Mapping[str, ProposalExtractionContext] | None,
+) -> dict[str, ProposalExtractionContext]:
+    requested = {
+        clause_id: (
+            requested_contexts[clause_id]
+            if requested_contexts is not None and clause_id in requested_contexts
+            else efficient_contexts[clause_id]
+        )
+        for clause_id in escalated_clause_ids
+    }
+    return _bound_contexts(
+        document,
+        clause_ids=frozenset(escalated_clause_ids),
+        context_by_clause=requested,
+    )
+
+
+def _proposal_binding_hash(proposal: DocumentKnowledgeProposal, clause_id: str) -> str:
+    matches = [
+        item.package_sha256
+        for item in proposal.context_source_bindings
+        if item.target_clause_id == clause_id
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            "source-bound proposal requires exactly one package binding per target clause"
+        )
+    return matches[0]
+
+
+def _unique_source_packages(
+    contexts: tuple[ProposalExtractionContext, ...],
+) -> tuple[ContextSourcePackage, ...]:
+    packages: dict[str, ContextSourcePackage] = {}
+    from standards_atlas.application.context.input_binding import context_source_package_binding
+
+    for context in contexts:
+        if context.source_package is None:
+            continue
+        binding = context_source_package_binding(context.source_package)
+        packages.setdefault(binding.package_sha256, context.source_package)
+    return tuple(packages.values())
 
 
 def _clause_is_selected(
@@ -298,7 +410,16 @@ def _validate_verification_completeness(
     verification: AssertionClauseVerification,
     clause: Clause,
     candidates: _ClauseCandidates,
+    *,
+    source_package: ContextSourcePackage | None,
 ) -> None:
+    if source_package is None:
+        raise ValueError("cascade verifier requires a bound source package")
+    from standards_atlas.application.context.input_binding import context_source_package_binding
+
+    expected_package_sha256 = context_source_package_binding(source_package).package_sha256
+    if verification.source_package_sha256 != expected_package_sha256:
+        raise ValueError("assertion verifier used a different source package than extraction")
     if verification.clause_id != clause.id:
         raise ValueError("assertion verifier returned a result for a different clause")
     expected_entities = {item.id for item in candidates.entities}
@@ -328,6 +449,9 @@ def _proposal_source(
         extractor_version=provenance.extractor_version,
         model=provenance.model,
         provider=provenance.provider,
+        request_contract_id=provenance.request_contract_id,
+        output_contract_id=provenance.output_contract_id,
+        source_binding_contract_id=provenance.source_binding_contract_id,
     )
 
 

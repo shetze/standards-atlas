@@ -6,8 +6,13 @@ import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
+from standards_atlas.application.context.input_binding import (
+    ContextSourcePackage,
+    context_source_package_binding,
+)
 from standards_atlas.application.knowledge_proposal_extraction.context import (
-    assertion_cbox_context,
+    assertion_context_source_package,
+    assertion_interpretation_context,
 )
 from standards_atlas.application.knowledge_proposal_extraction.references import (
     display_clause_reference,
@@ -34,9 +39,10 @@ from standards_atlas.domain.model import (
 
 @dataclass(frozen=True)
 class ProposalExtractionContext:
-    """Qualification-time CBox context supplied without mutating the document."""
+    """Run-time interpretation metadata and optional pre-bound source package."""
 
     applicability: ClauseApplicability = ClauseApplicability()
+    source_package: ContextSourcePackage | None = None
 
 
 @dataclass(frozen=True)
@@ -90,7 +96,8 @@ class KnowledgeProposalExtractionService:
         context_by_clause: Mapping[str, ProposalExtractionContext] | None = None,
         progress: Callable[[ProposalExtractionProgress], None] | None = None,
     ) -> DocumentKnowledgeProposal:
-        anchors = []
+        anchors = {}
+        source_bindings = {}
         entities = []
         assertions = []
         violations = []
@@ -120,12 +127,20 @@ class KnowledgeProposalExtractionService:
                     )
                 )
             started = time.monotonic()
+            source_package = (
+                context.source_package
+                if context is not None and context.source_package is not None
+                else assertion_context_source_package(document, clause)
+            )
+            source_binding = context_source_package_binding(source_package)
+            source_bindings[clause.id.value] = source_binding
             try:
                 result = self._extractor.extract(
                     clause,
                     document_key=document.key.value,
                     ontology_versions=ontology_versions,
-                    semantic_context=assertion_cbox_context(
+                    source_package=source_package,
+                    interpretation_context=assertion_interpretation_context(
                         document,
                         clause,
                         applicability=context.applicability if context is not None else None,
@@ -134,6 +149,10 @@ class KnowledgeProposalExtractionService:
                 if result.clause_id != clause.id:
                     raise ValueError(
                         "knowledge proposal extractor returned a result for a different clause"
+                    )
+                if result.source_package_binding != source_binding:
+                    raise ValueError(
+                        "knowledge proposal extractor returned a different source package binding"
                     )
                 candidate_provenance = result.proposal_provenance or self._extractor.provenance()
                 if run_provenance is None:
@@ -152,6 +171,7 @@ class KnowledgeProposalExtractionService:
                         duration_seconds=duration,
                         error_type=type(error).__name__,
                         message=str(error),
+                        source_package_sha256=source_binding.package_sha256,
                     )
                 )
                 failures.append(
@@ -185,9 +205,14 @@ class KnowledgeProposalExtractionService:
                     duration_seconds=duration,
                     input_hash=result.input_hash,
                     raw_response_hash=result.raw_response_hash,
+                    source_package_sha256=source_binding.package_sha256,
                 )
             )
-            anchors.extend(result.evidence_anchors)
+            for anchor in result.evidence_anchors:
+                existing = anchors.get(anchor.id)
+                if existing is not None and existing != anchor:
+                    raise ValueError("evidence anchor id collision across source-bound clauses")
+                anchors[anchor.id] = anchor
             entities.extend(result.entity_proposals)
             assertions.extend(result.assertion_proposals)
             violations.extend(result.violations)
@@ -211,7 +236,8 @@ class KnowledgeProposalExtractionService:
             proposal_run_id=proposal_run_id,
             source_document_key=document.key.value,
             ontology_versions=ontology_versions,
-            evidence_anchors=tuple(anchors),
+            context_source_bindings=tuple(source_bindings.values()),
+            evidence_anchors=tuple(anchors.values()),
             entity_proposals=tuple(entities),
             assertion_proposals=tuple(assertions),
             violations=tuple(violations),

@@ -126,9 +126,9 @@ class GoldenNormativeAssertion(BaseModel):
         return _require_absolute_iri(value, field_name="golden assertion predicate")
 
     @model_validator(mode="after")
-    def evidence_is_local_to_source_clause(self) -> GoldenNormativeAssertion:
-        if any(span.clause_id != self.source_clause_id for span in self.evidence):
-            raise ValueError("golden assertion evidence must belong to its source clause")
+    def evidence_spans_are_unique(self) -> GoldenNormativeAssertion:
+        # Assertion ownership remains clause-local. Evidence ownership is independent and may point
+        # at another bound source clause in the same document for current/native contracts.
         if len(self.evidence) != len(set(self.evidence)):
             raise ValueError("golden assertion evidence spans must be unique")
         return self
@@ -743,6 +743,9 @@ class AssertionQualificationProposalSource(BaseModel):
     model: str | None = None
     provider: str | None = None
     prompt_version: str | None = None
+    request_contract_id: str | None = None
+    output_contract_id: str | None = None
+    source_binding_contract_id: str | None = None
 
 
 class AssertionQualificationReport(SchemaBoundModel):

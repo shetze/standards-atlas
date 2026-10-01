@@ -143,6 +143,9 @@ class AssertionProposalRuntimeIdentity(BaseModel):
     model: str | None = None
     provider: str | None = None
     prompt_version: str | None = None
+    request_contract_id: str | None = None
+    output_contract_id: str | None = None
+    source_binding_contract_id: str | None = None
 
 
 class AssertionPipelineIdentityGate(BaseModel):
@@ -188,6 +191,10 @@ class AssertionAutoAdoptionReason(StrEnum):
     ESCALATED_CLAUSE = "escalated_clause"
     ESCALATION_NOT_REVERIFIED = "escalation_not_reverified"
     NON_EXACT_GROUNDING = "non_exact_grounding"
+    SOURCE_BINDING_MISSING = "source_binding_missing"
+    UNSUPPORTED_SOURCE_CONTRACT = "unsupported_source_contract"
+    SOURCE_CONTEXT_INCOMPLETE = "source_context_incomplete"
+    UNCONFIRMED_CONTEXT_REACH = "unconfirmed_context_reach"
 
 
 class AssertionAutoAdoptionDecision(BaseModel):

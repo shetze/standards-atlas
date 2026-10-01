@@ -9,6 +9,7 @@ from typing import Annotated
 import typer
 
 from standards_atlas.adapters.filesystem import (
+    FileSystemContextSourcePackageRepository,
     FileSystemDocumentKnowledgeProposalRepository,
     FileSystemEngineeringDocumentRepository,
 )
@@ -477,7 +478,6 @@ def run_assertion_qualification_cascade(
                 gateway,
                 model=efficient_model,
                 provider=gateway.provider,
-                prompt_version="ontology-guided-assertions-v2",
             ),
             verifier=OntologyGuidedAssertionProposalVerifier(
                 gateway,
@@ -488,7 +488,6 @@ def run_assertion_qualification_cascade(
                 gateway,
                 model=escalation_model,
                 provider=gateway.provider,
-                prompt_version="ontology-guided-assertions-v2",
             ),
         )
         document = FileSystemEngineeringDocumentRepository(workspace).load(
@@ -504,6 +503,20 @@ def run_assertion_qualification_cascade(
             ontology_versions=tuple(ontology_version),
             clause_ids=selected_clause_ids,
         )
+        source_package_repository = FileSystemContextSourcePackageRepository(workspace)
+        persisted_package_hashes = {
+            source_package_repository.save(package).package_sha256
+            for package in result.source_packages
+        }
+        expected_package_hashes = {
+            binding.package_sha256
+            for proposal in (result.efficient_proposal, result.escalation_proposal)
+            if proposal is not None
+            for binding in proposal.context_source_bindings
+        }
+        if persisted_package_hashes != expected_package_hashes:
+            raise ValueError("persisted context source packages differ from proposal bindings")
+
         proposal_repository = FileSystemDocumentKnowledgeProposalRepository(workspace)
         proposal_repository.save(result.efficient_proposal)
         if result.escalation_proposal is not None:
@@ -517,6 +530,7 @@ def run_assertion_qualification_cascade(
     typer.echo(f"Document                : {result.report.source_document_key}")
     typer.echo(f"Efficient accepted      : {result.report.efficient_accepted_clauses}")
     typer.echo(f"Escalated               : {result.report.escalated_clauses}")
+    typer.echo(f"Source packages         : {len(result.source_packages)}")
     typer.echo(f"Report                  : {report_path}")
 
 

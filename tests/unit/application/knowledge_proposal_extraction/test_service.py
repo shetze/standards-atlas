@@ -1,3 +1,4 @@
+from standards_atlas.application.context.input_binding import context_source_package_binding
 from standards_atlas.application.knowledge_proposal_extraction import (
     KnowledgeProposalExtractionService,
     proposal_extraction_eligibility,
@@ -38,8 +39,16 @@ class _Extractor:
             prompt_version="test-v1",
         )
 
-    def extract(self, clause, *, document_key, ontology_versions, semantic_context=None):
-        self.calls.append((clause.id.value, semantic_context))
+    def extract(
+        self,
+        clause,
+        *,
+        document_key,
+        ontology_versions,
+        source_package,
+        interpretation_context=None,
+    ):
+        self.calls.append((clause.id.value, source_package, interpretation_context))
         anchor = EvidenceAnchor(
             id=f"a:{clause.id.value}",
             source_clause_id=clause.id,
@@ -70,6 +79,7 @@ class _Extractor:
             evidence_anchors=(anchor,),
             entity_proposals=(entity,),
             assertion_proposals=(assertion,),
+            source_package_binding=context_source_package_binding(source_package),
             proposal_provenance=self.provenance(),
             input_hash="1" * 64,
             raw_response_hash="2" * 64,
@@ -122,6 +132,14 @@ def test_service_aggregates_clause_results_into_run_scoped_proposal() -> None:
     assert len(proposal.entity_proposals) == 1
     assert len(proposal.assertion_proposals) == 1
     assert proposal.failures == ()
+    assert len(proposal.context_source_bindings) == 1
+    assert proposal.context_source_bindings[0].target_clause_id == "c1"
     assert len(proposal.attempts) == 1
     assert proposal.attempts[0].input_hash == "1" * 64
+    assert (
+        proposal.attempts[0].source_package_sha256
+        == proposal.context_source_bindings[0].package_sha256
+    )
     assert [call[0] for call in extractor.calls] == ["c1"]
+    assert "heading" not in extractor.calls[0][2]
+    assert "associative_context" not in extractor.calls[0][2]

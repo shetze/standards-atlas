@@ -67,6 +67,10 @@ def test_hash_without_private_package_bytes_is_not_reported_as_available(tmp_pat
         document_revision=package.document_revision,
         target_clause_id=package.target_clause_id,
         target_reference=package.target_reference,
+        selection_contract_id=package.selection.contract_id,
+        selection_profile_id=package.selection.profile.profile_id,
+        selection_completeness=package.selection.completeness.value,
+        selection_gap_codes=tuple(gap.code for gap in package.selection.gaps),
         fingerprints=package.fingerprints,
     )
 

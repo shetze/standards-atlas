@@ -1,4 +1,4 @@
-"""Independent ontology-aware LLM verifier for efficient assertion proposals."""
+"""Independent source-bound LLM verifier for assertion proposals."""
 
 from __future__ import annotations
 
@@ -11,17 +11,23 @@ from standards_atlas.application.assertion_qualification.cascade_models import (
     AssertionVerificationDisposition,
     AssertionVerifierProvenance,
 )
+from standards_atlas.application.context.input_binding import (
+    ContextSourcePackage,
+    context_source_package_binding,
+)
 from standards_atlas.application.knowledge_proposal_extraction import (
     FormalOntologyVocabulary,
     display_clause_reference,
-    evidence_source_text,
-    project_clause_content,
+)
+from standards_atlas.application.knowledge_proposal_extraction.source_bound_contract import (
+    ASSERTION_VERIFIER_REQUEST_CONTRACT,
+    anchor_payload_from_source_package,
+    source_package_request_payload,
 )
 from standards_atlas.application.ports.llm_gateway import LlmGateway, StructuredGenerationRequest
 from standards_atlas.domain.model import (
     Clause,
     EvidenceAnchor,
-    EvidenceSourceKind,
     KnowledgeEntityProposal,
     NormativeAssertionProposal,
 )
@@ -72,7 +78,7 @@ _SCHEMA = {
 
 
 class OntologyGuidedAssertionProposalVerifier:
-    """Verify candidates independently and actively search for omitted assertions."""
+    """Verify candidates against the same immutable source package used for extraction."""
 
     def __init__(
         self,
@@ -80,8 +86,8 @@ class OntologyGuidedAssertionProposalVerifier:
         *,
         model: str | None = None,
         provider: str | None = None,
-        prompt_version: str = "ontology-guided-assertion-verifier-v2",
-        verifier_version: str = "1.1.0",
+        prompt_version: str = "ontology-guided-assertion-verifier-source-bound-v1",
+        verifier_version: str = "2.0.0",
     ) -> None:
         self._gateway = gateway
         self._model = model
@@ -96,6 +102,8 @@ class OntologyGuidedAssertionProposalVerifier:
             model=self._model,
             provider=self._provider,
             prompt_version=self._prompt_version,
+            request_contract_id=ASSERTION_VERIFIER_REQUEST_CONTRACT,
+            source_binding_contract_id="source-bound-context-binding-v1",
         )
 
     def verify(
@@ -107,10 +115,15 @@ class OntologyGuidedAssertionProposalVerifier:
         evidence_anchors: Sequence[EvidenceAnchor],
         entity_proposals: Sequence[KnowledgeEntityProposal],
         assertion_proposals: Sequence[NormativeAssertionProposal],
-        semantic_context: Mapping[str, object] | None = None,
+        source_package: ContextSourcePackage,
+        interpretation_context: Mapping[str, object] | None = None,
     ) -> AssertionClauseVerification:
+        if source_package.document_key != document_key:
+            raise ValueError("verifier source package belongs to a different document")
+        if source_package.target_clause_id != clause.id.value:
+            raise ValueError("verifier source package belongs to a different target clause")
         vocabulary = FormalOntologyVocabulary.load(ontology_versions)
-        projection = project_clause_content(clause.content)
+        binding = context_source_package_binding(source_package)
         anchor_by_id = {anchor.id: anchor for anchor in evidence_anchors}
         request = StructuredGenerationRequest(
             task="formal-semantic-assertion-verification",
@@ -121,36 +134,32 @@ class OntologyGuidedAssertionProposalVerifier:
             system_prompt=_system_prompt(),
             user_prompt=json.dumps(
                 {
+                    "request_contract_id": ASSERTION_VERIFIER_REQUEST_CONTRACT,
                     "document_key": document_key,
-                    "clause_reference": display_clause_reference(document_key, clause.reference),
-                    "clause_title": clause.heading,
-                    "clause_id": clause.id.value,
-                    "clause_text": projection.text,
-                    "semantic_context": dict(semantic_context or {}),
+                    "target_clause": {
+                        "clause_id": clause.id.value,
+                        "reference": display_clause_reference(document_key, clause.reference),
+                    },
+                    "source_package": source_package_request_payload(source_package),
+                    "interpretation_context": dict(interpretation_context or {}),
                     "allowed_classes": sorted(vocabulary.classes),
                     "allowed_properties": sorted(vocabulary.properties),
                     "entity_candidates": [
-                        _entity_payload(
-                            item,
-                            anchor_by_id,
-                            clause,
-                            semantic_context=semantic_context,
-                        )
+                        _entity_payload(item, anchor_by_id, source_package)
                         for item in entity_proposals
                     ],
                     "assertion_candidates": [
-                        _assertion_payload(
-                            item,
-                            anchor_by_id,
-                            clause,
-                            semantic_context=semantic_context,
-                        )
+                        _assertion_payload(item, anchor_by_id, source_package)
                         for item in assertion_proposals
                     ],
                 },
                 ensure_ascii=False,
             ),
-            metadata={"ontology_versions": ontology_versions},
+            metadata={
+                "ontology_versions": ontology_versions,
+                "source_package_sha256": binding.package_sha256,
+                "request_contract_id": ASSERTION_VERIFIER_REQUEST_CONTRACT,
+            },
         )
         result = self._gateway.generate_structured(request)
         payload = dict(result.value)
@@ -163,6 +172,7 @@ class OntologyGuidedAssertionProposalVerifier:
             missing_rationale=_optional_text(payload.get("missing_rationale")),
             input_hash=result.input_hash,
             raw_response_hash=result.raw_response_hash,
+            source_package_sha256=binding.package_sha256,
         )
         _validate_candidate_ids(
             verification,
@@ -174,37 +184,27 @@ class OntologyGuidedAssertionProposalVerifier:
 
 def _system_prompt() -> str:
     return (
-        "Act as an independent verifier of engineering-knowledge candidates extracted from one "
-        "standards clause. semantic_context is trusted canonical CBox context for interpreting "
-        "clause_text, including parent/ancestor structure, sibling position, governing scopes, "
-        "normative_context and routed references. Entity candidates may be grounded in the local "
-        "clause body, the local heading, an ancestor heading, or body/heading evidence explicitly "
-        "carried by semantic_context.associative_context, as declared by each evidence anchor. "
-        "Associative context may support entity identity and subject framing but is not normative "
-        "assertion evidence. Assertion candidates still require source support in the local clause "
-        "body. "
-        "Reject an assertion that assigns "
-        "normative force stronger than informative when its evidence is governed by an "
-        "informative normative_context or an informative span override. Review every supplied "
-        "entity and assertion exactly once. Mark a "
-        "candidate supported only when its semantics and cited source evidence are directly "
-        "supported by the declared canonical evidence surface. Mark it rejected when it is "
-        "contradicted, invented, uses the "
-        "wrong ontology meaning, or overstates the source. Use uncertain when the source does not "
-        "permit a reliable decision. Then independently inspect the complete clause for important "
-        "source-extractable engineering entities or assertions omitted by the efficient stage; "
-        "this missing-item check is mandatory even when the candidate arrays are empty. Set the "
-        "missing flags only for semantics expressible with allowed_classes/allowed_properties. "
-        "Do not repair candidates and do not propose replacement assertions."
+        "Act as an independent verifier of engineering-knowledge candidates for target_clause. "
+        "Use only the exact text in source_package.source_surfaces; interpretation_context is "
+        "source-free metadata and is not evidence. Candidate evidence may contain several spans "
+        "from local or context body/heading surfaces. Verify the declared source ownership, the "
+        "meaning of every span, the combined claim, conditions/exceptions, direction, predicate "
+        "and "
+        "normative force. A context passage being supplied does not prove that its meaning applies "
+        "to the target; unclear semantic reach is uncertainty, not automatic support. Do not "
+        "demand "
+        "mechanical extraction of every note, example, mention or list item. Review every supplied "
+        "candidate exactly once. Then inspect the complete supplied package for important omitted "
+        "source-extractable entities/assertions, while respecting selection gaps and incomplete "
+        "context. Do not silently use document text outside the bound package, repair candidates, "
+        "or invent replacement assertions."
     )
 
 
 def _entity_payload(
     entity: KnowledgeEntityProposal,
     anchor_by_id: Mapping[str, EvidenceAnchor],
-    clause: Clause,
-    *,
-    semantic_context: Mapping[str, object] | None,
+    package: ContextSourcePackage,
 ) -> dict[str, object]:
     return {
         "candidate_id": entity.id,
@@ -213,11 +213,7 @@ def _entity_payload(
         "aliases": list(entity.aliases),
         "confidence": entity.confidence,
         "evidence": [
-            _anchor_payload(
-                anchor_by_id[anchor_id],
-                clause,
-                semantic_context=semantic_context,
-            )
+            anchor_payload_from_source_package(anchor_by_id[anchor_id], package)
             for anchor_id in entity.source_anchor_ids
         ],
     }
@@ -226,60 +222,20 @@ def _entity_payload(
 def _assertion_payload(
     assertion: NormativeAssertionProposal,
     anchor_by_id: Mapping[str, EvidenceAnchor],
-    clause: Clause,
-    *,
-    semantic_context: Mapping[str, object] | None,
+    package: ContextSourcePackage,
 ) -> dict[str, object]:
-    assertion_anchors = tuple(
-        anchor_by_id[anchor_id] for anchor_id in assertion.evidence_anchor_ids
-    )
-    if any(
-        anchor.source_clause_id != assertion.source_clause_id
-        or anchor.source_kind is not EvidenceSourceKind.BODY
-        for anchor in assertion_anchors
-    ):
-        raise ValueError("assertion verifier requires local clause body evidence")
     return {
         "candidate_id": assertion.id,
+        "source_clause_id": assertion.source_clause_id.value,
         "subject_id": assertion.subject_id,
         "predicate": assertion.predicate,
         "object": assertion.object.model_dump(mode="json"),
         "normative_force": assertion.normative_force.value,
         "confidence": assertion.confidence,
         "evidence": [
-            _anchor_payload(
-                anchor_by_id[anchor_id],
-                clause,
-                semantic_context=semantic_context,
-            )
+            anchor_payload_from_source_package(anchor_by_id[anchor_id], package)
             for anchor_id in assertion.evidence_anchor_ids
         ],
-    }
-
-
-def _anchor_payload(
-    anchor: EvidenceAnchor,
-    clause: Clause,
-    *,
-    semantic_context: Mapping[str, object] | None,
-) -> dict[str, object]:
-    source_text = evidence_source_text(anchor, clause, semantic_context=semantic_context)
-    if source_text is None:
-        raise ValueError(
-            "assertion verifier cannot resolve the declared evidence source from canonical context"
-        )
-    if anchor.start_offset is None or anchor.end_offset is None:
-        quote = source_text
-    else:
-        quote = source_text[anchor.start_offset : anchor.end_offset]
-    return {
-        "anchor_id": anchor.id,
-        "source_clause_id": anchor.source_clause_id.value,
-        "source_kind": anchor.source_kind.value,
-        "start_offset": anchor.start_offset,
-        "end_offset": anchor.end_offset,
-        "content_hash": anchor.content_hash,
-        "quote": quote,
     }
 
 

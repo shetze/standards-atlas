@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Protocol
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
+    ContextSourcePackageBinding,
     DocumentKnowledgeProposal,
     EvidenceAnchor,
     KnowledgeEntityProposal,
@@ -22,6 +23,7 @@ if TYPE_CHECKING:
         AssertionClauseVerification,
         AssertionVerifierProvenance,
     )
+    from standards_atlas.application.context.input_binding import ContextSourcePackage
 
 
 @dataclass(frozen=True)
@@ -34,6 +36,7 @@ class ClauseKnowledgeProposalResult:
     """
 
     clause_id: ClauseId
+    source_package_binding: ContextSourcePackageBinding
     evidence_anchors: tuple[EvidenceAnchor, ...] = ()
     entity_proposals: tuple[KnowledgeEntityProposal, ...] = ()
     assertion_proposals: tuple[NormativeAssertionProposal, ...] = ()
@@ -56,7 +59,8 @@ class KnowledgeProposalExtractor(Protocol):
         *,
         document_key: str,
         ontology_versions: tuple[str, ...],
-        semantic_context: Mapping[str, object] | None = None,
+        source_package: ContextSourcePackage,
+        interpretation_context: Mapping[str, object] | None = None,
     ) -> ClauseKnowledgeProposalResult: ...
 
 
@@ -84,5 +88,6 @@ class AssertionProposalVerifier(Protocol):
         evidence_anchors: Sequence[EvidenceAnchor],
         entity_proposals: Sequence[KnowledgeEntityProposal],
         assertion_proposals: Sequence[NormativeAssertionProposal],
-        semantic_context: Mapping[str, object] | None = None,
+        source_package: ContextSourcePackage,
+        interpretation_context: Mapping[str, object] | None = None,
     ) -> AssertionClauseVerification: ...

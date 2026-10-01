@@ -86,25 +86,27 @@ def test_golden_assertion_rejects_unknown_entity_reference() -> None:
         )
 
 
-def test_golden_evidence_must_be_exact_and_source_clause_local() -> None:
-    with pytest.raises(ValidationError, match="source clause"):
-        GoldenNormativeAssertion(
-            id="a1",
-            source_clause_id=CLAUSE,
-            subject_id="e1",
-            predicate=f"{STAT}specifies",
-            object=EntityAssertionObject(entity_id="e2"),
-            evidence=(
-                GoldenEvidenceSpan(
-                    source_document_key="DOC",
-                    source_kind="body",
-                    clause_id=ClauseId(value="other"),
-                    start_offset=0,
-                    end_offset=4,
-                    content_hash=hashlib.sha256(b"test").hexdigest(),
-                ),
+def test_golden_assertion_owner_is_independent_from_multi_source_evidence_owner() -> None:
+    assertion = GoldenNormativeAssertion(
+        id="a1",
+        source_clause_id=CLAUSE,
+        subject_id="e1",
+        predicate=f"{STAT}specifies",
+        object=EntityAssertionObject(entity_id="e2"),
+        evidence=(
+            GoldenEvidenceSpan(
+                source_document_key="DOC",
+                source_kind="heading",
+                clause_id=ClauseId(value="other"),
+                start_offset=0,
+                end_offset=4,
+                content_hash=hashlib.sha256(b"test").hexdigest(),
             ),
-        )
+        ),
+    )
+
+    assert assertion.source_clause_id == CLAUSE
+    assert assertion.evidence[0].clause_id.value == "other"
 
 
 def test_golden_case_rejects_duplicate_semantic_entities() -> None:
