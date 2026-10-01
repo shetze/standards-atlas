@@ -200,7 +200,10 @@ class ContentEnrichmentService:
                     method=GenerationMethod.DETERMINISTIC,
                 ),
             ]
-            if clause.heading is None and enriched_clause.heading is not None:
+            if (
+                _alignment_source_heading(clause_alignment) is not None
+                and clause.provenance.protection("baseline.heading") is None
+            ):
                 generated.append(
                     GeneratedAttribute(
                         path="baseline.heading",
@@ -489,8 +492,8 @@ def _list_item(item: NormalizedListItem) -> ListItem:
     )
 
 
-def _enriched_title(clause: Clause, alignment: ClauseAlignment) -> str | None:
-    """Prefer a detected heading and retain the AtlasData fallback otherwise."""
+def _alignment_source_heading(alignment: ClauseAlignment) -> str | None:
+    """Return a normalized heading only when alignment actually observed a source title."""
     if (
         alignment.remainder_kind
         and alignment.remainder_kind.value == "title"
@@ -498,7 +501,12 @@ def _enriched_title(clause: Clause, alignment: ClauseAlignment) -> str | None:
         and alignment.observed_remainder.strip()
     ):
         return alignment.observed_remainder.strip()
-    return clause.heading
+    return None
+
+
+def _enriched_title(clause: Clause, alignment: ClauseAlignment) -> str | None:
+    """Prefer a detected source heading and retain the AtlasData fallback otherwise."""
+    return _alignment_source_heading(alignment) or clause.heading
 
 
 def _content_traceability_errors(

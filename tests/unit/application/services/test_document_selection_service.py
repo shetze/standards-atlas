@@ -89,6 +89,9 @@ def test_derive_by_volume_preserves_clause_zero_part_root(tmp_path):
 
     assert [item.reference.clause for item in derived.clauses] == ["0", "1"]
     assert derived.clauses[0].heading == "ISO 26262-8"
+    generated = {item.path: item for item in derived.clauses[0].provenance.generated_attributes}
+    assert generated["baseline.heading"].generator == "document-selection-synthetic-display-label"
+    assert generated["baseline.heading"].method.value == "deterministic"
     assert derived.title == "ISO 26262-8"
 
 

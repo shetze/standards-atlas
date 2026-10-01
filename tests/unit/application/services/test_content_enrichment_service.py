@@ -123,12 +123,63 @@ def test_enriches_clause_ranges_and_removes_structural_heads(tmp_path):
     assert persisted.tables[0].parent_clause_id == second.id
     assert persisted.tables[0].table_block_id == second.content[1].id
     first_generated = {item.path: item for item in first.provenance.generated_attributes}
+    assert first_generated["baseline.heading"].generator == "normalized-content-enrichment"
+    assert first_generated["baseline.heading"].method.value == "source_extraction"
     assert first_generated["baseline.content"].generator == "normalized-content-enrichment"
     assert first_generated["baseline.content"].method.value == "source_extraction"
     assert (
         first_generated["baseline.reference_mentions"].generator == "reference-mention-extractor/v4"
     )
     assert first_generated["baseline.reference_mentions"].method.value == "deterministic"
+
+
+def test_existing_atlasdata_heading_gets_source_origin_when_alignment_confirms_same_title(tmp_path):
+    workspace = tmp_path / ".atlas"
+    repository = FileSystemEngineeringDocumentRepository(workspace)
+    document = _document()
+    first = document.clauses[0].with_baseline_updates(heading="Scope")
+    repository.save(document.model_copy(update={"clauses": (first, document.clauses[1])}))
+    evidence = (SourceEvidence(source_id="PDF", source_type="pdf", page_number=3),)
+    normalized = _normalized(
+        NormalizedHeading(
+            id="h1",
+            sequence_number=0,
+            source_item_ids=("h1",),
+            source_evidence=evidence,
+            text="1 Scope",
+        ),
+        NormalizedText(
+            id="p1",
+            sequence_number=1,
+            source_item_ids=("p1",),
+            source_evidence=evidence,
+            text="Body",
+        ),
+        NormalizedHeading(
+            id="h2",
+            sequence_number=2,
+            source_item_ids=("h2",),
+            source_evidence=evidence,
+            text="2",
+        ),
+    )
+    NormalizationArtifactRepository(workspace).save("SAMPLE", normalized)
+    AlignmentArtifactRepository(workspace).save(
+        "SAMPLE",
+        _alignment(
+            first_end=1,
+            second_start=2,
+            second_end=2,
+            normalized_hash=_model_hash(normalized),
+        ),
+    )
+
+    build_content_enrichment_service(workspace).enrich("SAMPLE")
+
+    persisted = repository.load(StandardKey(value="SAMPLE"))
+    generated = {item.path: item for item in persisted.clauses[0].provenance.generated_attributes}
+    assert persisted.clauses[0].heading == "Scope"
+    assert generated["baseline.heading"].method.value == "source_extraction"
 
 
 def test_visual_only_formula_discards_docling_pseudo_expression(tmp_path):

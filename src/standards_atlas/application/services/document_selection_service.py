@@ -6,6 +6,8 @@ from standards_atlas.domain.model import (
     DocumentKey,
     DocumentTable,
     EngineeringDocument,
+    GeneratedAttribute,
+    GenerationMethod,
     Standard,
     StandardKey,
     TableIndexEntry,
@@ -118,7 +120,7 @@ def select_document_part(
         else (title.strip() if title and title.strip() else f"Part {part.replace('§', '-')}")
     )
     clauses = tuple(
-        clause.with_baseline_updates(heading=root_title)
+        _with_part_root_title(clause, root_title)
         if clause.reference.clause.strip() == "0" and clause.heading != root_title
         else clause
         for clause in clauses
@@ -140,6 +142,20 @@ def select_document_part(
             parent_key=StandardKey(value=source.key.value),
         )
     return source.model_copy(update=updates)
+
+
+def _with_part_root_title(clause, root_title: str):
+    """Mark a generated part-root label so it cannot masquerade as source heading evidence."""
+    updated = clause.with_baseline_updates(heading=root_title)
+    if clause.provenance.protection("baseline.heading") is not None:
+        return updated
+    return updated.mark_generated(
+        GeneratedAttribute(
+            path="baseline.heading",
+            generator="document-selection-synthetic-display-label",
+            method=GenerationMethod.DETERMINISTIC,
+        )
+    )
 
 
 def _select_table_structure(

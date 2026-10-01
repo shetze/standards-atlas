@@ -98,3 +98,21 @@ def test_offline_regression_modules_do_not_import_model_or_embedding_infrastruct
                     ), (name, alias.name)
         source = (PACKAGE / name).read_text(encoding="utf-8").casefold()
         assert "embedding" not in source, name
+
+
+def test_ap01_frozen_source_resolution_does_not_depend_on_current_source_surfaces() -> None:
+    """Historical audit evidence must not be enriched from current EngineeringDocuments."""
+    import ast
+
+    path = PACKAGE / "source_resolution.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    forbidden = "standards_atlas.application.context.source_surfaces"
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            module = node.module or ""
+            assert module != forbidden and not module.startswith(forbidden + ".")
+        elif isinstance(node, ast.Import):
+            assert all(
+                alias.name != forbidden and not alias.name.startswith(forbidden + ".")
+                for alias in node.names
+            )
