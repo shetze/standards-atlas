@@ -3,9 +3,21 @@
 from __future__ import annotations
 
 from standards_atlas.application.context.canonical_cbox import project_clause_enrichments
+from standards_atlas.application.context.context_selection import (
+    ContextSelectionProfile,
+    StructuredContextSelection,
+    select_structured_context,
+)
 from standards_atlas.application.context.normative_context import (
     governing_scope_context,
     resolve_normative_context,
+)
+from standards_atlas.application.context.source_surfaces import (
+    SourceSurfaceRef,
+    SourceSurfaceResolver,
+)
+from standards_atlas.application.context.structured_candidates import (
+    build_structured_context_candidates,
 )
 from standards_atlas.domain.model import (
     Clause,
@@ -101,6 +113,30 @@ def assertion_cbox_context(
             for item in enrichments.attributes
         },
     }
+
+
+def assertion_context_selection(
+    document: EngineeringDocument,
+    clause: Clause,
+    *,
+    profile: ContextSelectionProfile | None = None,
+    resolver: SourceSurfaceResolver | None = None,
+    external_source_refs: tuple[SourceSurfaceRef, ...] = (),
+) -> StructuredContextSelection:
+    """Return AP02 structural selection without changing the current extractor CBox payload.
+
+    Series B deliberately keeps this result beside ``assertion_cbox_context``.  S05 binds the
+    selected sources into an input package; S07 performs the productive extractor/parser cut-over.
+    Existing applicability and normative-context fields therefore remain untouched here.
+    """
+
+    inventory = build_structured_context_candidates(
+        document,
+        clause,
+        resolver=resolver,
+        external_source_refs=external_source_refs,
+    )
+    return select_structured_context(inventory, profile=profile)
 
 
 def _ancestor_headings(document: EngineeringDocument, clause: Clause) -> list[dict[str, str]]:

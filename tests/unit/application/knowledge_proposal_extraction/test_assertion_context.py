@@ -150,3 +150,40 @@ def test_first_substantive_leaf_does_not_receive_its_own_body_as_associative_con
     context = assertion_cbox_context(document, first)
 
     assert context["associative_context"] == []
+
+
+def test_series_b_selection_is_side_by_side_with_existing_cbox_semantics() -> None:
+    from standards_atlas.application.knowledge_proposal_extraction import (
+        assertion_context_selection,
+    )
+
+    parent = _clause(
+        "parent-selection",
+        "9",
+        "Shared frame",
+        text="Parent framing text.",
+    )
+    target = _clause(
+        "target-selection",
+        "9.1",
+        "Target",
+        parent="parent-selection",
+        text="Target statement.",
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="TEST"),
+        title="Test document",
+        document_type=DocumentType.STANDARD,
+        clauses=(parent, target),
+    )
+
+    before = assertion_cbox_context(document, target)
+    selection = assertion_context_selection(document, target)
+    after = assertion_cbox_context(document, target)
+
+    assert before == after
+    assert after["canonical_cbox_version"] == "1.3"
+    assert "normative_context" in after
+    assert "applicability" in after
+    assert selection.contract_id == "structured-context-selection-v1"
+    assert all(item.semantic_reach_confirmed is False for item in selection.selected)

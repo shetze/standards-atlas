@@ -1,6 +1,6 @@
 """Assertion-centred proposal extraction and deterministic source grounding."""
 
-from .context import assertion_cbox_context
+from .context import assertion_cbox_context, assertion_context_selection
 from .grounding import (
     EvidenceGroundingResult,
     evidence_source_text,
@@ -28,6 +28,7 @@ from .vocabulary import FormalOntologyVocabulary
 
 __all__ = [
     "assertion_cbox_context",
+    "assertion_context_selection",
     "EvidenceGroundingResult",
     "FormalOntologyVocabulary",
     "DocumentKnowledgeProposalUnifier",

@@ -1,8 +1,8 @@
 # AP02 structured context and evidence contract
 
-Status: Series A contract baseline (AP02-S01/S02). This document describes the current
-source-surface contract and the consumer migration map. It does not activate the productive
-multi-source extractor output contract.
+Status: Series B implemented baseline (AP02-S01-S04). This document describes the current
+source-surface, structural-candidate and bounded-selection contracts plus the consumer migration
+map. It does not activate the productive multi-source extractor output contract.
 
 ## 1. Contract boundaries
 
@@ -112,7 +112,7 @@ what it is, where it came from technically, and whether the caller may access it
 |---|---|---|---|
 | `Clause` / `EngineeringDocument` | Canonical body/heading and attribute provenance already exist. | S01-S02 | Reuse unchanged persistence shape; fix heading writer provenance where source is known. |
 | `DocumentKnowledge` / `EvidenceAnchor` | Entities/assertions already reference anchor lists; accepted anchors validate only against body/heading in the same document. | S06, S10 | No parallel anchor model and no external canonical adoption in Series A. |
-| Canonical CBox / assertion CBox | Carries own heading, ancestor headings and bounded associative context, but source text and display context are not a common resolver contract. | S03-S05 | Keep current CBox contract unchanged in Series A; establish resolver underneath future selection. |
+| Canonical CBox / assertion CBox | Existing `1.3` payload remains the current productive CBox. Series B adds a separate source-bound structural selection beside it. | S03-S05 | S03/S04 candidate/selection service implemented; `assertion_context_selection(...)` exposes it without changing the current extractor CBox payload. S05 binds it into a source/input package. |
 | Extraction renderer/schema/parser | Current model payload uses single quote declarations and legacy source fields. | S07 | No productive output cut-over in Series A. |
 | Grounding | Exact matching exists; entity fallback may silently search other allowed CBox surfaces. | S06-S07 | Leave behavior untouched; S02 only provides reusable source resolution primitives. |
 | Verifier | Payload/prompt still enforce local-body restrictions for assertions. | S07-S08 | No behavior change in Series A. |
@@ -127,8 +127,9 @@ what it is, where it came from technically, and whether the caller may access it
 | Tables/formulas | First-class table ids and formula content blocks/source evidence already exist. | S02, S06, S10 | Reuse as media handles; no second extractor/transcription workflow. |
 | Schema inventory | EngineeringDocument, proposal and AP01 contracts are current-only clean-break schemas. | S05/S07 when persistence changes | Series A adds no persisted schema family and no legacy reader. |
 
-Every current restriction above has an assigned AP02 slice; Series A does not leave a known direct
-consumer half-migrated because it does not activate the new productive payload.
+Every current restriction above has an assigned AP02 slice. Series B still does not activate the new
+productive payload: candidate availability and bounded selection are now implemented, while S05
+remains responsible for input-package/fingerprint binding and S07 for the productive output cut-over.
 
 ## 7. Structural reference cases established in Series A
 
@@ -146,3 +147,82 @@ These cases are technical contract examples, not new Golden semantic decisions:
 
 Later slices add hierarchy, sequence, selection, budgets, bound packages and multi-span use without
 changing these identity rules.
+
+## 8. Series B structural candidate contract
+
+The candidate inventory contract is `structured-context-candidates-v1`. It is built from the
+canonical EngineeringDocument order, actual `parent_id` links, resolved reference metadata and the
+Series-A source resolver. Candidate discovery is deliberately weaker than semantic reach.
+
+For a target clause the inventory contains:
+
+- own body and heading source surfaces;
+- the complete resolvable ancestor chain, including heading-only or otherwise textless grouping
+  nodes; ancestor body/heading surfaces remain separately addressable;
+- the direct same-parent leaf sequence in canonical document order on both sides of the target;
+- the first leaf as an explicit `first_leaf_candidate` reason only, never as a scope decision;
+- direct internal reference targets; and
+- clauses with reverse internal references to the target or another clause in its same-parent leaf
+  sequence.
+
+A sibling sequence never walks through a more distant common ancestor to borrow a descendant from
+another branch. Missing parents, ancestor cycles, parent/order contradictions and unresolved or
+ambiguous target references terminate deterministically and remain diagnostics. Reference paths
+across section boundaries stay reference paths rather than synthetic sibling relations.
+
+External references are identified, but resolver presence alone is not authorization. External
+content becomes a candidate only when the caller supplies a concrete `SourceSurfaceRef` with an
+exact `document_revision`; the normal Series-A source access policy is then applied. No document is
+looked up from the network or by guessed edition.
+
+Every foreign candidate has `reach_status: unconfirmed`. Candidate reasons and paths are
+application-level structural metadata. They are not new ABox predicates, do not imply Applicability,
+do not propagate normative force and do not say that a foreign assertion should be copied to the
+target clause.
+
+## 9. Series B selection and budget policy
+
+The selection contract is `structured-context-selection-v1`; the default versioned profile is
+`assertion-context-selection-v1`. The default policy uses a character budget with explicit fixed
+and per-surface overhead reservations. It never reports characters as tokens. S05 remains
+responsible for binding the actual rendered request and its exact input fingerprint.
+
+Selection is deterministic and records selected and omitted candidates, structural reach hints,
+selection reasons, known gaps, estimated character costs and a technical completeness state. The
+state is not an adoption/release decision and all foreign selected entries keep
+`semantic_reach_confirmed: false`.
+
+Priority is deliberately structural rather than lexical:
+
+1. target body and target heading are an all-or-nothing core for budget purposes when available;
+2. reverse and direct explicit references are considered before unlinked proximity;
+3. ancestor context follows; and
+4. ordinary same-parent sequence candidates are ordered by distance, with forward context before
+   equally distant backward context.
+
+The first leaf receives no special selection priority merely because it is first. No word such as
+`except` is used as a reach classifier. An explicitly later reverse reference therefore cannot be
+systematically displaced by an unlinked earlier introduction, while an unlinked later neighbor is
+still only an unconfirmed candidate. Existing CBox Applicability and normative-context projections
+remain separate and unchanged; the selection policy neither copies nor inherits them into foreign
+source entries.
+
+If target content exceeds the configured budget, selection returns
+`input_budget_exceeded` and does not truncate it. Other complete source surfaces that do not fit are
+omitted with `budget_exceeded`. Pre-addressed resolver excerpts retain their absolute source offsets
+and hashes; Series B itself does not invent a semantically arbitrary excerpt just to make text fit.
+Unauthorized, conflicting, unloaded and unresolved sources remain explicit gaps rather than guessed
+substitutes.
+
+## 10. Consumer state after Series B
+
+`application.knowledge_proposal_extraction.context.assertion_context_selection(...)` exposes the
+new candidate/selection path beside `assertion_cbox_context(...)`. The current CBox remains contract
+`1.3` and its existing `normative_context`, Applicability and provenance projections are unchanged.
+The extraction service does not yet inject the new selection into a live model request. That
+intentional boundary avoids an early S05/S07 cut-over while giving the next series one shared,
+tested selection source instead of a second context truth.
+
+The AP01 frozen audit resolver and historical Golden/evaluation contracts remain untouched. Series B
+does not run or qualify a real extractor, verifier, cascade or embedding model.
+

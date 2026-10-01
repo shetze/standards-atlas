@@ -1,5 +1,19 @@
 """CBox-oriented deterministic context discovery."""
 
+from standards_atlas.application.context.context_selection import (
+    DEFAULT_CONTEXT_SELECTION_PROFILE_ID,
+    STRUCTURED_CONTEXT_SELECTION_CONTRACT,
+    ContextOmissionReason,
+    ContextOmittedEntry,
+    ContextReachHint,
+    ContextSelectionCompleteness,
+    ContextSelectionEntry,
+    ContextSelectionGap,
+    ContextSelectionProfile,
+    ContextSelectionReason,
+    StructuredContextSelection,
+    select_structured_context,
+)
 from standards_atlas.application.context.normative_context import (
     governing_scope_context,
     resolve_normative_context,
@@ -22,6 +36,18 @@ from standards_atlas.application.context.source_surfaces import (
     SourceSurfaceResolver,
     source_document_binding,
 )
+from standards_atlas.application.context.structured_candidates import (
+    STRUCTURED_CONTEXT_CANDIDATE_CONTRACT,
+    ContextCandidate,
+    ContextCandidateDiagnostic,
+    ContextCandidatePath,
+    ContextCandidateReason,
+    ContextDiagnosticCode,
+    ContextPathKind,
+    ContextStructuralNode,
+    StructuredContextCandidates,
+    build_structured_context_candidates,
+)
 from standards_atlas.application.context.subject_identification import (
     ClauseSubjectIdentification,
     DeterministicSubjectIdentifier,
@@ -43,6 +69,28 @@ from standards_atlas.application.context.subject_vocabulary import (
 )
 
 __all__ = [
+    "STRUCTURED_CONTEXT_CANDIDATE_CONTRACT",
+    "STRUCTURED_CONTEXT_SELECTION_CONTRACT",
+    "DEFAULT_CONTEXT_SELECTION_PROFILE_ID",
+    "ContextCandidate",
+    "ContextCandidateDiagnostic",
+    "ContextCandidatePath",
+    "ContextCandidateReason",
+    "ContextDiagnosticCode",
+    "ContextPathKind",
+    "ContextStructuralNode",
+    "StructuredContextCandidates",
+    "build_structured_context_candidates",
+    "ContextOmissionReason",
+    "ContextOmittedEntry",
+    "ContextReachHint",
+    "ContextSelectionCompleteness",
+    "ContextSelectionEntry",
+    "ContextSelectionGap",
+    "ContextSelectionProfile",
+    "ContextSelectionReason",
+    "StructuredContextSelection",
+    "select_structured_context",
     "SOURCE_REVISION_CONTRACT",
     "SOURCE_SURFACE_CONTRACT",
     "SourceAccessPolicy",
