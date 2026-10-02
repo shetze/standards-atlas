@@ -9,3 +9,5 @@ local/*
 !local/README.md
 !local/sources/.gitkeep
 !local/exports/.gitkeep
+
+_delivery/

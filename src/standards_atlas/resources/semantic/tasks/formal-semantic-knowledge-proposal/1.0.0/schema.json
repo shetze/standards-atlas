@@ -1,0 +1,302 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "assertions": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "evidence": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "contribution": {
+                  "enum": [
+                    "direct_statement",
+                    "subject_frame",
+                    "condition_or_exception"
+                  ],
+                  "type": "string"
+                },
+                "exact_quote": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "selector": {
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "unique"
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "occurrence"
+                        },
+                        "occurrence_index": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "occurrence_index"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "end_offset": {
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        "kind": {
+                          "const": "canonical_offsets"
+                        },
+                        "start_offset": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "start_offset",
+                        "end_offset"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                },
+                "source_ref": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "source_ref",
+                "exact_quote",
+                "selector",
+                "contribution"
+              ],
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "literal_datatype_iri": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "literal_language": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "literal_value": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "normative_force": {
+            "enum": [
+              "requirement",
+              "recommendation",
+              "permission",
+              "prohibition",
+              "informative",
+              "unspecified"
+            ],
+            "type": "string"
+          },
+          "object_index": {
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "object_kind": {
+            "enum": [
+              "entity",
+              "literal"
+            ],
+            "type": "string"
+          },
+          "predicate": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subject_index": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "subject_index",
+          "predicate",
+          "object_kind",
+          "object_index",
+          "literal_value",
+          "literal_datatype_iri",
+          "literal_language",
+          "normative_force",
+          "confidence",
+          "evidence",
+          "rationale"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "entities": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "class_iri": {
+            "type": "string"
+          },
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "evidence": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "contribution": {
+                  "enum": [
+                    "direct_statement",
+                    "subject_frame",
+                    "condition_or_exception"
+                  ],
+                  "type": "string"
+                },
+                "exact_quote": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "selector": {
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "unique"
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "occurrence"
+                        },
+                        "occurrence_index": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "occurrence_index"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "end_offset": {
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        "kind": {
+                          "const": "canonical_offsets"
+                        },
+                        "start_offset": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "start_offset",
+                        "end_offset"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                },
+                "source_ref": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "source_ref",
+                "exact_quote",
+                "selector",
+                "contribution"
+              ],
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "label": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "class_iri",
+          "label",
+          "confidence",
+          "evidence",
+          "rationale"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "entities",
+    "assertions"
+  ],
+  "type": "object"
+}

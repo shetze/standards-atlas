@@ -1,0 +1,85 @@
+{
+  "baseline_id": "B0-AP02",
+  "claims": {
+    "historical_artifacts_reconstructed": false,
+    "model_execution": false,
+    "semantic_quality_assessed": false
+  },
+  "context_binding": {
+    "assertion_cbox_contract_version": "1.3",
+    "candidate_contract": "structured-context-candidates-v1",
+    "selection_contract": "structured-context-selection-v1",
+    "selection_profile": {
+      "character_budget": 12000,
+      "fixed_overhead_chars": 256,
+      "max_sequence_distance": 4,
+      "per_surface_overhead_chars": 96,
+      "profile_id": "assertion-context-selection-v1"
+    },
+    "source_binding_contract": "source-bound-context-binding-v1",
+    "source_package_contract": "source-bound-context-input-v1",
+    "source_package_schema_version": 1,
+    "source_surface_contract": "source-surface-resolution-v1"
+  },
+  "description": "Frozen post-AP02 source-bound extractor/verifier request baseline before AP03 prompt optimization.",
+  "generation_binding": {
+    "declared_base_url": "http://127.0.0.1:8080/v1",
+    "declared_default_model": "hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M",
+    "declared_runtime_config_path": "cfg/llm.yaml",
+    "declared_runtime_config_sha256": "e8476c323775dc5625ab22cdad3f0d67321068d0692a96da7f407422e1676ac8",
+    "declared_server_model": "hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M",
+    "declared_server_runtime": "llama.cpp",
+    "model_selection": "experiment_plan_required",
+    "provider_selection": "experiment_plan_required",
+    "temperature": 0.0
+  },
+  "historical_reference": {
+    "audit_sha256": "eab6d6dfa30e7f5af2bb477f7c5bce19764d7f3459c403e27652ce6ff15d6fa1",
+    "golden_suite_sha256": "80735a6045000b3749edda3fb67458607d36be54b243625348e821743a93ae74",
+    "partition": "development",
+    "qualification_report_sha256": "4063bf29d640de7d9c06659e7eb95ce8b1080353e84e2e31e78b76bad4ab8063",
+    "review_id": "assertion-pilot",
+    "review_version": "0.1.0",
+    "suite_id": "assertion-pilot-development",
+    "suite_version": "0.1.0"
+  },
+  "prompt_bindings": [
+    {
+      "files": {
+        "prompt_json_sha256": "db0a9d4948c4b5e9071f64cc52a96aeb60b0b56b7513d5b6522ff9501517daad",
+        "prompt_schema_sha256": "0cb146b6dec0e5d9f682ec738a341545ad1d100edf7d8492f3e0bbfa0b6d8c51",
+        "system_sha256": "72674e12d319eabf4611ffba5ff8cd388dbcf40fa2be89c935a13f30074f71c2",
+        "task_schema_sha256": "0cb146b6dec0e5d9f682ec738a341545ad1d100edf7d8492f3e0bbfa0b6d8c51",
+        "task_yaml_sha256": "4efed1adb31c6ef0f0e1a240273dc2e74511733f468ca269bfbbec51e82c5e4e",
+        "user_template_sha256": "f4cbf738a3c0a8785dee931321c5a77284b84899580008ae6ea2bbf218e7e564"
+      },
+      "output_contract_id": "source-bound-knowledge-proposal-output-v1",
+      "prompt_version": "ontology-guided-assertions-source-bound-v1",
+      "request_contract_id": "source-bound-knowledge-proposal-request-v1",
+      "role": "extractor",
+      "task": "formal-semantic-knowledge-proposal",
+      "task_schema_version": "1.0.0"
+    },
+    {
+      "files": {
+        "prompt_json_sha256": "4840337e66afe49195df85f7f829f8be81adcdcd63cfef14d83ed4fe6613aa1b",
+        "prompt_schema_sha256": "a6389d75b7d7ddf3cecb2b98c3d1f5ac61005a584d12d29579fba8cd4a622ae7",
+        "system_sha256": "d267c76aac6ea3d48ba95e76e524664f16d29e7ff68e1570a33857c175da1baf",
+        "task_schema_sha256": "a6389d75b7d7ddf3cecb2b98c3d1f5ac61005a584d12d29579fba8cd4a622ae7",
+        "task_yaml_sha256": "ad7fa526e55cd0e288e46f83562bcc561626dce30dbc4ffa191084b34a58e533",
+        "user_template_sha256": "f4cbf738a3c0a8785dee931321c5a77284b84899580008ae6ea2bbf218e7e564"
+      },
+      "output_contract_id": null,
+      "prompt_version": "ontology-guided-assertion-verifier-source-bound-v1",
+      "request_contract_id": "source-bound-assertion-verifier-request-v1",
+      "role": "verifier",
+      "task": "formal-semantic-assertion-verification",
+      "task_schema_version": "1.0.0"
+    }
+  ],
+  "schema_version": 1,
+  "source_snapshot": {
+    "logical_name": "standards-atlas-current-202610021913.zip",
+    "sha256": "f9545ade7b294bed4423e83ba98410355563a8d0c8ff247a765b20231ab0f898"
+  }
+}

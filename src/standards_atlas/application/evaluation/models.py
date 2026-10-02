@@ -17,6 +17,7 @@ class PromptDefinition:
     user_template: str
     output_schema: JsonObject
     description: str = ""
+    task_schema_version: str | None = None
 
 
 @dataclass(frozen=True)

@@ -1,0 +1,7 @@
+{
+  "baseline_id": "B0-AP02",
+  "description": "Current source-bound assertion-centred extractor baseline frozen after AP02.",
+  "task": "formal-semantic-knowledge-proposal",
+  "task_schema_version": "1.0.0",
+  "version": "ontology-guided-assertions-source-bound-v1"
+}

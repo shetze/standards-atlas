@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping, Sequence
 
 from standards_atlas.application.assertion_qualification.cascade_models import (
@@ -15,6 +14,11 @@ from standards_atlas.application.context.input_binding import (
     ContextSourcePackage,
     context_source_package_binding,
 )
+from standards_atlas.application.evaluation.repository import PromptRepository
+from standards_atlas.application.evaluation.source_bound_prompt import (
+    build_source_bound_generation_request,
+    semantic_prompt_repository,
+)
 from standards_atlas.application.knowledge_proposal_extraction import (
     FormalOntologyVocabulary,
     display_clause_reference,
@@ -24,57 +28,13 @@ from standards_atlas.application.knowledge_proposal_extraction.source_bound_cont
     anchor_payload_from_source_package,
     source_package_request_payload,
 )
-from standards_atlas.application.ports.llm_gateway import LlmGateway, StructuredGenerationRequest
+from standards_atlas.application.ports.llm_gateway import LlmGateway
 from standards_atlas.domain.model import (
     Clause,
     EvidenceAnchor,
     KnowledgeEntityProposal,
     NormativeAssertionProposal,
 )
-
-_DISPOSITIONS = [item.value for item in AssertionVerificationDisposition]
-_SCHEMA = {
-    "type": "object",
-    "additionalProperties": False,
-    "required": [
-        "entity_reviews",
-        "assertion_reviews",
-        "missing_entity_detected",
-        "missing_assertion_detected",
-        "missing_rationale",
-    ],
-    "properties": {
-        "entity_reviews": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["candidate_id", "disposition", "rationale"],
-                "properties": {
-                    "candidate_id": {"type": "string"},
-                    "disposition": {"type": "string", "enum": _DISPOSITIONS},
-                    "rationale": {"type": ["string", "null"]},
-                },
-            },
-        },
-        "assertion_reviews": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["candidate_id", "disposition", "rationale"],
-                "properties": {
-                    "candidate_id": {"type": "string"},
-                    "disposition": {"type": "string", "enum": _DISPOSITIONS},
-                    "rationale": {"type": ["string", "null"]},
-                },
-            },
-        },
-        "missing_entity_detected": {"type": "boolean"},
-        "missing_assertion_detected": {"type": "boolean"},
-        "missing_rationale": {"type": ["string", "null"]},
-    },
-}
 
 
 class OntologyGuidedAssertionProposalVerifier:
@@ -87,13 +47,17 @@ class OntologyGuidedAssertionProposalVerifier:
         model: str | None = None,
         provider: str | None = None,
         prompt_version: str = "ontology-guided-assertion-verifier-source-bound-v1",
+        task_schema_version: str = "1.0.0",
         verifier_version: str = "2.0.0",
+        prompt_repository: PromptRepository | None = None,
     ) -> None:
         self._gateway = gateway
         self._model = model
         self._provider = provider
         self._prompt_version = prompt_version
+        self._task_schema_version = task_schema_version
         self._verifier_version = verifier_version
+        self._prompt_repository = prompt_repository or semantic_prompt_repository()
 
     def provenance(self) -> AssertionVerifierProvenance:
         return AssertionVerifierProvenance(
@@ -125,36 +89,33 @@ class OntologyGuidedAssertionProposalVerifier:
         vocabulary = FormalOntologyVocabulary.load(ontology_versions)
         binding = context_source_package_binding(source_package)
         anchor_by_id = {anchor.id: anchor for anchor in evidence_anchors}
-        request = StructuredGenerationRequest(
+        request_payload = {
+            "request_contract_id": ASSERTION_VERIFIER_REQUEST_CONTRACT,
+            "document_key": document_key,
+            "target_clause": {
+                "clause_id": clause.id.value,
+                "reference": display_clause_reference(document_key, clause.reference),
+            },
+            "source_package": source_package_request_payload(source_package),
+            "interpretation_context": dict(interpretation_context or {}),
+            "allowed_classes": sorted(vocabulary.classes),
+            "allowed_properties": sorted(vocabulary.properties),
+            "entity_candidates": [
+                _entity_payload(item, anchor_by_id, source_package) for item in entity_proposals
+            ],
+            "assertion_candidates": [
+                _assertion_payload(item, anchor_by_id, source_package)
+                for item in assertion_proposals
+            ],
+        }
+        request = build_source_bound_generation_request(
+            repository=self._prompt_repository,
             task="formal-semantic-assertion-verification",
             prompt_version=self._prompt_version,
+            task_schema_version=self._task_schema_version,
+            payload=request_payload,
             model=self._model,
             temperature=0.0,
-            output_schema=_SCHEMA,
-            system_prompt=_system_prompt(),
-            user_prompt=json.dumps(
-                {
-                    "request_contract_id": ASSERTION_VERIFIER_REQUEST_CONTRACT,
-                    "document_key": document_key,
-                    "target_clause": {
-                        "clause_id": clause.id.value,
-                        "reference": display_clause_reference(document_key, clause.reference),
-                    },
-                    "source_package": source_package_request_payload(source_package),
-                    "interpretation_context": dict(interpretation_context or {}),
-                    "allowed_classes": sorted(vocabulary.classes),
-                    "allowed_properties": sorted(vocabulary.properties),
-                    "entity_candidates": [
-                        _entity_payload(item, anchor_by_id, source_package)
-                        for item in entity_proposals
-                    ],
-                    "assertion_candidates": [
-                        _assertion_payload(item, anchor_by_id, source_package)
-                        for item in assertion_proposals
-                    ],
-                },
-                ensure_ascii=False,
-            ),
             metadata={
                 "ontology_versions": ontology_versions,
                 "source_package_sha256": binding.package_sha256,
@@ -180,25 +141,6 @@ class OntologyGuidedAssertionProposalVerifier:
             assertion_ids={item.id for item in assertion_proposals},
         )
         return verification
-
-
-def _system_prompt() -> str:
-    return (
-        "Act as an independent verifier of engineering-knowledge candidates for target_clause. "
-        "Use only the exact text in source_package.source_surfaces; interpretation_context is "
-        "source-free metadata and is not evidence. Candidate evidence may contain several spans "
-        "from local or context body/heading surfaces. Verify the declared source ownership, the "
-        "meaning of every span, the combined claim, conditions/exceptions, direction, predicate "
-        "and "
-        "normative force. A context passage being supplied does not prove that its meaning applies "
-        "to the target; unclear semantic reach is uncertainty, not automatic support. Do not "
-        "demand "
-        "mechanical extraction of every note, example, mention or list item. Review every supplied "
-        "candidate exactly once. Then inspect the complete supplied package for important omitted "
-        "source-extractable entities/assertions, while respecting selection gaps and incomplete "
-        "context. Do not silently use document text outside the bound package, repair candidates, "
-        "or invent replacement assertions."
-    )
 
 
 def _entity_payload(

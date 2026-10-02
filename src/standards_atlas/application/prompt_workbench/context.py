@@ -29,7 +29,7 @@ NONE_CONTEXT = ContextVariantDescriptor(
 STRUCTURAL_CONTEXT_V1 = ContextVariantDescriptor(
     id="structural-context-v1",
     description="Complete deterministic StructuralContext plus compact clause metadata.",
-    recommended_tasks=("applicability-presence", "formal-semantic-knowledge-extraction"),
+    recommended_tasks=("applicability-presence", "formal-semantic-knowledge-proposal"),
 )
 ROUTING_SOURCE_V1 = ContextVariantDescriptor(
     id="routing-source-v1",
@@ -46,7 +46,7 @@ def list_context_variants() -> tuple[ContextVariantDescriptor, ...]:
             description=f"Versioned CBox frame {policy.id} v{policy.version}.",
             recommended_tasks=(
                 "applicability-presence",
-                "formal-semantic-knowledge-extraction",
+                "formal-semantic-knowledge-proposal",
             ),
         )
         for policy in list_cbox_frame_policies()

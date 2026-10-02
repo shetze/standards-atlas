@@ -1,0 +1,7 @@
+schema_version: 1
+task: formal-semantic-assertion-verification
+version: 1.0.0
+description: Source-bound verification of assertion-centred engineering candidates.
+multi_label: true
+allow_unclassified: true
+supported_item_kinds: [clause]

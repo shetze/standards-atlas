@@ -1,0 +1,7 @@
+schema_version: 1
+task: formal-semantic-knowledge-proposal
+version: 1.0.0
+description: Source-bound assertion-centred engineering entity and assertion proposal.
+multi_label: true
+allow_unclassified: true
+supported_item_kinds: [clause]

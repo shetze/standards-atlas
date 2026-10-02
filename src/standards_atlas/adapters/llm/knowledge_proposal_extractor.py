@@ -12,6 +12,11 @@ from standards_atlas.application.context.input_binding import (
     ContextSourcePackage,
     context_source_package_binding,
 )
+from standards_atlas.application.evaluation.repository import PromptRepository
+from standards_atlas.application.evaluation.source_bound_prompt import (
+    build_source_bound_generation_request,
+    semantic_prompt_repository,
+)
 from standards_atlas.application.knowledge_proposal_extraction import (
     EvidenceGroundingFailureCode,
     EvidenceGroundingOwnerKind,
@@ -27,7 +32,7 @@ from standards_atlas.application.knowledge_proposal_extraction.source_bound_cont
     source_package_request_payload,
 )
 from standards_atlas.application.ports.knowledge_proposals import ClauseKnowledgeProposalResult
-from standards_atlas.application.ports.llm_gateway import LlmGateway, StructuredGenerationRequest
+from standards_atlas.application.ports.llm_gateway import LlmGateway
 from standards_atlas.domain.model import (
     Clause,
     EntityAssertionObject,
@@ -41,103 +46,6 @@ from standards_atlas.domain.model import (
 )
 
 _NORMATIVE_FORCE_VALUES = tuple(item.value for item in NormativeForce)
-_EVIDENCE_CONTRIBUTIONS = ("direct_statement", "subject_frame", "condition_or_exception")
-
-_SELECTOR_SCHEMA = {
-    "oneOf": [
-        {
-            "type": "object",
-            "additionalProperties": False,
-            "required": ["kind"],
-            "properties": {"kind": {"const": "unique"}},
-        },
-        {
-            "type": "object",
-            "additionalProperties": False,
-            "required": ["kind", "occurrence_index"],
-            "properties": {
-                "kind": {"const": "occurrence"},
-                "occurrence_index": {"type": "integer", "minimum": 0},
-            },
-        },
-        {
-            "type": "object",
-            "additionalProperties": False,
-            "required": ["kind", "start_offset", "end_offset"],
-            "properties": {
-                "kind": {"const": "canonical_offsets"},
-                "start_offset": {"type": "integer", "minimum": 0},
-                "end_offset": {"type": "integer", "minimum": 1},
-            },
-        },
-    ]
-}
-_EVIDENCE_USE_SCHEMA = {
-    "type": "object",
-    "additionalProperties": False,
-    "required": ["source_ref", "exact_quote", "selector", "contribution"],
-    "properties": {
-        "source_ref": {"type": "string", "minLength": 1},
-        "exact_quote": {"type": "string", "minLength": 1},
-        "selector": _SELECTOR_SCHEMA,
-        "contribution": {"type": "string", "enum": list(_EVIDENCE_CONTRIBUTIONS)},
-    },
-}
-_SCHEMA = {
-    "type": "object",
-    "additionalProperties": False,
-    "required": ["entities", "assertions"],
-    "properties": {
-        "entities": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["class_iri", "label", "confidence", "evidence", "rationale"],
-                "properties": {
-                    "class_iri": {"type": "string"},
-                    "label": {"type": "string"},
-                    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-                    "evidence": {"type": "array", "minItems": 1, "items": _EVIDENCE_USE_SCHEMA},
-                    "rationale": {"type": ["string", "null"]},
-                },
-            },
-        },
-        "assertions": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": [
-                    "subject_index",
-                    "predicate",
-                    "object_kind",
-                    "object_index",
-                    "literal_value",
-                    "literal_datatype_iri",
-                    "literal_language",
-                    "normative_force",
-                    "confidence",
-                    "evidence",
-                    "rationale",
-                ],
-                "properties": {
-                    "subject_index": {"type": "integer", "minimum": 0},
-                    "predicate": {"type": "string"},
-                    "object_kind": {"type": "string", "enum": ["entity", "literal"]},
-                    "object_index": {"type": ["integer", "null"], "minimum": 0},
-                    "literal_value": {"type": ["string", "number", "boolean", "null"]},
-                    "literal_datatype_iri": {"type": ["string", "null"]},
-                    "literal_language": {"type": ["string", "null"]},
-                    "normative_force": {"type": "string", "enum": list(_NORMATIVE_FORCE_VALUES)},
-                    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-                    "evidence": {"type": "array", "minItems": 1, "items": _EVIDENCE_USE_SCHEMA},
-                    "rationale": {"type": ["string", "null"]},
-                },
-            },
-        },
-    },
-}
 
 
 class OntologyGuidedKnowledgeProposalExtractor:
@@ -150,13 +58,17 @@ class OntologyGuidedKnowledgeProposalExtractor:
         model: str | None = None,
         provider: str | None = None,
         prompt_version: str = "ontology-guided-assertions-source-bound-v1",
+        task_schema_version: str = "1.0.0",
         extractor_version: str = "4.0.0",
+        prompt_repository: PromptRepository | None = None,
     ) -> None:
         self._gateway = gateway
         self._model = model
         self._provider = provider
         self._prompt_version = prompt_version
+        self._task_schema_version = task_schema_version
         self._extractor_version = extractor_version
+        self._prompt_repository = prompt_repository or semantic_prompt_repository()
 
     def provenance(self) -> KnowledgeProposalProvenance:
         return KnowledgeProposalProvenance(
@@ -187,30 +99,28 @@ class OntologyGuidedKnowledgeProposalExtractor:
 
         vocabulary = FormalOntologyVocabulary.load(ontology_versions)
         binding = context_source_package_binding(source_package)
-        request = StructuredGenerationRequest(
+        request_payload = {
+            "request_contract_id": KNOWLEDGE_PROPOSAL_REQUEST_CONTRACT,
+            "output_contract_id": KNOWLEDGE_PROPOSAL_OUTPUT_CONTRACT,
+            "document_key": document_key,
+            "target_clause": {
+                "clause_id": clause.id.value,
+                "reference": display_clause_reference(document_key, clause.reference),
+            },
+            "source_package": source_package_request_payload(source_package),
+            "interpretation_context": dict(interpretation_context or {}),
+            "allowed_classes": sorted(vocabulary.classes),
+            "allowed_properties": sorted(vocabulary.properties),
+            "allowed_normative_force": list(_NORMATIVE_FORCE_VALUES),
+        }
+        request = build_source_bound_generation_request(
+            repository=self._prompt_repository,
             task="formal-semantic-knowledge-proposal",
             prompt_version=self._prompt_version,
+            task_schema_version=self._task_schema_version,
+            payload=request_payload,
             model=self._model,
             temperature=0.0,
-            output_schema=_SCHEMA,
-            system_prompt=_system_prompt(),
-            user_prompt=json.dumps(
-                {
-                    "request_contract_id": KNOWLEDGE_PROPOSAL_REQUEST_CONTRACT,
-                    "output_contract_id": KNOWLEDGE_PROPOSAL_OUTPUT_CONTRACT,
-                    "document_key": document_key,
-                    "target_clause": {
-                        "clause_id": clause.id.value,
-                        "reference": display_clause_reference(document_key, clause.reference),
-                    },
-                    "source_package": source_package_request_payload(source_package),
-                    "interpretation_context": dict(interpretation_context or {}),
-                    "allowed_classes": sorted(vocabulary.classes),
-                    "allowed_properties": sorted(vocabulary.properties),
-                    "allowed_normative_force": list(_NORMATIVE_FORCE_VALUES),
-                },
-                ensure_ascii=False,
-            ),
             metadata={
                 "ontology_versions": ontology_versions,
                 "source_package_sha256": binding.package_sha256,
@@ -391,38 +301,6 @@ class OntologyGuidedKnowledgeProposalExtractor:
             input_hash=result.input_hash,
             raw_response_hash=result.raw_response_hash,
         )
-
-
-def _system_prompt() -> str:
-    return (
-        "Extract engineering entities and assertions for target_clause using only the exact text "
-        "surfaces supplied in source_package.source_surfaces. The result remains owned by the "
-        "target clause, but evidence may come from any supplied body or source-backed heading and "
-        "may contain multiple separate spans. Never copy an independent claim merely because a "
-        "context surface is present: hierarchy, sequence and references are interpretation cues, "
-        "not automatic semantic reach. Preserve relevant conditions, exceptions and restrictions. "
-        "Do not mechanically extract every mention, note, example or list item; preserve the "
-        "engineering-relevant meaning and explicit work products. For every entity and assertion, "
-        "emit a non-empty evidence list. Each evidence item must declare the exact source_ref from "
-        "the supplied source_surfaces, an exact unmodified quote, a selector, and its proposed "
-        "contribution. Use subject_frame for a source that establishes the subject or common "
-        "frame, "
-        "condition_or_exception for a source carrying a relevant qualification, and "
-        "direct_statement "
-        "for the source carrying the stated entity/assertion. Separate spans stay separate; never "
-        "join them with ellipses or intervening text. When a quote repeats, use a checked "
-        "occurrence "
-        "selector or canonical character offsets. Do not cite omitted sources, undisclosed "
-        "document "
-        "text, or projection markers. interpretation_context contains source-free metadata only "
-        "and "
-        "is not itself evidence. allowed_classes and allowed_properties are closed vocabularies. "
-        "normative_force is assertion-local and must follow the source meaning and structural "
-        "frame, "
-        "not predicate names or a clause classifier alone. Omit a candidate that cannot be "
-        "supported "
-        "by the supplied bound sources."
-    )
 
 
 def _reject_legacy_single_quote_payload(payload: Mapping[str, object]) -> None:

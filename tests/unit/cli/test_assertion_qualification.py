@@ -258,3 +258,22 @@ def test_assertion_evaluate_cli_loads_native_private_source_packages(tmp_path: P
     report = AssertionQualificationReport.model_validate_json(output.read_text())
     assert report.source_binding == "native_package_verified"
     assert report.cases[0].source_comparison.status.value == "matching"
+
+
+def test_ap03_preflight_cli_is_model_free_and_text_free(tmp_path: Path) -> None:
+    (tmp_path / "cfg").mkdir()
+    (tmp_path / "cfg" / "llm.yaml").write_bytes(Path("cfg/llm.yaml").read_bytes())
+    (tmp_path / "manifests").mkdir()
+
+    result = runner.invoke(
+        app,
+        ["evaluation", "assertion-ap03-preflight", "--project-root", str(tmp_path)],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.stdout)
+    assert payload["contract_id"] == "ap03-qualification-preflight-v1"
+    assert payload["model_execution"] is False
+    assert payload["network_access"] is False
+    assert payload["golden_or_knowledge_write"] is False
+    assert payload["release_state"] == "not_ready_for_release"

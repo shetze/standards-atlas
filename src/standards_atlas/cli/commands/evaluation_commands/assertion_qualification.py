@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from pathlib import Path
 from typing import Annotated
 
@@ -33,6 +34,7 @@ from standards_atlas.application.assertion_qualification import (
     publish_assertion_review_pilot,
     qualification_report_sha256,
     review_clause_ids,
+    run_ap03_preflight,
     select_applicability_pilot_cases,
     validate_assertion_review_pilot_document,
     write_assertion_auto_adoption_report,
@@ -46,6 +48,36 @@ from standards_atlas.application.assertion_qualification.io import ensure_distin
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import evaluation_app
 from standards_atlas.domain.model import DocumentKey
+
+
+@evaluation_app.command("assertion-ap03-preflight")
+def run_assertion_ap03_preflight_command(
+    project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            dir_okay=False,
+            help="Optional text-free JSON report path; omit to print to stdout.",
+        ),
+    ] = None,
+) -> None:
+    """Inspect AP03 inputs and frozen B0 bindings without model or network execution."""
+
+    try:
+        report = run_ap03_preflight(project_root)
+        rendered = (
+            json.dumps(report.model_dump(mode="json"), indent=2, ensure_ascii=False, sort_keys=True)
+            + "\n"
+        )
+        if output is None:
+            typer.echo(rendered, nl=False)
+            return
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(rendered, encoding="utf-8")
+        typer.echo(f"AP03 preflight: {output}")
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
 
 
 @evaluation_app.command("assertion-review-pilot-build")
@@ -331,15 +363,11 @@ def evaluate_assertion_proposals(
             ensure_distinct_output(output, summary_output)
         suite = load_assertion_golden_suite(golden)
         proposals = (
-            tuple(load_document_knowledge_proposal(path) for path in proposal)
-            if proposal
-            else None
+            tuple(load_document_knowledge_proposal(path) for path in proposal) if proposal else None
         )
         source_packages = None
         if proposals is not None and source_package_workspace is not None:
-            package_repository = FileSystemContextSourcePackageRepository(
-                source_package_workspace
-            )
+            package_repository = FileSystemContextSourcePackageRepository(source_package_workspace)
             source_packages = tuple(
                 package
                 for candidate in proposals

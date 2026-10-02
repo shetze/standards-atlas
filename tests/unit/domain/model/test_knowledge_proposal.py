@@ -90,12 +90,12 @@ def _proposal() -> DocumentKnowledgeProposal:
             ),
         ),
         proposal_provenance=KnowledgeProposalProvenance(
-            extractor="formal-semantic-knowledge-extraction",
-            extractor_version="2.0.0",
+            extractor="ontology-guided-llm",
+            extractor_version="4.0.0",
             model="example/model",
             provider="local",
-            semantic_task="formal-semantic-knowledge-extraction@2.0.0",
-            prompt_version="2.0.0",
+            semantic_task="formal-semantic-knowledge-proposal",
+            prompt_version="ontology-guided-assertions-source-bound-v1",
         ),
     )
 

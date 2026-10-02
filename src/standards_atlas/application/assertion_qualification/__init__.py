@@ -1,5 +1,15 @@
 """Assertion-centred qualification, regression, cascade, and eligibility contracts."""
 
+from .ap03_preflight import (
+    AP03_B0_RESOURCE,
+    AP03_PREFLIGHT_CONTRACT,
+    Ap03ArtifactCheck,
+    Ap03ArtifactStatus,
+    Ap03B0Check,
+    Ap03ModelDeclaration,
+    Ap03PreflightReport,
+    run_ap03_preflight,
+)
 from .audit import AssertionReviewAudit, review_case_source_sha256
 from .cascade import (
     AssertionQualificationCascadeResult,
@@ -131,6 +141,14 @@ from .review_pilot_models import (
 )
 
 __all__ = [
+    "AP03_B0_RESOURCE",
+    "AP03_PREFLIGHT_CONTRACT",
+    "Ap03ArtifactCheck",
+    "Ap03ArtifactStatus",
+    "Ap03B0Check",
+    "Ap03ModelDeclaration",
+    "Ap03PreflightReport",
+    "run_ap03_preflight",
     "ASSERTION_EVALUATION_CONTRACT",
     "AssertionAuditBinding",
     "AssertionDiagnosticCode",

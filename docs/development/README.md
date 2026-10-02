@@ -15,6 +15,9 @@ This section explains how the Standards Atlas codebase maps to the documented ar
 | Documentation ownership and style | [Documentation style guide](documentation-style-guide.md) |
 | Release preparation and contract versioning | [Release and versioning](release-and-versioning.md) |
 | Current-only schema guards and executable boundary coverage | [Schema refactoring R4](../user-guide/schema-refactoring-guards.md) |
+| AP03 Series A status | [AP03 status](ap03-status.md) |
+| AP03 prompt/task consumer cut-over | [AP03 consumer matrix](ap03-consumer-matrix.md) |
+| AP03 extraction qualification contract | [Engineering extraction qualification](engineering-extraction-qualification.md) |
 
 ## Essential companion references
 
