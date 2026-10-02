@@ -403,3 +403,37 @@ headings and ancestor context, source-text reference mentions, table textual con
 formula context. Document allowlists continue to gate clause/table/formula access. Structured table
 and formula handles retain their actual status; Series E does not fabricate textual evidence from
 markers, images or unavailable transcriptions.
+
+## 18. Series F deterministic reference and inspection boundary
+
+The completed structural reference contract is enumerated as `ap02-structural-reference-matrix-v1`
+in `tests/fixtures/ap02/reference-test-matrix.json`. It binds AP02 reference intentions T01-T34 to
+concrete public/offline pytest functions. The matrix is a test traceability artifact, not a Golden
+suite and not a semantic scorecard. Architecture tests require the full T01-T34 set and verify that
+all referenced pytest nodes continue to exist.
+
+The model-free inspection application is `context-evidence-inspection-v1`. It composes the existing
+candidate discovery, `structured-context-selection-v1`, `ContextSourcePackage` input binding and the
+shared multi-span grounding service. The report is intentionally text-free and deterministic: it
+shows target identity, source identities/origins, structural paths, selection and omission reasons,
+gaps, configured/used budget, the four source/input fingerprints, package hash and one result per
+explicit grounding request. It carries `model_execution: false` and
+`semantic_quality_assessed: false` as contract invariants.
+
+The CLI exposes this service as `standards-atlas context evidence-inspect`; it is a thin read-only
+wrapper over persisted `EngineeringDocument` data. Optional grounding requests must use the current
+`EvidenceGroundingRequest` contract and may address only surfaces actually delivered in the selected
+package. The command writes no accepted `DocumentKnowledge`, performs no adoption and has no LLM,
+verifier, cascade or embedding dependency.
+
+The public Series-F integration fixture closes the deterministic path from source-surface resolution
+through candidates, selection, bound package, fake structured extractor response, common grounding,
+fake verifier/cascade, proposal/package persistence, the existing clause-local evaluator and formal
+projection back to resolvable source surfaces. Synthetic accepted knowledge exists only inside the
+test to exercise the already-existing projection boundary; it is not an adoption workflow.
+
+AP03 receives the request/output/verifier contract IDs, source-package bindings, reference cases and
+the explicit statement that model quality has not been assessed. AP05 receives source identities,
+structural paths, addressable excerpts, budgets, gaps and the four fingerprint classes as retrieval
+inputs; it is not required to copy the extractor prompt or its complete selected context into a
+retrieval representation.

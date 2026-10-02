@@ -20,6 +20,11 @@ from .grounding import (
     UniqueQuoteSelector,
     ground_evidence_request,
 )
+from .inspection import (
+    CONTEXT_EVIDENCE_INSPECTION_CONTRACT,
+    ContextEvidenceInspectionReport,
+    inspect_context_evidence,
+)
 from .projection import (
     SemanticTextProjection,
     is_non_evidence_projection_marker,
@@ -56,6 +61,9 @@ __all__ = [
     "QuoteOccurrenceSelector",
     "UniqueQuoteSelector",
     "ground_evidence_request",
+    "CONTEXT_EVIDENCE_INSPECTION_CONTRACT",
+    "ContextEvidenceInspectionReport",
+    "inspect_context_evidence",
     "is_non_evidence_projection_marker",
     "assertion_cbox_context",
     "assertion_context_selection",

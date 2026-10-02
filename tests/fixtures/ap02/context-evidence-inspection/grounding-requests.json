@@ -1,0 +1,52 @@
+[
+  {
+    "owner_kind": "entity",
+    "owner_id": "review-activity",
+    "evidence": [
+      {
+        "source_ref": "AP02-SYNTH:sha256:6ed8241763d98e908898f51333a11217b33ed012e80c80d6d7d0934665e25f5e:parent:heading:-",
+        "exact_quote": "Safety plan confirmation review",
+        "selector": {
+          "kind": "unique"
+        },
+        "contribution": "subject_frame"
+      }
+    ]
+  },
+  {
+    "owner_kind": "assertion",
+    "owner_id": "assessment-with-exception",
+    "evidence": [
+      {
+        "source_ref": "AP02-SYNTH:sha256:6ed8241763d98e908898f51333a11217b33ed012e80c80d6d7d0934665e25f5e:target:body:-",
+        "exact_quote": "shall assess the verification criteria",
+        "selector": {
+          "kind": "unique"
+        },
+        "contribution": "direct_statement"
+      },
+      {
+        "source_ref": "AP02-SYNTH:sha256:6ed8241763d98e908898f51333a11217b33ed012e80c80d6d7d0934665e25f5e:later:body:-",
+        "exact_quote": "does not apply to clause 5.2",
+        "selector": {
+          "kind": "unique"
+        },
+        "contribution": "condition_or_exception"
+      }
+    ]
+  },
+  {
+    "owner_kind": "assertion",
+    "owner_id": "intentional-failed-span",
+    "evidence": [
+      {
+        "source_ref": "AP02-SYNTH:sha256:6ed8241763d98e908898f51333a11217b33ed012e80c80d6d7d0934665e25f5e:target:body:-",
+        "exact_quote": "text deliberately absent from the delivered source",
+        "selector": {
+          "kind": "unique"
+        },
+        "contribution": "direct_statement"
+      }
+    ]
+  }
+]

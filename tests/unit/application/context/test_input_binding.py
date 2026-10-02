@@ -98,6 +98,34 @@ def test_package_separates_source_candidate_selection_and_actual_input_fingerpri
     assert package.selection.profile.profile_id == "assertion-context-selection-v1"
 
 
+def test_parent_heading_change_invalidates_reuse_even_when_target_body_is_unchanged() -> None:
+    first_parent = _clause("parent", "5", "Original shared subject")
+    target = _clause("target", "5.1", "Detail", parent="parent", text="Target statement.")
+    before = _package(_document(first_parent, target), "target")
+
+    changed_parent = _clause("parent", "5", "Changed shared subject")
+    after = _package(_document(changed_parent, target), "target")
+
+    check = check_context_source_package_reuse(context_source_package_binding(before), after)
+
+    assert before.target_clause_id == after.target_clause_id == "target"
+    assert next(
+        surface.text
+        for surface in before.input_surfaces
+        if surface.source_ref.clause_id == "target"
+        and surface.source_ref.source_kind.value == "body"
+    ) == next(
+        surface.text
+        for surface in after.input_surfaces
+        if surface.source_ref.clause_id == "target"
+        and surface.source_ref.source_kind.value == "body"
+    )
+    assert check.reusable is False
+    assert ContextReuseReason.SOURCE_STATE_CHANGED in check.reasons
+    assert ContextReuseReason.CANDIDATE_SPACE_CHANGED in check.reasons
+    assert ContextReuseReason.ACTUAL_INPUT_CHANGED in check.reasons
+
+
 def test_new_unselected_later_exception_invalidates_previous_binding() -> None:
     parent = _clause("parent", "5", "Group")
     intro = _clause("intro", "5.1", "Introduction", parent="parent", text="Common frame.")

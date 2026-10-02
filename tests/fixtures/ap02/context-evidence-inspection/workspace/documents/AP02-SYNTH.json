@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "document": {
+    "key": {
+      "value": "AP02-SYNTH"
+    },
+    "title": "Synthetic AP02 reference document",
+    "document_type": "other",
+    "year": null,
+    "version": null,
+    "source": null,
+    "clauses": [
+      {
+        "id": {
+          "value": "parent"
+        },
+        "reference": {
+          "standard": "AP02-SYNTH",
+          "part": null,
+          "year": 2026,
+          "clause": "5"
+        },
+        "clause_type": "requirement",
+        "baseline": {
+          "heading": "Safety plan confirmation review",
+          "content": [],
+          "parent_id": null,
+          "source_token": null,
+          "enum_prefix": null,
+          "identifier_width": null,
+          "doorstop": null,
+          "structural_profile": null,
+          "structural_context": null,
+          "reference_mentions": [],
+          "document_structure": null,
+          "normative_status": "unspecified",
+          "reference_relations": []
+        },
+        "enrichments": {
+          "applicability": {
+            "present": false,
+            "polarity": null
+          },
+          "context_routing": {
+            "scopes": [],
+            "references": []
+          },
+          "subject_context": {
+            "primary_subject": null,
+            "ambiguous_candidates": []
+          }
+        },
+        "provenance": {
+          "generated_attributes": [],
+          "confirmed_attributes": [],
+          "unattributed_attributes": []
+        }
+      },
+      {
+        "id": {
+          "value": "intro"
+        },
+        "reference": {
+          "standard": "AP02-SYNTH",
+          "part": null,
+          "year": 2026,
+          "clause": "5.1"
+        },
+        "clause_type": "requirement",
+        "baseline": {
+          "heading": "Purpose",
+          "content": [
+            {
+              "id": "text:intro",
+              "normalized_item_ids": [],
+              "source_evidence": [],
+              "type": "text",
+              "text": "The review checks whether the safety plan is adequate."
+            }
+          ],
+          "parent_id": {
+            "value": "parent"
+          },
+          "source_token": null,
+          "enum_prefix": null,
+          "identifier_width": null,
+          "doorstop": null,
+          "structural_profile": null,
+          "structural_context": null,
+          "reference_mentions": [],
+          "document_structure": null,
+          "normative_status": "unspecified",
+          "reference_relations": []
+        },
+        "enrichments": {
+          "applicability": {
+            "present": false,
+            "polarity": null
+          },
+          "context_routing": {
+            "scopes": [],
+            "references": []
+          },
+          "subject_context": {
+            "primary_subject": null,
+            "ambiguous_candidates": []
+          }
+        },
+        "provenance": {
+          "generated_attributes": [],
+          "confirmed_attributes": [],
+          "unattributed_attributes": []
+        }
+      },
+      {
+        "id": {
+          "value": "target"
+        },
+        "reference": {
+          "standard": "AP02-SYNTH",
+          "part": null,
+          "year": 2026,
+          "clause": "5.2"
+        },
+        "clause_type": "requirement",
+        "baseline": {
+          "heading": "Evaluation activities",
+          "content": [
+            {
+              "id": "text:target",
+              "normalized_item_ids": [],
+              "source_evidence": [],
+              "type": "text",
+              "text": "The evaluation shall assess the verification criteria and record the result."
+            }
+          ],
+          "parent_id": {
+            "value": "parent"
+          },
+          "source_token": null,
+          "enum_prefix": null,
+          "identifier_width": null,
+          "doorstop": null,
+          "structural_profile": null,
+          "structural_context": null,
+          "reference_mentions": [],
+          "document_structure": null,
+          "normative_status": "unspecified",
+          "reference_relations": []
+        },
+        "enrichments": {
+          "applicability": {
+            "present": false,
+            "polarity": null
+          },
+          "context_routing": {
+            "scopes": [],
+            "references": []
+          },
+          "subject_context": {
+            "primary_subject": null,
+            "ambiguous_candidates": []
+          }
+        },
+        "provenance": {
+          "generated_attributes": [],
+          "confirmed_attributes": [],
+          "unattributed_attributes": []
+        }
+      },
+      {
+        "id": {
+          "value": "later"
+        },
+        "reference": {
+          "standard": "AP02-SYNTH",
+          "part": null,
+          "year": 2026,
+          "clause": "5.3"
+        },
+        "clause_type": "requirement",
+        "baseline": {
+          "heading": "Exception",
+          "content": [
+            {
+              "id": "text:later",
+              "normalized_item_ids": [],
+              "source_evidence": [],
+              "type": "text",
+              "text": "For test-only prototypes, the record requirement does not apply to clause 5.2."
+            }
+          ],
+          "parent_id": {
+            "value": "parent"
+          },
+          "source_token": null,
+          "enum_prefix": null,
+          "identifier_width": null,
+          "doorstop": null,
+          "structural_profile": null,
+          "structural_context": null,
+          "reference_mentions": [
+            {
+              "schema_version": "1.0",
+              "kind": "clause",
+              "surface_text": "5.2",
+              "start_offset": 74,
+              "end_offset": 77,
+              "reference": "5.2",
+              "range_start": null,
+              "range_end": null,
+              "direction_hint": null,
+              "cardinality_hint": null,
+              "status": "resolved",
+              "targets": [
+                {
+                  "document_key": null,
+                  "clause_id": "target",
+                  "reference": "5.2",
+                  "title": null
+                }
+              ]
+            }
+          ],
+          "document_structure": null,
+          "normative_status": "unspecified",
+          "reference_relations": []
+        },
+        "enrichments": {
+          "applicability": {
+            "present": false,
+            "polarity": null
+          },
+          "context_routing": {
+            "scopes": [],
+            "references": []
+          },
+          "subject_context": {
+            "primary_subject": null,
+            "ambiguous_candidates": []
+          }
+        },
+        "provenance": {
+          "generated_attributes": [],
+          "confirmed_attributes": [],
+          "unattributed_attributes": []
+        }
+      }
+    ],
+    "tables": [],
+    "table_index": [],
+    "annotations": [],
+    "knowledge": {
+      "schema_version": 1,
+      "ontology_versions": [],
+      "evidence_anchors": [],
+      "entities": [],
+      "assertions": []
+    },
+    "lineage": null
+  }
+}

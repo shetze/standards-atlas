@@ -390,3 +390,41 @@ def test_table_omission_marker_is_never_accepted_as_evidence() -> None:
 
     assert not result.complete
     assert result.failures[0].code is EvidenceGroundingFailureCode.UNQUOTEABLE_PROJECTION_MARKER
+
+
+def test_intro_and_list_item_remain_two_distinct_evidence_spans() -> None:
+    text = (
+        "The following hardware-fault-tolerance rules apply:\n"
+        "- SIL A requires HFT 1.\n"
+        "- SIL B requires HFT 2."
+    )
+    target = _clause("target", "1", "HFT", text=text)
+    package = _package(_document(target), "target")
+    source_ref = _source_ref(package, "target", EvidenceSourceKind.BODY)
+
+    result = ground_evidence_request(
+        package,
+        EvidenceGroundingRequest(
+            owner_kind=EvidenceGroundingOwnerKind.ASSERTION,
+            owner_id="hft-a",
+            evidence=(
+                EvidenceUse(
+                    source_ref=source_ref,
+                    exact_quote="The following hardware-fault-tolerance rules apply:",
+                    contribution=EvidenceContribution.SUBJECT_FRAME,
+                ),
+                EvidenceUse(
+                    source_ref=source_ref,
+                    exact_quote="- SIL A requires HFT 1.",
+                    contribution=EvidenceContribution.DIRECT_STATEMENT,
+                ),
+            ),
+        ),
+    )
+
+    assert result.complete
+    assert len(result.anchors) == 2
+    intro, list_item = result.anchors
+    assert intro.end_offset < list_item.start_offset
+    mounted = text[intro.start_offset : list_item.end_offset]
+    assert text[intro.start_offset : intro.end_offset] != mounted
