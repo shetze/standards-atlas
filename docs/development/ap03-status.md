@@ -1,105 +1,150 @@
-# AP03 status — Series A / S01-S02 complete
+# AP03 status — Series B / S01-S04 complete
 
-Date: 2026-10-02. Series A implements only AP03-S01 and AP03-S02 on the supplied start snapshot
-`standards-atlas-current-202610021913(1).zip` (SHA-256
-`f9545ade7b294bed4423e83ba98410355563a8d0c8ff247a765b20231ab0f898`). AP03 Series B is not
-started.
+Date: 2026-10-02. Series B implements only AP03-S03 and AP03-S04 on the locally checked
+post-Series-A snapshot `standards-atlas-current-202610022028.zip` (SHA-256
+`4d65d419625e0b9411edf5348b3691773d80536c53b2618c1c3fff320f49e847`). Series A remains the
+technical baseline described below. AP03 Series C is not started.
 
-No real model, remote LLM, Codex client or semantic quality experiment was executed. The changes are
-contract/preflight/resource work only.
+No real model, remote LLM, Codex client, private standards corpus or semantic quality experiment was
+executed in Series B. All generation behavior in tests uses Fake gateways and public synthetic text.
+P1/P2 are explicitly **unqualified** Development variants; they are not a recommendation for a
+model or a claim of improved extraction quality.
 
-## S01 — inventory, preflight and frozen B0
+## S03 — shared engineering policy and bounded prompt variants
 
-`docs/development/ap03-consumer-matrix.md` records the inspected direct consumers and assigns deferred
-changes to later slices. The supplied snapshot includes the AP02 post-Series-F heading-source and
-reverse-reference corrections; Series A treats them as part of B0 and does not replace them with
-prompt heuristics.
+The current extractor and verifier remain separate roles on their existing source-bound task/schema
+contracts, but both can now bind the same versioned fachliche policy resource:
 
-`resources/semantic/prompts/ap03-b0.json` freezes the post-AP02 reference state before any semantic
-prompt optimization. It binds:
+- policy `engineering-assertion-extraction@1.0.0` contains a concise R01-R14 implementation covering
+  engineering meaning, first-class Work Products, requirement-to-Work-Product relations, Records,
+  closed-ontology typing, source-supported assertions, list granularity, Notes/Examples,
+  definition/entity-only cases, conditions/exceptions, justified structural interpretation,
+  normative Force, Evidence semantics and local identity;
+- P1 extractor `engineering-policy-v1` and verifier `engineering-policy-verifier-v1` use that policy
+  with role-specific instructions;
+- P2 extractor `engineering-policy-contrast-v1` and verifier
+  `engineering-policy-verifier-contrast-v1` use the identical policy plus the public-synthetic
+  `engineering-contrast@1.0.0` Development example set;
+- `resources/semantic/experiments/ap03-engineering-prompt-variants-v1.json` binds B0, P1, P2,
+  policy/example hashes, partition and the no-schema/no-source-policy-change constraints.
 
-- the exact supplied snapshot hash;
-- the documented original AP01 audit, Development Golden and v8-report identities/hashes without
-  recreating those absent private files;
-- extractor and verifier task/prompt/schema resource hashes;
-- AP02 source-surface, candidate, selection, source-package, binding and CBox contract identities;
-- the declared runtime configuration bytes while explicitly requiring later experiments to bind the
-  actually selected/effective model and provider.
+`PromptRepository` resolves these optional shared bindings from the existing semantic resource tree
+and records policy/example identity in generation metadata. It rejects missing or mismatched
+resources and accepts example bindings only when they declare a non-empty partition and
+`source_class: public_synthetic`. Bundles without these bindings are unchanged.
 
-`run_ap03_preflight()` and CLI `evaluation assertion-ap03-preflight` provide a text-free, model-free
-readiness check. Resolution is limited to registered project roots. The report distinguishes missing,
-ambiguous and invalid historical inputs; validates B0 prompt/task/schema/context/config integrity;
-lists model *declarations* without claiming availability; and remains `not_ready_for_release` while
-quality thresholds, finalist freeze, real measurements and Holdout evidence are absent. It cannot
-write Golden or canonical knowledge state.
+No private norm text, confirmed Golden expected content or concrete Golden Clause ID is embedded in
+these prompt resources. There is no new ontology vocabulary, alias matcher, schema version or
+Clause-ID-specific branch.
 
-`docs/development/engineering-extraction-qualification.md` records the minimum experiment-plan and
-release-profile information for later slices. Numeric quality gates are intentionally not invented in
-Series A.
+### B0 remains unchanged
 
-## S02 — one productive versioned prompt/task/schema path
+The frozen `resources/semantic/prompts/ap03-b0.json` bytes are unchanged (SHA-256
+`888622019e6339379a470dccdf498109b5b1be162197ffbe4324a9b9989bb92a`). In addition to the Series-A
+content comparison, Series B executed the same synthetic B0 request probe in separate Python
+processes against the supplied start tree and the modified tree. The complete serialized
+`StructuredGenerationRequest` is byte-identical for both source-bound roles:
 
-The current source-bound roles now use the existing prompt repository/catalog instead of owning
-independent inline prompt/schema truths:
+- extractor request SHA-256: `6a129e7a355a7fc67b1d7b86a11184d06d150534b74bbf148d3fc966a52c1706`;
+- verifier request SHA-256: `716b230766e6b6d0d5d7bb63fd488fb9288c292c866c2832bc5aa3f95834b789`.
 
-- extractor task `formal-semantic-knowledge-proposal`, prompt
-  `ontology-guided-assertions-source-bound-v1`, task schema `1.0.0`;
-- verifier task `formal-semantic-assertion-verification`, prompt
-  `ontology-guided-assertion-verifier-source-bound-v1`, task schema `1.0.0`.
+The comparison includes task, prompt version, model/parameter defaults, system/user prompt, schema
+and request metadata. Policy/example metadata is added only for prompt variants that actually bind
+those resources.
 
-`PromptRepository` rejects incomplete bundles, task/version identity mismatches, missing task
-resources and any divergence between the prompt-local schema copy and the task-owned schema. The
-self-contained schema copy remains because the existing Prompt Workbench expects complete bundles;
-it is no longer independent schema authority.
+## S04 — Prompt Workbench on the productive source/parser/grounding path
 
-Both productive adapters compile through `application/evaluation/source_bound_prompt.py`. The helper
-renders exactly the previous `json.dumps(payload, ensure_ascii=False)` B0 request body and records
-only additional prompt/task/schema fingerprints in metadata. No second prompt catalog or model
-process manager was introduced.
+The productive knowledge extractor is internally split into two application-level operations:
 
-The legacy packaged task `formal-semantic-knowledge-extraction/1.0.0`, whose active contract was
-`entities`/`relations`, is removed. The inspected productive source tree has no remaining consumer of
-that task. Prompt Workbench context recommendations now point at the current proposal task. Generic
-historical string values in domain-model tests are not task-resource consumers and remain untouched.
-There is no automatic conversion from old `relations` payloads to assertions.
+1. `prepare_knowledge_proposal_request()` builds the exact AP02 source-bound payload, ontology
+   vocabulary, source-package binding and versioned structured-generation request;
+2. `parse_knowledge_proposal_result()` applies the productive closed-ontology validation,
+   multi-span Evidence parsing/grounding, deterministic local IDs, violations and proposal
+   provenance.
 
-## B0 request-equivalence evidence
+`OntologyGuidedKnowledgeProposalExtractor` is now a thin adapter over those operations. The AP03
+source-bound Workbench path uses the **same** functions. There is no Workbench-specific assertion
+extractor, ontology validator or grounder.
 
-Old and migrated adapters were executed in separate processes against the unchanged start-snapshot
-code and the same public synthetic source-bound inputs. For both roles the fields `task`,
-`prompt_version`, `model`, `temperature`, `output_schema`, `system_prompt` and `user_prompt` are
-equal before and after migration.
+The headless service and web API add separate source-bound endpoints for knowledge extraction:
 
-- extractor canonical compared-content SHA-256:
-  `94307954ab90d59e5c4500e37183d9313699aa16b3df3c76523885c6f106d59a`
-- verifier canonical compared-content SHA-256:
-  `be470b56106a6b7688c4003de211b3b81418a8452848a3ae19c6a8af42a5ea57`
+- preview resolves the real `EngineeringDocument`, constructs the productive AP02 source package,
+  interpretation context and exact effective request without calling the gateway;
+- run is explicit, executes that exact request once and then reports JSON-Schema validation,
+  productive parser result and grounding/ontology violations as separate stages;
+- a schema-valid result with invalid Evidence is therefore not a technically valid proposal and is
+  never presented as semantic success;
+- semantic quality remains `semantic_quality_assessed: false`; Series B does not invoke the Golden
+  evaluator or infer quality from schema/grounding success.
 
-The only request differences are deliberate metadata additions for task-schema and prompt/schema
-fingerprints. These do not change the B0 semantic instructions, output structure or source-package
-JSON.
+For this source-bound mode, the browser no longer owns editable system prompt, user template,
+schema or ad-hoc context text. It selects a versioned bundle and parameters, displays the exact
+compiled request/source package, and keeps source offsets/source ownership unchanged. The generic
+`/api/experiments`/service path explicitly rejects `formal-semantic-knowledge-proposal`, so a caller
+cannot bypass the productive parser/grounding route with a hand-built generic request. Generic
+historical Workbench behavior remains available for the existing non-source-bound tasks, including
+Applicability; the clean assertion path does not reintroduce legacy classification.
 
-## Historical AP01 inputs
+The source-bound preview exposes target/heading/context surfaces, selection gaps, omitted sources,
+budget and effective request data from the same source package supplied to productive extraction.
+Heading-only parent context and unresolved-source diagnostics are retained. Text-release protection
+continues to be owned by the existing local Workbench surface; Series B does not create a new remote
+or MCP text route.
 
-The original private AP01 audit, published Golden and v8 qualification report are still absent from
-this supplied snapshot. Series A does not reconstruct them from `ap01-status.md` or other summaries.
-Their frozen identities are used only to validate originals if they are later placed in the registered
-local review/evaluation areas. Therefore the historical replay and all real B0 measurements remain
-not executed.
+## Historical AP01/AP02 protection status
+
+Series B does not modify or reconstruct historical AP01 audit bytes, v8 proposals, confirmed Golden
+IDs/`expected` contents or the clause-local evaluator. The private AP01 originals remain absent from
+this snapshot and were not replayed. AP02 source-package identities, heading ownership,
+reverse-reference protections and multi-span grounding remain the technical source contract.
+
+No Golden publisher, `DocumentKnowledge` adoption, Holdout selection, experiment runner, MCP scope,
+Codex workflow or Series-C functionality is introduced.
 
 ## Test status
 
-The exact Series-A delivery commands/results are recorded in `_delivery/ap03-series-a/tests.md`.
-Public tests use only synthetic fixtures/Fake gateways. The implementation environment has Python
-3.13 and pytest available, but `ruff` is not installed. An attempted `uv run pytest ...` could not
-resolve dependencies because outbound PyPI/DNS access is unavailable; the project test suite is
-therefore also run directly with the already installed Python 3.13 environment. No unavailable check
-is reported as passed.
+The Series-B delivery report records exact commands and outputs. The implementation checks completed
+in this environment are:
 
-## Handover to Series B
+- targeted S03/S04 unit/adapter/Workbench/architecture set (final): 73 passed;
+- AP02 source-bound/workflow integration plus full architecture, schema and filesystem contract set
+  (final focused series check): 508 passed;
+- Prompt-Workbench CLI surface check: 6 passed;
+- JavaScript syntax check for the Workbench client: passed;
+- independent start-vs-work B0 request byte comparison: passed for extractor and verifier.
 
-Series B may now add P1/P2 as new, explicitly unqualified prompt variants on the same catalog and
-schema/source contract while leaving B0 unchanged. S03 should add the shared R01-R14 fachliche policy
-for extractor/verifier roles; S04 should connect Workbench preview/run to the same productive
-request/parser/grounding path. It must not reinterpret this Series-A migration as a model-quality
-improvement or use the missing AP01 private artifacts as if they had been replayed.
+`uv run ruff check .` was attempted but could not create/resolve the project environment because this
+execution environment has no working DNS/PyPI access; dependency resolution failed (the final
+attempt stopped while fetching `click`, an earlier attempt while fetching `docling`). No Ruff result
+is therefore claimed. An additional attempt to run the entire `tests/integration`
+tree exceeded the 120-second execution limit after 41 reported tests (two skipped); it is recorded
+as incomplete, not failed or passed. The focused source-bound/workflow integration set was then
+rerun successfully with the complete architecture/schema/contract set above. The full project
+`pytest` suite was not executed here; the user will run Ruff and full pytest after applying the
+cumulative delta, as required by the series workflow.
+
+No real model/client run was performed. No test result is reported as a semantic model-quality
+measurement.
+
+## Series-A baseline retained
+
+Series A established the AP03 consumer matrix, model-free preflight, experiment/release contract,
+frozen B0 reference and one productive versioned task/prompt/schema path. Its current source-bound
+roles remain:
+
+- extractor task `formal-semantic-knowledge-proposal`, B0 prompt
+  `ontology-guided-assertions-source-bound-v1`, task schema `1.0.0`;
+- verifier task `formal-semantic-assertion-verification`, B0 prompt
+  `ontology-guided-assertion-verifier-source-bound-v1`, task schema `1.0.0`.
+
+The old active `formal-semantic-knowledge-extraction` entities/relations task remains removed and no
+compatibility reader/writer was reintroduced.
+
+## Handover to Series C
+
+Series C may build S05/S06 on this stable path: versioned B0/P1/P2 variants, exact productive
+request preparation, explicit run, productive parser/grounding and stage-aware Workbench results are
+available. Series C must introduce bounded plan/run/resume and diagnostics in the existing
+qualification/workflow framework rather than turning the Workbench into a second runner or matcher.
+It must continue to use Fake gateways for implementation tests and must not treat P1/P2 as qualified
+or start real experiments without the separately required plan/data/budget approval.

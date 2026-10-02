@@ -35,6 +35,9 @@ def build_source_bound_generation_request(
     model: str | None,
     temperature: float,
     metadata: Mapping[str, Any],
+    seed: int | None = None,
+    max_tokens: int | None = None,
+    reasoning_enabled: bool | None = None,
 ) -> StructuredGenerationRequest:
     """Compile the exact JSON payload through one task/schema-bound packaged prompt.
 
@@ -62,11 +65,33 @@ def build_source_bound_generation_request(
             "prompt_schema_sha256": _canonical_sha256(prompt.output_schema),
         }
     )
+    if prompt.variant_id is not None:
+        enriched_metadata["prompt_variant"] = {
+            "id": prompt.variant_id,
+            "baseline_id": prompt.baseline_id,
+            "qualification_status": prompt.qualification_status,
+        }
+    if prompt.policy_id is not None:
+        enriched_metadata["prompt_policy"] = {
+            "id": prompt.policy_id,
+            "version": prompt.policy_version,
+            "sha256": prompt.policy_sha256,
+        }
+    if prompt.example_set_id is not None:
+        enriched_metadata["prompt_example_set"] = {
+            "id": prompt.example_set_id,
+            "version": prompt.example_set_version,
+            "partition": prompt.example_set_partition,
+            "sha256": prompt.example_set_sha256,
+        }
     return StructuredGenerationRequest(
         task=task,
         prompt_version=prompt_version,
         model=model,
         temperature=temperature,
+        seed=seed,
+        max_tokens=max_tokens,
+        reasoning_enabled=reasoning_enabled,
         output_schema=prompt.output_schema,
         system_prompt=prompt.system_prompt,
         user_prompt=user_prompt,

@@ -1,0 +1,17 @@
+{
+  "baseline_id": "B0-AP02",
+  "description": "Unqualified AP03 P2 verifier using the same shared policy plus public synthetic contrast examples.",
+  "qualification_status": "unqualified",
+  "task": "formal-semantic-assertion-verification",
+  "task_schema_version": "1.0.0",
+  "version": "engineering-policy-verifier-contrast-v1",
+  "variant_id": "P2",
+  "policy_binding": {
+    "id": "engineering-assertion-extraction",
+    "version": "1.0.0"
+  },
+  "example_binding": {
+    "id": "engineering-contrast",
+    "version": "1.0.0"
+  }
+}

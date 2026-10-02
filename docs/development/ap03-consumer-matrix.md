@@ -54,3 +54,20 @@ Series A does not change the clause-local evaluator, matching policy, ontology v
 selection policy, grounding rules, cascade policy, review publisher, MCP server, Codex gateway,
 canonical `DocumentKnowledge`, RAG/GraphRAG or model process management. Those boundaries remain
 owned by later slices where the AP03 plan assigns them.
+
+## Series-B S03/S04 consumer update
+
+The matrix above remains the Series-A cut-over inventory. Series B resolved its S03/S04 deferred
+items without changing later-slice ownership:
+
+| Consumer / boundary | Series-B change | Guard / resulting owner |
+|---|---|---|
+| `PromptRepository` | Adds optional versioned shared policy and public-synthetic example bindings; B0 bundles with no binding retain their exact effective request. | AP03 prompt-contract tests plus independent start/work B0 probe. S05 consumes the same repository. |
+| Extractor prompt | Adds unqualified P1/P2 bundles on the current task/schema/source contract. | No schema/source-policy change, private norm text or Clause-ID special case. S11/S12 own real measurements. |
+| Verifier prompt | Adds matching unqualified P1/P2 verifier bundles bound to the identical R01-R14 policy with role-specific omission checking. | Same policy hash as extractor; verifier task/schema remains independent. S13 owns measured verifier quality. |
+| Productive knowledge parser | Request construction and output parsing/grounding move from adapter-private helpers into `application/knowledge_proposal_extraction/pipeline.py`. | Productive adapter delegates to the shared functions; no alternate parser or matcher. |
+| Prompt Workbench service | Adds AP03 source-bound preview/run that resolves the real EngineeringDocument/source package and calls the shared productive request/parser functions. The generic experiment path rejects the assertion-proposal task. | Preview gateway-call guard; exact Workbench/productive request equality test; no schema-only bypass; S05 remains the experiment-runner owner. |
+| Prompt Workbench web/API | Shows exact source package/request and distinct schema/parser/grounding/semantic-quality stages. Browser editing of prompt/schema/context is disabled for the source-bound assertion task. | Schema-valid bad grounding is explicitly non-success; semantic quality is never inferred. Existing non-source-bound/Applicability flow remains. |
+| AP02 source contract | Consumed unchanged by both productive extraction and Workbench. | Integration/architecture regression set retains headings, gaps, source refs and multi-span grounding. |
+| B0 | No resource modification and no implicit policy/example binding. | Full synthetic `StructuredGenerationRequest` byte equality start vs Series-B tree for both roles. |
+| Golden/evaluator/Holdout | No change. | Historical expected content remains untouched; S05+ and S07+ retain ownership. |

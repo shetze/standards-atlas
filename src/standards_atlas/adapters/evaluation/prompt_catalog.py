@@ -15,9 +15,9 @@ class ResourcePromptCatalog:
 
     _REQUIRED_FILES = frozenset({"prompt.json", "schema.json", "system.txt", "user.txt"})
 
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, *, repository: PromptRepository | None = None) -> None:
         self._root = root
-        self._repository = PromptRepository(root)
+        self._repository = repository or PromptRepository(root)
         self._compiler = PromptCompiler()
 
     def list_prompts(self) -> tuple[PromptCatalogEntry, ...]:
@@ -37,6 +37,17 @@ class ResourcePromptCatalog:
                         version=definition.version,
                         description=definition.description,
                         placeholders=self._compiler.placeholders(definition.user_template),
+                        task_schema_version=definition.task_schema_version,
+                        qualification_status=definition.qualification_status,
+                        baseline_id=definition.baseline_id,
+                        variant_id=definition.variant_id,
+                        policy_id=definition.policy_id,
+                        policy_version=definition.policy_version,
+                        policy_sha256=definition.policy_sha256,
+                        example_set_id=definition.example_set_id,
+                        example_set_version=definition.example_set_version,
+                        example_set_partition=definition.example_set_partition,
+                        example_set_sha256=definition.example_set_sha256,
                     )
                 )
         return tuple(prompts)

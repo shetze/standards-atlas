@@ -269,3 +269,136 @@ def test_current_parser_clearly_rejects_legacy_single_quote_payload() -> None:
             ontology_versions=ONTOLOGIES,
             source_package=package,
         )
+
+
+def test_p1_fake_response_preserves_required_record_condition_and_multi_span_support() -> None:
+    parent = Clause(
+        id=ClauseId(value="parent"),
+        reference=StandardReference(standard="TEST", year=2026, clause="6"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Verification records",
+    )
+    statement = "The evaluation shall record the rationale only when the option is excluded."
+    target = Clause(
+        id=ClauseId(value="target"),
+        reference=StandardReference(standard="TEST", year=2026, clause="6.1"),
+        clause_type=ClauseType.REQUIREMENT,
+        parent_id=parent.id,
+        content=(TextBlock(id="t-target", text=statement),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="TEST"),
+        title="Synthetic test standard",
+        document_type=DocumentType.STANDARD,
+        clauses=(parent, target),
+    )
+    package = _package(document, target)
+    parent_heading = _source_ref(package, "parent", EvidenceSourceKind.HEADING)
+    target_body = _source_ref(package, "target", EvidenceSourceKind.BODY)
+    gateway = _Gateway(
+        {
+            "entities": [
+                {
+                    "class_iri": f"{STAT}SafetyRequirement",
+                    "label": ("evaluation requirement applicable only when the option is excluded"),
+                    "confidence": 0.91,
+                    "evidence": _evidence(target_body, statement),
+                    "rationale": "condition remains in the normalized meaning",
+                },
+                {
+                    "class_iri": f"{STAT}EngineeringRecord",
+                    "label": "exclusion rationale record",
+                    "confidence": 0.89,
+                    "evidence": _evidence(target_body, "rationale"),
+                    "rationale": "record-like work product remains first-class",
+                },
+            ],
+            "assertions": [
+                {
+                    "subject_index": 0,
+                    "predicate": f"{STAT}requires",
+                    "object_kind": "entity",
+                    "object_index": 1,
+                    "literal_value": None,
+                    "literal_datatype_iri": None,
+                    "literal_language": None,
+                    "normative_force": "requirement",
+                    "confidence": 0.9,
+                    "evidence": [
+                        {
+                            "source_ref": parent_heading,
+                            "exact_quote": "Verification records",
+                            "selector": {"kind": "unique"},
+                            "contribution": "subject_frame",
+                        },
+                        {
+                            "source_ref": target_body,
+                            "exact_quote": statement,
+                            "selector": {"kind": "unique"},
+                            "contribution": "direct_statement",
+                        },
+                    ],
+                    "rationale": "synthetic parser coverage for required work products",
+                }
+            ],
+        }
+    )
+
+    result = OntologyGuidedKnowledgeProposalExtractor(
+        gateway,
+        prompt_version="engineering-policy-v1",
+    ).extract(
+        target,
+        document_key="TEST",
+        ontology_versions=ONTOLOGIES,
+        source_package=package,
+    )
+
+    assert [item.class_iri for item in result.entity_proposals] == [
+        f"{STAT}SafetyRequirement",
+        f"{STAT}EngineeringRecord",
+    ]
+    assert "only when" in result.entity_proposals[0].normalized_label
+    assert result.assertion_proposals[0].predicate == f"{STAT}requires"
+    assert len(result.assertion_proposals[0].evidence_anchor_ids) == 2
+    assert result.violations == ()
+    assert gateway.request.metadata["prompt_policy"]["id"] == "engineering-assertion-extraction"
+    assert gateway.request.metadata["prompt_variant"] == {
+        "id": "P1",
+        "baseline_id": "B0-AP02",
+        "qualification_status": "unqualified",
+    }
+
+
+def test_p1_fake_response_allows_entity_only_result_without_invented_edge() -> None:
+    document, target = _document()
+    package = _package(document, target)
+    target_body = _source_ref(package, "target", EvidenceSourceKind.BODY)
+    gateway = _Gateway(
+        {
+            "entities": [
+                {
+                    "class_iri": f"{STAT}VerificationCriterion",
+                    "label": "verification criteria",
+                    "confidence": 0.94,
+                    "evidence": _evidence(target_body, "verification criteria"),
+                    "rationale": "entity-only synthetic case",
+                }
+            ],
+            "assertions": [],
+        }
+    )
+
+    result = OntologyGuidedKnowledgeProposalExtractor(
+        gateway,
+        prompt_version="engineering-policy-v1",
+    ).extract(
+        target,
+        document_key="TEST",
+        ontology_versions=ONTOLOGIES,
+        source_package=package,
+    )
+
+    assert len(result.entity_proposals) == 1
+    assert result.assertion_proposals == ()
+    assert result.violations == ()

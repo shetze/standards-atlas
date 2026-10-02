@@ -108,3 +108,5 @@ select:focus, input:focus, textarea:focus, button:focus-visible { outline: 3px s
   .tabs { width: 100%; overflow-x: auto; }
   .editor { height: 280px; }
 }
+.run-panel > .button.secondary { width: calc(100% - 32px); margin: 12px 16px 0; }
+.editor[readonly] { background: #f4f6f1; }

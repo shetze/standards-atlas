@@ -142,3 +142,22 @@ def test_rejects_reasoning_mode_not_declared_by_model() -> None:
 
     with pytest.raises(ValueError, match="does not support reasoning mode"):
         service.run(request)
+
+
+def test_generic_run_rejects_source_bound_knowledge_task_before_gateway_call() -> None:
+    gateway = Gateway()
+    service = PromptExperimentService(
+        clauses=Clauses(), prompts=Prompts(), models=Models(), gateway=gateway
+    )
+    request = PromptExperimentRequest(
+        clause_identifier="clause-a",
+        prompt_task="formal-semantic-knowledge-proposal",
+        prompt_version="engineering-policy-v1",
+        model_id="granite",
+        context_variant="none",
+    )
+
+    with pytest.raises(ValueError, match="must use the source-bound Workbench"):
+        service.run(request)
+
+    assert gateway.request is None

@@ -115,11 +115,13 @@
             <label><span>Temperatur</span><input id="temperature" type="number" min="0" max="2" step="0.1" value="0"></label>
             <label><span>Seed</span><input id="seed" type="number" value="0"></label>
             <label><span>Max. Tokens</span><input id="maxTokens" type="number" min="1" placeholder="Modellstandard"></label>
+            <label><span>Ontologien (AP03)</span><input id="ontologyVersions" value="standards-atlas-core@2.0.0, functional-safety@2.1.0"></label>
           </div>
           <label class="check"><input id="reasoning" type="checkbox"><span>Reasoning aktivieren</span></label>
           <label class="check"><input id="useCache" type="checkbox"><span>Lokalen Response-Cache verwenden</span></label>
+          <button class="button secondary" id="previewButton" type="button" hidden>Produktiven Request modellfrei anzeigen</button>
           <button class="button run" id="runButton" type="button">Experiment ausführen <span>→</span></button>
-          <p class="run-note">Prompt, Klausel und ausgewählte Kontextprojektion werden strukturiert an RamaLama gesendet.</p>
+          <p class="run-note" id="runNote">Prompt, Klausel und ausgewählte Kontextprojektion werden strukturiert an RamaLama gesendet.</p>
         </article>
       </div>
     </section>

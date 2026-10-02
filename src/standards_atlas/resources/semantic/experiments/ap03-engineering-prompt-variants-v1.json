@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "experiment_family": "ap03-engineering-prompt-variants",
+  "version": "1.0.0",
+  "qualification_status": "unqualified",
+  "baseline": {
+    "id": "B0-AP02",
+    "manifest": "prompts/ap03-b0.json",
+    "sha256": "888622019e6339379a470dccdf498109b5b1be162197ffbe4324a9b9989bb92a"
+  },
+  "shared_policy": {
+    "id": "engineering-assertion-extraction",
+    "version": "1.0.0",
+    "path": "policies/engineering-assertion-extraction/1.0.0/policy.txt",
+    "sha256": "89e5217962ece5717734c157c2d3246a323954902e80400cd69e3bc27f3b89d3"
+  },
+  "variants": [
+    {
+      "id": "P1",
+      "changed_factor": "shared_semantic_policy",
+      "extractor_prompt": "engineering-policy-v1",
+      "verifier_prompt": "engineering-policy-verifier-v1",
+      "example_set": null
+    },
+    {
+      "id": "P2",
+      "changed_factor": "public_synthetic_contrast_examples",
+      "extractor_prompt": "engineering-policy-contrast-v1",
+      "verifier_prompt": "engineering-policy-verifier-contrast-v1",
+      "example_set": {
+        "id": "engineering-contrast",
+        "version": "1.0.0",
+        "partition": "public-synthetic-development",
+        "source_class": "public_synthetic",
+        "path": "examples/engineering-contrast/1.0.0/examples.txt",
+        "sha256": "095df33186c3ffc8296076ec9f4e81bce49d078b47a5d068c5a8b37b7f31c460"
+      }
+    }
+  ],
+  "constraints": {
+    "private_standard_text_in_resources": false,
+    "clause_id_specific_rules": false,
+    "schema_change": false,
+    "source_policy_change": false
+  }
+}

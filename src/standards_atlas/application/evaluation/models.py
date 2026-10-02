@@ -18,6 +18,16 @@ class PromptDefinition:
     output_schema: JsonObject
     description: str = ""
     task_schema_version: str | None = None
+    qualification_status: str | None = None
+    baseline_id: str | None = None
+    variant_id: str | None = None
+    policy_id: str | None = None
+    policy_version: str | None = None
+    policy_sha256: str | None = None
+    example_set_id: str | None = None
+    example_set_version: str | None = None
+    example_set_partition: str | None = None
+    example_set_sha256: str | None = None
 
 
 @dataclass(frozen=True)

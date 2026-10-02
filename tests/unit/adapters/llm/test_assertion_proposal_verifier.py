@@ -203,3 +203,51 @@ def test_verifier_rejects_anchor_not_contained_in_bound_package_before_gateway_c
             source_package=package,
         )
     assert gateway.request is None
+
+
+def test_p1_verifier_uses_shared_policy_and_can_report_important_omissions() -> None:
+    target, package, anchors, entities, assertion, _parent_ref, _body_ref = _fixture()
+    gateway = _Gateway(
+        {
+            "entity_reviews": [
+                {"candidate_id": item.id, "disposition": "supported", "rationale": None}
+                for item in entities
+            ],
+            "assertion_reviews": [
+                {"candidate_id": assertion.id, "disposition": "supported", "rationale": None}
+            ],
+            "missing_entity_detected": True,
+            "missing_assertion_detected": True,
+            "missing_rationale": "A required work product and its relation are absent.",
+        }
+    )
+
+    result = OntologyGuidedAssertionProposalVerifier(
+        gateway,
+        prompt_version="engineering-policy-verifier-v1",
+    ).verify(
+        target,
+        document_key="TEST",
+        ontology_versions=ONTOLOGIES,
+        evidence_anchors=anchors,
+        entity_proposals=entities,
+        assertion_proposals=(assertion,),
+        source_package=package,
+    )
+
+    assert result.missing_entity_detected is True
+    assert result.missing_assertion_detected is True
+    assert gateway.request.metadata["prompt_policy"]["id"] == "engineering-assertion-extraction"
+    assert gateway.request.metadata["prompt_variant"] == {
+        "id": "P1",
+        "baseline_id": "B0-AP02",
+        "qualification_status": "unqualified",
+    }
+    assert (
+        "work products and evidence objects as first-class entities"
+        in gateway.request.system_prompt
+    )
+    assert (
+        "important omitted source-extractable entities or assertions"
+        in gateway.request.system_prompt
+    )

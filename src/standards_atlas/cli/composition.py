@@ -260,11 +260,16 @@ def build_prompt_workbench_web_app(
         PromptWorkbenchWebDependencies,
         create_prompt_workbench_app,
     )
+    from standards_atlas.application.evaluation.source_bound_prompt import (
+        semantic_prompt_repository,
+    )
     from standards_atlas.application.prompt_workbench import PromptExperimentService
 
     clauses = EngineeringDocumentClauseProvider(workspace)
+    documents = FileSystemEngineeringDocumentRepository(workspace)
     resources = Path(__file__).resolve().parents[1] / "resources" / "semantic" / "prompts"
-    prompts = ResourcePromptCatalog(resources)
+    prompt_repository = semantic_prompt_repository()
+    prompts = ResourcePromptCatalog(resources, repository=prompt_repository)
     models = ManifestRamaLamaModelCatalog.from_directory(manifest_directory)
     runtime = ManagedRamaLamaGateway(LlmConfig.load(llm_config_path))
     experiments = PromptExperimentService(
@@ -272,6 +277,8 @@ def build_prompt_workbench_web_app(
         prompts=prompts,
         models=models,
         gateway=runtime,
+        documents=documents,
+        source_bound_prompt_repository=prompt_repository,
     )
     return create_prompt_workbench_app(
         PromptWorkbenchWebDependencies(

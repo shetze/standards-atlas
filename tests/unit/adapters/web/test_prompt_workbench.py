@@ -223,3 +223,152 @@ def test_rejects_non_loopback_bind() -> None:
         assert "loopback" in str(error)
     else:  # pragma: no cover - explicit failure message is more useful here
         raise AssertionError("non-loopback bind was accepted")
+
+
+def _source_bound_client():
+    from standards_atlas.application.evaluation.source_bound_prompt import (
+        semantic_prompt_repository,
+    )
+    from standards_atlas.domain.model import (
+        Clause,
+        ClauseId,
+        DocumentKey,
+        EngineeringDocument,
+        StandardReference,
+        TextBlock,
+    )
+
+    class Documents:
+        document = EngineeringDocument(
+            key=DocumentKey(value="TEST"),
+            title="Test",
+            document_type=DocumentType.STANDARD,
+            clauses=(
+                Clause(
+                    id=ClauseId(value="clause-a"),
+                    reference=StandardReference(standard="TEST", year=2026, clause="1"),
+                    clause_type=ClauseType.CLAUSE,
+                    heading="Scope",
+                    content=(TextBlock(id="body", text="The supplier shall verify the result."),),
+                ),
+            ),
+        )
+
+        def load(self, key):
+            assert key == self.document.key
+            return self.document
+
+    class SourceBoundGateway(Gateway):
+        def generate_structured(self, request):
+            import json
+
+            payload = json.loads(request.user_prompt)
+            source_ref = next(
+                item["source_ref"]
+                for item in payload["source_package"]["source_surfaces"]
+                if item["source_kind"] == "body"
+            )
+            return StructuredGenerationResult(
+                value={
+                    "entities": [
+                        {
+                            "class_iri": "http://lunetix.org/standards-atlas#Activity",
+                            "label": "verification",
+                            "confidence": 0.9,
+                            "evidence": [
+                                {
+                                    "source_ref": source_ref,
+                                    "exact_quote": "not delivered",
+                                    "selector": {"kind": "unique"},
+                                    "contribution": "direct_statement",
+                                }
+                            ],
+                            "rationale": None,
+                        }
+                    ],
+                    "assertions": [],
+                },
+                model=request.model or "",
+                provider="test",
+                prompt_version=request.prompt_version,
+                input_hash="input",
+                raw_response_hash="response",
+                duration_ms=5,
+            )
+
+    clauses, prompts, models, gateway, runtime = (
+        Clauses(),
+        Prompts(),
+        Models(),
+        SourceBoundGateway(),
+        Runtime(),
+    )
+    service = PromptExperimentService(
+        clauses=clauses,
+        prompts=prompts,
+        models=models,
+        gateway=gateway,
+        documents=Documents(),
+        source_bound_prompt_repository=semantic_prompt_repository(),
+    )
+    app = create_prompt_workbench_app(
+        PromptWorkbenchWebDependencies(
+            clauses=clauses,
+            prompts=prompts,
+            models=models,
+            experiments=service,
+            runtime=runtime,
+        ),
+        PromptWorkbenchHttpConfig(extra_allowed_hosts=("testserver",)),
+    )
+    return TestClient(app)
+
+
+def test_source_bound_preview_and_run_keep_stages_separate() -> None:
+    client = _source_bound_client()
+    request = {
+        "clause_identifier": "clause-a",
+        "prompt_version": "engineering-policy-v1",
+        "model_id": "granite",
+        "ontology_versions": [
+            "standards-atlas-core@2.0.0",
+            "functional-safety@2.1.0",
+        ],
+    }
+
+    preview = client.post("/api/source-bound-knowledge/preview", json=request)
+    run = client.post("/api/source-bound-knowledge/run", json=request)
+
+    assert preview.status_code == 200
+    assert preview.json()["stages"] == {
+        "model_called": False,
+        "schema_checked": False,
+        "parser_applied": False,
+        "ontology_checked": False,
+        "grounding_checked": False,
+        "semantic_quality_assessed": False,
+    }
+    assert preview.json()["source_package"]["source_surfaces"]
+    assert run.status_code == 200
+    assert run.json()["validation"]["schema_valid"] is True
+    assert run.json()["validation"]["ontology_valid"] is True
+    assert run.json()["validation"]["grounding_valid"] is False
+    assert run.json()["validation"]["technical_candidate_valid"] is False
+    assert run.json()["validation"]["semantic_quality_assessed"] is False
+
+
+def test_generic_experiment_endpoint_cannot_bypass_source_bound_knowledge_path() -> None:
+    client = _source_bound_client()
+    response = client.post(
+        "/api/experiments",
+        json={
+            "clause_identifier": "clause-a",
+            "prompt_task": "formal-semantic-knowledge-proposal",
+            "prompt_version": "engineering-policy-v1",
+            "model_id": "granite",
+            "context_variant": "none",
+        },
+    )
+
+    assert response.status_code == 400
+    assert "must use the source-bound Workbench" in response.json()["error"]

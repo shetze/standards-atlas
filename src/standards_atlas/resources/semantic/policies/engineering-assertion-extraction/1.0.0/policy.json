@@ -1,0 +1,7 @@
+{
+  "id": "engineering-assertion-extraction",
+  "version": "1.0.0",
+  "description": "AP03 shared fachliche policy implementing review rules R01-R14 for extractor and verifier roles.",
+  "source": "standards-atlas-fachliches-ziel-und-review-leitfaden-v0.2.0",
+  "rules": ["R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10", "R11", "R12", "R13", "R14"]
+}

@@ -25,7 +25,7 @@ def test_discovers_only_complete_prompt_bundles(tmp_path: Path) -> None:
     _prompt(tmp_path, "classification", "draft", complete=False)
     catalog = ResourcePromptCatalog(tmp_path)
 
-    assert catalog.list_prompts()[0].model_dump() == {
+    assert catalog.list_prompts()[0].model_dump(exclude_none=True) == {
         "task": "classification",
         "version": "1.0.0",
         "description": "Prompt description",

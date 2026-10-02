@@ -1,0 +1,7 @@
+{
+  "id": "engineering-contrast",
+  "version": "1.0.0",
+  "partition": "public-synthetic-development",
+  "source_class": "public_synthetic",
+  "description": "Short contrast cases for AP03 P2; no private standard text or Golden case is embedded."
+}

@@ -1,0 +1,13 @@
+{
+  "baseline_id": "B0-AP02",
+  "description": "Unqualified AP03 P1 verifier using the same shared engineering policy R01-R14.",
+  "qualification_status": "unqualified",
+  "task": "formal-semantic-assertion-verification",
+  "task_schema_version": "1.0.0",
+  "version": "engineering-policy-verifier-v1",
+  "variant_id": "P1",
+  "policy_binding": {
+    "id": "engineering-assertion-extraction",
+    "version": "1.0.0"
+  }
+}

@@ -13,6 +13,9 @@ from urllib.parse import urlparse
 from pydantic import ValidationError
 
 from standards_atlas.adapters.llm.ramalama_server import RamaLamaServerError
+from standards_atlas.application.knowledge_proposal_extraction.source_bound_contract import (
+    source_package_request_payload,
+)
 from standards_atlas.application.ports.llm_gateway import (
     LlmResponseError,
     LlmTimeoutError,
@@ -27,6 +30,9 @@ from standards_atlas.application.prompt_workbench import (
     PromptExperimentRequest,
     PromptExperimentResult,
     PromptExperimentService,
+    SourceBoundKnowledgeExperimentRequest,
+    SourceBoundKnowledgeExperimentResult,
+    SourceBoundKnowledgePreviewResult,
     list_context_variants,
 )
 from standards_atlas.application.semantic_qualification.clause_access import ClauseProvider
@@ -107,7 +113,8 @@ def create_prompt_workbench_app(
         return JSONResponse(
             {
                 "items": [
-                    item.model_dump(mode="json") for item in dependencies.prompts.list_prompts()
+                    item.model_dump(mode="json", exclude_none=True)
+                    for item in dependencies.prompts.list_prompts()
                 ]
             }
         )
@@ -121,6 +128,17 @@ def create_prompt_workbench_app(
                 "task": definition.task,
                 "version": definition.version,
                 "description": definition.description,
+                "task_schema_version": definition.task_schema_version,
+                "qualification_status": definition.qualification_status,
+                "baseline_id": definition.baseline_id,
+                "variant_id": definition.variant_id,
+                "policy_id": definition.policy_id,
+                "policy_version": definition.policy_version,
+                "policy_sha256": definition.policy_sha256,
+                "example_set_id": definition.example_set_id,
+                "example_set_version": definition.example_set_version,
+                "example_set_partition": definition.example_set_partition,
+                "example_set_sha256": definition.example_set_sha256,
                 "system_prompt": definition.system_prompt,
                 "user_template": definition.user_template,
                 "output_schema": definition.output_schema,
@@ -189,6 +207,22 @@ def create_prompt_workbench_app(
         result = await run_in_threadpool(dependencies.experiments.run, experiment)
         return JSONResponse(_experiment_json(result))
 
+    async def source_bound_preview(request):
+        payload = await request.json()
+        experiment = SourceBoundKnowledgeExperimentRequest.model_validate(payload)
+        result = await run_in_threadpool(
+            dependencies.experiments.preview_source_bound_knowledge, experiment
+        )
+        return JSONResponse(_source_bound_preview_json(result))
+
+    async def source_bound_run(request):
+        payload = await request.json()
+        experiment = SourceBoundKnowledgeExperimentRequest.model_validate(payload)
+        result = await run_in_threadpool(
+            dependencies.experiments.run_source_bound_knowledge, experiment
+        )
+        return JSONResponse(_source_bound_experiment_json(result))
+
     routes = [
         Route("/", index, methods=["GET"]),
         Route("/api/health", health, methods=["GET"]),
@@ -202,6 +236,8 @@ def create_prompt_workbench_app(
         Route("/api/runtime", runtime, methods=["GET"]),
         Route("/api/models/activate", activate_model, methods=["POST"]),
         Route("/api/experiments", run_experiment, methods=["POST"]),
+        Route("/api/source-bound-knowledge/preview", source_bound_preview, methods=["POST"]),
+        Route("/api/source-bound-knowledge/run", source_bound_run, methods=["POST"]),
         Mount("/assets", StaticFiles(directory=assets), name="assets"),
     ]
     app = Starlette(
@@ -396,6 +432,115 @@ def _experiment_json(result: PromptExperimentResult) -> dict[str, Any]:
             "raw_response": generation.raw_response,
         },
     }
+
+
+def _source_bound_preview_json(result: SourceBoundKnowledgePreviewResult) -> dict[str, Any]:
+    request = result.generation_request
+    return {
+        "clause": result.clause.model_dump(mode="json"),
+        "model": result.model.model_dump(mode="json") if result.model is not None else None,
+        "source_package": source_package_request_payload(result.source_package),
+        "interpretation_context": dict(result.interpretation_context),
+        "request": {
+            "task": request.task,
+            "prompt_version": request.prompt_version,
+            "model": request.model,
+            "temperature": request.temperature,
+            "seed": request.seed,
+            "max_tokens": request.max_tokens,
+            "reasoning_enabled": request.reasoning_enabled,
+            "system_prompt": request.system_prompt,
+            "user_prompt": request.user_prompt,
+            "output_schema": request.output_schema,
+            "metadata": request.metadata,
+        },
+        "stages": {
+            "model_called": False,
+            "schema_checked": False,
+            "parser_applied": False,
+            "ontology_checked": False,
+            "grounding_checked": False,
+            "semantic_quality_assessed": False,
+        },
+    }
+
+
+def _source_bound_experiment_json(
+    result: SourceBoundKnowledgeExperimentResult,
+) -> dict[str, Any]:
+    preview = _source_bound_preview_json(result.preview)
+    generation = result.generation_result
+    proposal = result.proposal_result
+    violations = list(proposal.violations) if proposal is not None else []
+    ontology_kinds = {"undeclared_class", "undeclared_property"}
+    ontology_valid = (
+        None
+        if proposal is None
+        else not any(item.kind.value in ontology_kinds for item in violations)
+    )
+    grounding_kinds = {"unresolved_grounding", "ambiguous_grounding"}
+    grounding_valid = (
+        None
+        if proposal is None
+        else not any(item.kind.value in grounding_kinds for item in violations)
+    )
+    technical_candidate_valid = bool(
+        result.schema_valid
+        and result.parser_error is None
+        and proposal is not None
+        and not violations
+    )
+    preview.update(
+        {
+            "output": generation.value,
+            "validation": {
+                "schema_valid": result.schema_valid,
+                "schema_errors": result.schema_errors,
+                "parser_valid": result.parser_error is None if result.schema_valid else None,
+                "parser_error": result.parser_error,
+                "ontology_valid": ontology_valid,
+                "grounding_valid": grounding_valid,
+                "technical_candidate_valid": technical_candidate_valid,
+                "semantic_quality_assessed": False,
+            },
+            "proposal": (
+                {
+                    "source_binding": proposal.source_package_binding.model_dump(mode="json"),
+                    "evidence_anchors": [
+                        item.model_dump(mode="json") for item in proposal.evidence_anchors
+                    ],
+                    "entities": [
+                        item.model_dump(mode="json") for item in proposal.entity_proposals
+                    ],
+                    "assertions": [
+                        item.model_dump(mode="json") for item in proposal.assertion_proposals
+                    ],
+                    "violations": [item.model_dump(mode="json") for item in violations],
+                }
+                if proposal is not None
+                else None
+            ),
+            "generation": {
+                "model": generation.model,
+                "provider": generation.provider,
+                "duration_ms": generation.duration_ms,
+                "cached": generation.cached,
+                "usage": asdict(generation.usage) if generation.usage else None,
+                "input_hash": generation.input_hash,
+                "raw_response_hash": generation.raw_response_hash,
+                "raw_response": generation.raw_response,
+            },
+            "stages": {
+                "model_called": True,
+                "schema_checked": True,
+                "parser_applied": result.schema_valid,
+                "ontology_checked": proposal is not None,
+                "grounding_checked": proposal is not None,
+                "semantic_quality_assessed": False,
+            },
+        }
+    )
+    return preview
 
 
 def _query_limit(value: str | None) -> int:

@@ -25,6 +25,9 @@ from standards_atlas.application.prompt_workbench.models import (
     PromptCatalogEntry,
     PromptExperimentRequest,
     PromptExperimentResult,
+    SourceBoundKnowledgeExperimentRequest,
+    SourceBoundKnowledgeExperimentResult,
+    SourceBoundKnowledgePreviewResult,
 )
 from standards_atlas.application.prompt_workbench.service import PromptExperimentService
 
@@ -45,5 +48,8 @@ __all__ = [
     "PromptExperimentRequest",
     "PromptExperimentResult",
     "PromptExperimentService",
+    "SourceBoundKnowledgeExperimentRequest",
+    "SourceBoundKnowledgeExperimentResult",
+    "SourceBoundKnowledgePreviewResult",
     "list_context_variants",
 ]
