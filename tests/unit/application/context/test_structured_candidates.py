@@ -264,3 +264,93 @@ def test_external_content_requires_explicit_revision_bound_authorized_binding() 
     )
     assert denied_candidate.resolution.availability is SourceSurfaceAvailability.NOT_AUTHORIZED
     assert denied_candidate.resolution.text is None
+
+
+def test_structural_display_heading_is_not_materialized_as_clause_heading_candidate() -> None:
+    parent = _clause("parent", "7.4.4.3", "Route 2H")
+    target = Clause(
+        id=ClauseId(value="target"),
+        reference=StandardReference(standard="TEST", clause="7.4.4.3.1"),
+        clause_type=ClauseType.REQUIREMENT,
+        heading="REQUIREMENT",
+        source_token="r7.4.4.3.{1..4}",
+        parent_id=ClauseId(value="parent"),
+        content=(TextBlock(id="target-text", text="Target requirement."),),
+    )
+    document = _document(parent, target)
+
+    inventory = build_structured_context_candidates(document, target)
+
+    target_kinds = {
+        item.source_ref.source_kind
+        for item in inventory.candidates
+        if item.source_ref.clause_id == "target"
+    }
+    assert EvidenceSourceKind.BODY in target_kinds
+    assert EvidenceSourceKind.HEADING not in target_kinds
+    assert inventory.ancestor_path[0].heading_present is True
+
+
+def test_reverse_reference_does_not_propagate_from_unrelated_sequence_sibling() -> None:
+    parent = _clause("parent", "3", "Terms")
+    sibling_a = _clause("a", "3.2", "alpha", parent="parent", text="Alpha.")
+    target = _clause("target", "3.30", "hazard log", parent="parent", text="Target.")
+    linked = _clause("linked", "3.31", "hazard rate", parent="parent", text="Linked.")
+    unrelated_source = _clause(
+        "remote",
+        "C.1",
+        "Annex",
+        text="See 3.2.",
+        mentions=(_resolved_reference("3.2", clause_id="a", reference="3.2"),),
+    )
+    direct_reverse = _clause(
+        "direct-reverse",
+        "C.2",
+        "Direct",
+        text="See 3.30.",
+        mentions=(_resolved_reference("3.30", clause_id="target", reference="3.30"),),
+    )
+    document = _document(parent, sibling_a, target, linked, unrelated_source, direct_reverse)
+
+    inventory = build_structured_context_candidates(document, target)
+    candidate_ids = {item.source_ref.clause_id for item in inventory.candidates}
+
+    assert "direct-reverse" in candidate_ids
+    assert "remote" not in candidate_ids
+
+
+def test_reverse_reference_to_target_linked_local_sequence_member_remains_reachable() -> None:
+    parent = _clause("parent", "7.4.4.3", "Route 2H")
+    linked = _clause(
+        "linked",
+        "7.4.4.3.2",
+        "Detail",
+        parent="parent",
+        text="See 7.4.4.3.1.",
+        mentions=(_resolved_reference("7.4.4.3.1", clause_id="target", reference="7.4.4.3.1"),),
+    )
+    target = _clause(
+        "target",
+        "7.4.4.3.1",
+        "Target",
+        parent="parent",
+        text="See 7.4.4.3.2.",
+        mentions=(_resolved_reference("7.4.4.3.2", clause_id="linked", reference="7.4.4.3.2"),),
+    )
+    later = _clause(
+        "later",
+        "7.4.4.3.3",
+        "Later",
+        parent="parent",
+        text="Exception to 7.4.4.3.2.",
+        mentions=(_resolved_reference("7.4.4.3.2", clause_id="linked", reference="7.4.4.3.2"),),
+    )
+    document = _document(parent, target, linked, later)
+
+    inventory = build_structured_context_candidates(document, target)
+
+    linked_candidate = _candidate_for(inventory, "linked", EvidenceSourceKind.BODY)
+    later_candidate = _candidate_for(inventory, "later", EvidenceSourceKind.BODY)
+    assert ContextCandidateReason.DIRECT_INTERNAL_REFERENCE in linked_candidate.reasons
+    assert ContextCandidateReason.REVERSE_INTERNAL_REFERENCE in linked_candidate.reasons
+    assert ContextCandidateReason.REVERSE_INTERNAL_REFERENCE in later_candidate.reasons

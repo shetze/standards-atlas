@@ -147,10 +147,13 @@ def test_heading_origin_does_not_promote_synthetic_or_unattributed_text() -> Non
         )
     )
 
-    assert synthetic_result.origin is SourceSurfaceOrigin.SYNTHETIC_DISPLAY_LABEL
-    assert synthetic_result.source_backed is False
+    assert synthetic_result.availability is SourceSurfaceAvailability.MISSING
+    assert "synthetic structural/display label" in synthetic_result.reason
+    assert unresolved_result.availability is SourceSurfaceAvailability.AVAILABLE
     assert unresolved_result.origin is SourceSurfaceOrigin.UNRESOLVED
     assert unresolved_result.source_backed is False
+    refs = resolver.list_surface_refs(document_key="SYNTHETIC", clause_id="c1")
+    assert all(ref.source_kind is not EvidenceSourceKind.HEADING for ref in refs)
 
 
 def test_confirmed_heading_assignment_is_distinct_from_source_extraction() -> None:
@@ -407,3 +410,51 @@ def test_source_revision_excludes_accepted_document_knowledge() -> None:
         source_document_binding(document).source_revision
         == source_document_binding(with_knowledge).source_revision
     )
+
+
+def test_atlasdata_placeholder_is_not_heading_surface_but_real_term_title_is() -> None:
+    placeholder = Clause(
+        id=ClauseId(value="requirement"),
+        reference=StandardReference(standard="IEC 61508-2", year=2010, clause="7.4.4.3.1"),
+        clause_type=ClauseType.REQUIREMENT,
+        heading="REQUIREMENT",
+        source_token="2-r7.4.4.3.{1..4}",
+        content=(TextBlock(id="requirement-text", text="Requirement body."),),
+    )
+    term = Clause(
+        id=ClauseId(value="hazard-log"),
+        reference=StandardReference(standard="EN 50126-1", year=2017, clause="3.30"),
+        clause_type=ClauseType.TERM,
+        heading="hazard log",
+        source_token="1-t3.{1..83}",
+        content=(TextBlock(id="term-text", text="Document in which hazards are recorded."),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="ATLASDATA"),
+        title="AtlasData headings",
+        document_type=DocumentType.STANDARD,
+        clauses=(placeholder, term),
+    )
+    resolver = SourceSurfaceResolver((document,))
+
+    placeholder_result = resolver.resolve(
+        SourceSurfaceRef(
+            document_key="ATLASDATA",
+            clause_id="requirement",
+            source_kind=EvidenceSourceKind.HEADING,
+        )
+    )
+    term_result = resolver.resolve(
+        SourceSurfaceRef(
+            document_key="ATLASDATA",
+            clause_id="hazard-log",
+            source_kind=EvidenceSourceKind.HEADING,
+        )
+    )
+
+    assert placeholder_result.availability is SourceSurfaceAvailability.MISSING
+    assert term_result.availability is SourceSurfaceAvailability.AVAILABLE
+    assert term_result.origin is SourceSurfaceOrigin.CONFIRMED_SOURCE_ASSIGNMENT
+    assert term_result.origin_reference == "atlasdata-structure-title"
+    assert term_result.source_backed is True
+    assert term_result.text == "hazard log"

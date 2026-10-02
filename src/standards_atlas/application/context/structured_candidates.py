@@ -17,6 +17,7 @@ from standards_atlas.application.context.source_surfaces import (
     SourceSurfaceRef,
     SourceSurfaceResolution,
     SourceSurfaceResolver,
+    clause_has_heading_source_surface,
     source_document_binding,
 )
 from standards_atlas.domain.model import (
@@ -307,7 +308,14 @@ def build_structured_context_candidates(
             add_heading=True,
         )
 
-    reverse_targets = {canonical_target.id.value, *sequence_ids}
+    target_linked_sequence_ids = {
+        edge.target_clause_id
+        for edge in edges_by_source[canonical_target.id.value]
+        if not edge.external
+        and edge.target_clause_id is not None
+        and edge.target_clause_id in sequence_ids
+    }
+    reverse_targets = {canonical_target.id.value, *target_linked_sequence_ids}
     for source in document.clauses:
         if source.id == canonical_target.id:
             continue
@@ -396,7 +404,7 @@ def _ancestor_path(
                 reference=parent.reference.clause,
                 parent_id=parent.parent_id.value if parent.parent_id is not None else None,
                 document_position=parent_position,
-                heading_present=bool(parent.heading),
+                heading_present=clause_has_heading_source_surface(parent),
                 body_present=bool(parent.plain_text),
             )
         )
@@ -469,7 +477,7 @@ def _add_clause_surfaces(
             target=target,
             diagnostics=diagnostics,
         )
-    if add_heading and clause.heading is not None:
+    if add_heading and clause_has_heading_source_surface(clause):
         _add_candidate(
             candidates,
             resolver,

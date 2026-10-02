@@ -1,4 +1,4 @@
-# AP02 status — Series F / S11-S12 complete
+# AP02 status — Series F / S11-S12 complete, post-inspection correction applied
 
 Date: 2026-10-02.
 
@@ -82,6 +82,32 @@ at their normal source boundary.
 definition, Safety-Plan context, HFT multi-span, separate Work Products, entity-only cases,
 conditions/exceptions and Normative Force) to these technical tests. Synthetic structural/security
 cases are listed separately and explicitly are not an AP03 Holdout.
+
+
+## Post-Series-F correction after real EngineeringDocument inspection
+
+A model-free inspection of four real local cases after Series F exposed two deterministic AP02
+contract defects. This correction remains inside AP02 and performs no model run or Golden change.
+
+1. **Heading source identity.** Historical AtlasData-backed clauses can carry structural display
+   values such as `REQUIREMENT` or `OBJECTIVE` in `Clause.heading`, although those leaf clauses have
+   no own source heading. These values are now recognized as synthetic structural display labels and
+   do not produce heading source surfaces/candidates. Non-placeholder AtlasData titles remain
+   addressable; when older documents have no explicit attribute provenance, their AtlasData
+   `source_token` binds the title as `confirmed_source_assignment` with origin reference
+   `atlasdata-structure-title`. This keeps a real term heading such as EN 50126-1 3.30 `hazard log`
+   while suppressing false HFT/C.4 leaf headings. New AtlasData mappings also mark recognized
+   structural display titles explicitly as deterministic synthetic headings.
+2. **Reverse-reference scope.** Candidate discovery previously treated every same-parent leaf as a
+   reverse-reference target. In large definition sections this allowed remote clauses/annexes that
+   referenced an unrelated sibling to receive `explicit_reference` priority for the current target.
+   Reverse targets are now limited to the target itself plus local sequence members explicitly
+   referenced by the target. Direct HFT-style reciprocal references remain reachable; unrelated
+   sibling references no longer displace local context through the budget.
+
+The T01-T34 matrix remains the AP02 reference set; T02 and T07 now point to additional regression
+tests for these real-data failure modes. Natural-language references such as `the following clauses`
+remain fail-closed diagnostics rather than gaining a new heuristic scope interpretation.
 
 ## Private AP01 historical replay status
 

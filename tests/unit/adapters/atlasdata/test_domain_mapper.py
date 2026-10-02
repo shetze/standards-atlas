@@ -316,3 +316,52 @@ def test_table_structure_item_without_table_record_is_still_materialized() -> No
     assert [clause.reference.clause for clause in standard.clauses] == ["A"]
     assert [table.reference for table in standard.tables] == ["A.1"]
     assert standard.tables[0].parent_clause_reference == "A"
+
+
+def test_atlasdata_structural_display_titles_are_marked_synthetic() -> None:
+    atlas_data = AtlasStandardData(
+        metadata=AtlasMetadata(name="Example", digits=4, official_year=2026),
+        structure_items=[
+            StructureItem(
+                visible_reference="5.1",
+                item_type=AtlasItemType.REQUIREMENT,
+                source_token="r5.{1..2}",
+            ),
+            StructureItem(
+                visible_reference="3.30",
+                item_type=AtlasItemType.TERM,
+                source_token="t3.{1..83}",
+            ),
+        ],
+        initialization_records=[
+            InitializationRecord(
+                kind="TOC",
+                hash_value="requirement",
+                reference="Example:2026 5.1",
+                content="REQUIREMENT",
+                type_marker="r",
+            ),
+            InitializationRecord(
+                kind="TOC",
+                hash_value="term",
+                reference="Example:2026 3.30",
+                content="hazard log",
+                type_marker="t",
+            ),
+        ],
+    )
+
+    standard = map_atlas_data_to_standard(atlas_data, key="EXAMPLE")
+    requirement = next(item for item in standard.clauses if item.reference.clause == "5.1")
+    term = next(item for item in standard.clauses if item.reference.clause == "3.30")
+
+    requirement_heading = next(
+        item
+        for item in requirement.provenance.generated_attributes
+        if item.path == "baseline.heading"
+    )
+    assert requirement.heading == "REQUIREMENT"
+    assert requirement_heading.generator == "atlasdata-structural-display-label"
+    assert requirement_heading.method.value == "deterministic"
+    assert term.heading == "hazard log"
+    assert not any(item.path == "baseline.heading" for item in term.provenance.generated_attributes)

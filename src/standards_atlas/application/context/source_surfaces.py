@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.domain.model import (
     Clause,
+    ClauseType,
     ContentBlock,
     EngineeringDocument,
     EvidenceSourceKind,
@@ -32,7 +33,22 @@ SOURCE_REVISION_CONTRACT = "engineering-document-source-surfaces-v1"
 BODY_RENDERING_ID = "engineering-document-clause-body-v1"
 HEADING_RENDERING_ID = "engineering-document-clause-heading-v1"
 TABLE_RENDERING_ID = "engineering-document-table-handle-v1"
-_SYNTHETIC_HEADING_GENERATORS = frozenset({"document-selection-synthetic-display-label"})
+_SYNTHETIC_HEADING_GENERATORS = frozenset(
+    {
+        "document-selection-synthetic-display-label",
+        "atlasdata-structural-display-label",
+    }
+)
+_ATLASDATA_STRUCTURAL_DISPLAY_LABELS: dict[ClauseType, frozenset[str]] = {
+    ClauseType.TOC: frozenset({"TOC", "HEADING"}),
+    ClauseType.CLAUSE: frozenset({"CLAUSE", "HEADING"}),
+    ClauseType.REQUIREMENT: frozenset({"REQUIREMENT"}),
+    ClauseType.OBJECTIVE: frozenset({"OBJECTIVE"}),
+    ClauseType.TABLE: frozenset({"TABLE"}),
+    ClauseType.MISC: frozenset({"MISC"}),
+    ClauseType.SCOPE: frozenset({"SCOPE"}),
+    ClauseType.TERM: frozenset({"TERM"}),
+}
 
 
 class SourceMediaKind(StrEnum):
@@ -247,7 +263,7 @@ class SourceSurfaceResolver:
                 source_kind=EvidenceSourceKind.BODY,
             )
         ]
-        if clause.heading is not None:
+        if clause_has_heading_source_surface(clause):
             refs.append(
                 SourceSurfaceRef(
                     document_key=document_key,
@@ -337,7 +353,16 @@ class SourceSurfaceResolver:
         if source_ref.source_kind is EvidenceSourceKind.HEADING:
             if clause.heading is None or clause.heading == "":
                 return _missing_surface(source_ref, identity, "clause heading surface is absent")
-            origin, reference = _attribute_origin(clause, "baseline.heading")
+            origin, reference = heading_surface_origin(clause)
+            if origin is SourceSurfaceOrigin.SYNTHETIC_DISPLAY_LABEL:
+                return _missing_surface(
+                    source_ref,
+                    identity,
+                    (
+                        "clause heading value is a synthetic structural/display label, "
+                        "not a source surface"
+                    ),
+                )
             return self._text_resolution(
                 source_ref,
                 identity,
@@ -543,6 +568,44 @@ def _source_provenance_payload(clause: Clause) -> dict[str, object]:
             path for path in provenance.unattributed_attributes if source_path(path)
         ],
     }
+
+
+def heading_surface_origin(clause: Clause) -> tuple[SourceSurfaceOrigin, str | None]:
+    """Classify the heading value without promoting structural display labels to source text.
+
+    Older EngineeringDocuments may contain AtlasData TOC display labels such as ``REQUIREMENT``
+    or ``OBJECTIVE`` without attribute provenance.  ``source_token`` identifies those clauses as
+    AtlasData-backed structure.  Non-placeholder AtlasData titles remain a confirmed source
+    assignment (for example a term heading such as ``hazard log``); known structural placeholders
+    are explicitly synthetic and therefore have no heading source surface.
+    """
+
+    if clause.heading is None or clause.heading == "":
+        return SourceSurfaceOrigin.UNRESOLVED, None
+    origin, reference = _attribute_origin(clause, "baseline.heading")
+    if origin is not SourceSurfaceOrigin.UNRESOLVED:
+        return origin, reference
+    if clause.source_token is None:
+        return origin, reference
+    if _is_atlasdata_structural_display_label(clause):
+        return SourceSurfaceOrigin.SYNTHETIC_DISPLAY_LABEL, "atlasdata-structural-display-label"
+    return SourceSurfaceOrigin.CONFIRMED_SOURCE_ASSIGNMENT, "atlasdata-structure-title"
+
+
+def clause_has_heading_source_surface(clause: Clause) -> bool:
+    """Return whether ``clause.heading`` denotes an addressable heading source surface."""
+
+    if clause.heading is None or clause.heading == "":
+        return False
+    origin, _ = heading_surface_origin(clause)
+    return origin is not SourceSurfaceOrigin.SYNTHETIC_DISPLAY_LABEL
+
+
+def _is_atlasdata_structural_display_label(clause: Clause) -> bool:
+    if clause.heading is None:
+        return False
+    labels = _ATLASDATA_STRUCTURAL_DISPLAY_LABELS.get(clause.clause_type, frozenset())
+    return clause.heading.strip() in labels
 
 
 def _attribute_origin(clause: Clause, path: str) -> tuple[SourceSurfaceOrigin, str | None]:

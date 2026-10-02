@@ -154,7 +154,7 @@ not implied by the Series-D transport gates.
 These cases are technical contract examples, not new Golden semantic decisions:
 
 - **T01 positive:** own source-extracted heading and body remain distinct resolvable surfaces.
-- **T02 negative:** a synthetic display heading is visible as display-only, not original evidence.
+- **T02 negative:** a synthetic/structural display label is not materialized as a heading source surface; an unresolved non-synthetic heading remains distinguishable from source extraction.
 - **T03 negative:** an unattributed heading stays `unresolved` rather than being promoted by presence.
 - **T17 negative:** identical text in heading/body or another clause remains bound to the declared
   source identity.
@@ -180,8 +180,9 @@ For a target clause the inventory contains:
 - the direct same-parent leaf sequence in canonical document order on both sides of the target;
 - the first leaf as an explicit `first_leaf_candidate` reason only, never as a scope decision;
 - direct internal reference targets; and
-- clauses with reverse internal references to the target or another clause in its same-parent leaf
-  sequence.
+- clauses with reverse internal references to the target or to a same-parent sequence member that
+  the target itself explicitly references. Reverse references to arbitrary other siblings do not
+  become target context merely because all clauses share a large leaf group.
 
 A sibling sequence never walks through a more distant common ancestor to borrow a descendant from
 another branch. Missing parents, ancestor cycles, parent/order contradictions and unresolved or
@@ -214,7 +215,7 @@ state is not an adoption/release decision and all foreign selected entries keep
 Priority is deliberately structural rather than lexical:
 
 1. target body and target heading are an all-or-nothing core for budget purposes when available;
-2. reverse and direct explicit references are considered before unlinked proximity;
+2. direct references and target-linked reverse references are considered before unlinked proximity;
 3. ancestor context follows; and
 4. ordinary same-parent sequence candidates are ordered by distance, with forward context before
    equally distant backward context.
@@ -437,3 +438,24 @@ the explicit statement that model quality has not been assessed. AP05 receives s
 structural paths, addressable excerpts, budgets, gaps and the four fingerprint classes as retrieval
 inputs; it is not required to copy the extractor prompt or its complete selected context into a
 retrieval representation.
+
+
+### Post-Series-F correction from real document inspection
+
+Model-free inspections of IEC 61508-2/3, ISO 26262-2 and EN 50126-1 exposed two contract bugs that
+were not visible in the original synthetic matrix. They are corrected without introducing AP03
+model work:
+
+- AtlasData structural display values such as `REQUIREMENT` and `OBJECTIVE` remain usable display
+  metadata but no longer create body-independent `heading` source surfaces. A non-placeholder
+  AtlasData title (for example a term title such as `hazard log`) is resolved as an
+  `atlasdata-structure-title` confirmed source assignment when older documents have no more specific
+  heading provenance. Explicit source-extraction/confirmation provenance still takes precedence.
+- Reverse-reference discovery no longer treats every sibling in a potentially very large leaf group
+  as an implicit target. Reverse edges are retained when they point directly to the target or to a
+  local sequence member that the target explicitly references. This preserves HFT-style reciprocal
+  references while preventing unrelated term/annex references from consuming target context budget.
+
+The correction does not infer semantic reach. Selected foreign sources continue to carry
+`semantic_reach_confirmed: false`, and unresolved natural-language range references remain visible
+as gaps rather than being guessed.

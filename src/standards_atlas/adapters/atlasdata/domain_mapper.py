@@ -26,6 +26,8 @@ from standards_atlas.domain.model import (
     DocumentStructureClassification,
     DocumentTable,
     DocumentTableId,
+    GeneratedAttribute,
+    GenerationMethod,
     NormativeStatus,
     Standard,
     StandardKey,
@@ -238,7 +240,7 @@ def _map_structure_item_to_clause(
         visible_reference=item.visible_reference,
         title=title,
     )
-    return Clause(
+    clause = Clause(
         id=_build_clause_id(
             standard_name=standard_name,
             year=item.publication_year or year,
@@ -263,6 +265,36 @@ def _map_structure_item_to_clause(
         enum_prefix=item.enum_prefix,
         identifier_width=item.identifier_width,
     )
+    if title is not None and _is_structural_display_heading(item, title):
+        clause = clause.mark_generated(
+            GeneratedAttribute(
+                path="baseline.heading",
+                generator="atlasdata-structural-display-label",
+                method=GenerationMethod.DETERMINISTIC,
+            )
+        )
+    return clause
+
+
+def _is_structural_display_heading(item: StructureItem, title: str) -> bool:
+    """Recognize AtlasData type placeholders without discarding real clause titles.
+
+    Historical/public AtlasData files use uppercase type labels for heading-less semantic leaves
+    (notably ``REQUIREMENT`` and ``OBJECTIVE``).  They are useful display metadata, but they are
+    not source headings and must never become heading Evidence surfaces.
+    """
+
+    placeholder = {
+        AtlasItemType.TOC: {"TOC", "HEADING"},
+        AtlasItemType.CLAUSE: {"CLAUSE", "HEADING"},
+        AtlasItemType.REQUIREMENT: {"REQUIREMENT"},
+        AtlasItemType.OBJECTIVE: {"OBJECTIVE"},
+        AtlasItemType.TABLE: {"TABLE"},
+        AtlasItemType.MISC: {"MISC"},
+        AtlasItemType.SCOPE: {"SCOPE"},
+        AtlasItemType.TERM: {"TERM"},
+    }.get(item.item_type, set())
+    return title.strip() in placeholder
 
 
 def _document_structure_classification(
