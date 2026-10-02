@@ -37,7 +37,7 @@ from standards_atlas.application.assertion_qualification.review_pilot_models imp
     AssertionProposalEvidenceSnapshot,
 )
 from standards_atlas.application.assertion_qualification.source_resolution import (
-    FrozenSourceResolver,
+    EvidenceSourceResolver,
 )
 from standards_atlas.application.formal_semantics import FormalClassHierarchy
 from standards_atlas.domain.model import (
@@ -81,7 +81,7 @@ def evaluate_case(
     proposal: ClauseEvaluationCandidate | None,
     *,
     class_hierarchy: FormalClassHierarchy,
-    source_resolver: FrozenSourceResolver | None = None,
+    source_resolver: EvidenceSourceResolver | None = None,
 ) -> CaseMatchResult:
     """Evaluate one case without semantic guessing or best-fit attribute pairing."""
     golden_entities = {entity.id: entity for entity in golden.entities}
@@ -699,7 +699,7 @@ def _evidence_integrity_findings(
     source_document_key: str,
     proposal: ClauseEvaluationCandidate | None,
     *,
-    source_resolver: FrozenSourceResolver | None,
+    source_resolver: EvidenceSourceResolver | None,
 ) -> tuple[EvidenceIntegrityFinding, ...]:
     if proposal is None:
         return ()
@@ -715,7 +715,7 @@ def _evidence_integrity_findings(
     for owner_kind, owner_id, anchor in owners:
         if source_resolver is None:
             status = EvidenceIntegrityStatus.UNAVAILABLE
-            reason = "no frozen review source audit was supplied for integrity checking"
+            reason = "no candidate source resolver was supplied for integrity checking"
         else:
             resolution = source_resolver.resolve(
                 source_document_key=source_document_key,

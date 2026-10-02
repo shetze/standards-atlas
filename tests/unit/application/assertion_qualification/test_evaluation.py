@@ -679,3 +679,108 @@ def test_diagnostic_vocabulary_contains_the_ap01_codes_and_open_state() -> None:
         "conditional_semantics_loss",
         "unclassified_semantic_mismatch",
     }
+
+
+def _native_source_package_with_parent_heading():
+    from standards_atlas.application.context import (
+        build_context_source_package,
+        build_structured_context_candidates,
+        context_source_package_binding,
+        select_structured_context,
+    )
+    from standards_atlas.domain.model import (
+        Clause,
+        ClauseType,
+        DocumentKey,
+        DocumentType,
+        EngineeringDocument,
+        GeneratedAttribute,
+        GenerationMethod,
+        StandardReference,
+        TextBlock,
+    )
+
+    parent = Clause(
+        id=ClauseId(value="parent"),
+        reference=StandardReference(standard="EN50716", clause="0"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Verification context",
+    ).mark_generated(
+        GeneratedAttribute(
+            path="baseline.heading",
+            generator="test-source-extraction",
+            method=GenerationMethod.SOURCE_EXTRACTION,
+        )
+    )
+    target = Clause(
+        id=CLAUSE,
+        reference=StandardReference(standard="EN50716", clause="1"),
+        clause_type=ClauseType.REQUIREMENT,
+        parent_id=parent.id,
+        content=(TextBlock(id="body", text=TEXT),),
+    ).mark_generated(
+        GeneratedAttribute(
+            path="baseline.content",
+            generator="test-source-extraction",
+            method=GenerationMethod.SOURCE_EXTRACTION,
+        )
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="EN50716"),
+        title="Synthetic evaluation source",
+        document_type=DocumentType.STANDARD,
+        clauses=(parent, target),
+    )
+    inventory = build_structured_context_candidates(document, target)
+    selection = select_structured_context(inventory)
+    package = build_context_source_package(document, inventory, selection)
+    return package, context_source_package_binding(package)
+
+
+def test_native_package_resolves_foreign_heading_without_relaxing_golden_span_match() -> None:
+    package, binding = _native_source_package_with_parent_heading()
+    heading = "Verification context"
+    anchor = EvidenceAnchor(
+        id="parent-heading",
+        source_clause_id=ClauseId(value="parent"),
+        source_kind=EvidenceSourceKind.HEADING,
+        start_offset=0,
+        end_offset=len(heading),
+        content_hash=hashlib.sha256(heading.encode()).hexdigest(),
+    )
+    proposal = _proposal().model_copy(
+        update={
+            "evidence_anchors": (anchor,),
+            "entity_proposals": tuple(
+                item.model_copy(update={"source_anchor_ids": (anchor.id,)})
+                for item in _proposal().entity_proposals
+            ),
+            "assertion_proposals": (
+                _proposal()
+                .assertion_proposals[0]
+                .model_copy(update={"evidence_anchor_ids": (anchor.id,)}),
+            ),
+            "context_source_bindings": (binding,),
+        }
+    )
+
+    report = AssertionQualificationEvaluator().evaluate(
+        _suite(), (proposal,), source_packages=(package,)
+    )
+
+    assert report.source_binding == "native_package_verified"
+    assert report.cases[0].evidence_integrity.valid == 3
+    assert report.cases[0].evidence_span_exact_match.accuracy.value == 0.0
+    assert report.cases[0].source_comparison.status.value == "matching"
+    assert report.cases[0].source_comparison.additional_candidate_surfaces >= 1
+
+
+def test_native_package_missing_from_private_store_is_visible_and_not_a_frozen_fallback() -> None:
+    package, binding = _native_source_package_with_parent_heading()
+    proposal = _proposal().model_copy(update={"context_source_bindings": (binding,)})
+
+    report = AssertionQualificationEvaluator().evaluate(_suite(), (proposal,), source_packages=())
+
+    assert report.source_binding == "native_package_partial"
+    assert report.cases[0].source_comparison.status.value == "partial"
+    assert report.cases[0].evidence_integrity.unavailable == 3

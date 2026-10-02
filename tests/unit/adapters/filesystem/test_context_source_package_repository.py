@@ -75,3 +75,43 @@ def test_hash_without_private_package_bytes_is_not_reported_as_available(tmp_pat
     )
 
     assert repository.load(binding) is None
+
+
+def test_proposal_and_private_source_package_roundtrip_keep_binding_resolvable(tmp_path) -> None:
+    from standards_atlas.adapters.filesystem import FileSystemDocumentKnowledgeProposalRepository
+    from standards_atlas.domain.model import (
+        CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT,
+        DocumentKnowledgeProposal,
+        KnowledgeProposalProvenance,
+    )
+
+    packages = FileSystemContextSourcePackageRepository(tmp_path)
+    package = _package()
+    binding = packages.save(package)
+    proposal = DocumentKnowledgeProposal(
+        proposal_run_id="run-evidence-roundtrip",
+        source_document_key=package.document_key,
+        context_source_bindings=(binding,),
+        proposal_provenance=KnowledgeProposalProvenance(
+            extractor="synthetic-test",
+            extractor_version="1",
+            source_binding_contract_id=CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT,
+        ),
+    )
+    proposals = FileSystemDocumentKnowledgeProposalRepository(tmp_path)
+    proposals.save(proposal)
+
+    reloaded = proposals.load(proposal.proposal_run_id, proposal.source_document_key)
+    assert reloaded is not None
+    assert reloaded.context_source_bindings == (binding,)
+    assert packages.load(reloaded.context_source_bindings[0]) == package
+
+    proposal_path = (
+        tmp_path
+        / "knowledge-proposals"
+        / proposal.proposal_run_id
+        / f"{proposal.source_document_key}.json"
+    )
+    public_proposal = proposal_path.read_text(encoding="utf-8")
+    assert "Protected source text" not in public_proposal
+    assert "Protected heading" not in public_proposal

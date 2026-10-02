@@ -281,6 +281,19 @@ def evaluate_assertion_proposals(
             help="Archived review for source verification only; candidates still use --proposal.",
         ),
     ] = None,
+    source_package_workspace: Annotated[
+        Path | None,
+        typer.Option(
+            "--source-package-workspace",
+            exists=True,
+            file_okay=False,
+            readable=True,
+            help=(
+                "Workspace containing private AP02 context-source-packages referenced by "
+                "native proposal bindings. Excludes --review."
+            ),
+        ),
+    ] = None,
     output: Annotated[
         Path,
         typer.Option(
@@ -306,6 +319,10 @@ def evaluate_assertion_proposals(
             )
         if review is not None and source_review is not None:
             raise ValueError("--source-review is only valid with --proposal, not --review")
+        if review is not None and source_package_workspace is not None:
+            raise ValueError(
+                "--source-package-workspace is only valid with --proposal, not --review"
+            )
         sources = [golden, *(proposal or ())]
         sources.extend(path for path in (review, source_review) if path is not None)
         ensure_distinct_output(output, *sources)
@@ -313,15 +330,28 @@ def evaluate_assertion_proposals(
             ensure_distinct_output(summary_output, *sources, output)
             ensure_distinct_output(output, summary_output)
         suite = load_assertion_golden_suite(golden)
+        proposals = (
+            tuple(load_document_knowledge_proposal(path) for path in proposal)
+            if proposal
+            else None
+        )
+        source_packages = None
+        if proposals is not None and source_package_workspace is not None:
+            package_repository = FileSystemContextSourcePackageRepository(
+                source_package_workspace
+            )
+            source_packages = tuple(
+                package
+                for candidate in proposals
+                for binding in candidate.context_source_bindings
+                if (package := package_repository.load(binding)) is not None
+            )
         report = AssertionQualificationEvaluator().evaluate(
             suite,
-            (
-                tuple(load_document_knowledge_proposal(path) for path in proposal)
-                if proposal
-                else None
-            ),
+            proposals,
             review_audit=load_assertion_review_audit(review) if review is not None else None,
             source_audit=load_assertion_review_audit(source_review) if source_review else None,
+            source_packages=source_packages,
         )
         report_path = write_assertion_qualification_report(report, output)
         summary_path = (

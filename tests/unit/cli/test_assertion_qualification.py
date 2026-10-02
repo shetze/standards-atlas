@@ -100,6 +100,7 @@ def test_assertion_evaluate_help_is_registered() -> None:
     assert "--proposal" in result.stdout
     assert "--output" in result.stdout
     assert "--summary-output" in result.stdout
+    assert "--source-package-workspace" in result.stdout
 
 
 def test_assertion_cascade_help_is_registered() -> None:
@@ -148,3 +149,112 @@ def test_assertion_cascade_help_exposes_review_pilot_selection() -> None:
     result = runner.invoke(app, ["evaluation", "assertion-cascade", "--help"])
     assert result.exit_code == 0
     assert "--review-pilot" in result.stdout
+
+
+def test_assertion_evaluate_cli_loads_native_private_source_packages(tmp_path: Path) -> None:
+    import hashlib
+
+    from standards_atlas.adapters.filesystem import (
+        FileSystemContextSourcePackageRepository,
+        FileSystemDocumentKnowledgeProposalRepository,
+    )
+    from standards_atlas.application.context import (
+        build_context_source_package,
+        build_structured_context_candidates,
+        select_structured_context,
+    )
+    from standards_atlas.domain.model import (
+        CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT,
+        Clause,
+        ClauseId,
+        ClauseType,
+        DocumentKey,
+        DocumentKnowledgeProposal,
+        DocumentType,
+        EngineeringDocument,
+        KnowledgeProposalProvenance,
+        StandardReference,
+        TextBlock,
+    )
+
+    text = "Synthetic source body"
+    clause = Clause(
+        id=ClauseId(value="c1"),
+        reference=StandardReference(standard="DOC", clause="1"),
+        clause_type=ClauseType.CLAUSE,
+        content=(TextBlock(id="text", text=text),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Synthetic",
+        document_type=DocumentType.OTHER,
+        clauses=(clause,),
+    )
+    inventory = build_structured_context_candidates(document, clause)
+    selection = select_structured_context(inventory)
+    package = build_context_source_package(document, inventory, selection)
+    package_binding = FileSystemContextSourcePackageRepository(tmp_path).save(package)
+    proposal = DocumentKnowledgeProposal(
+        proposal_run_id="run-native-package",
+        source_document_key="DOC",
+        ontology_versions=("standards-atlas-core@2.0.0",),
+        context_source_bindings=(package_binding,),
+        proposal_provenance=KnowledgeProposalProvenance(
+            extractor="synthetic-test",
+            extractor_version="1",
+            source_binding_contract_id=CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT,
+        ),
+    )
+    proposal_repository = FileSystemDocumentKnowledgeProposalRepository(tmp_path)
+    proposal_repository.save(proposal)
+    proposal_path = tmp_path / "knowledge-proposals" / proposal.proposal_run_id / "DOC.json"
+
+    golden = tmp_path / "golden-native.yaml"
+    golden.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": 1,
+                "id": "dev-native",
+                "version": "1",
+                "partition": "development",
+                "audit": {"review_id": "test", "review_version": "1", "audit_sha256": "a" * 64},
+                "ontology_versions": ["standards-atlas-core@2.0.0"],
+                "cases": [
+                    {
+                        "source_document_key": "DOC",
+                        "clause_id": {"value": "c1"},
+                        "reference": "DOC:1",
+                        "canonical_reference": "DOC 1",
+                        "text_sha256": hashlib.sha256(text.encode()).hexdigest(),
+                        "source_sha256": "c" * 64,
+                        "entities": [],
+                        "assertions": [],
+                    }
+                ],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    output = tmp_path / "native-report.json"
+
+    result = runner.invoke(
+        app,
+        [
+            "evaluation",
+            "assertion-evaluate",
+            "--golden",
+            str(golden),
+            "--proposal",
+            str(proposal_path),
+            "--source-package-workspace",
+            str(tmp_path),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    report = AssertionQualificationReport.model_validate_json(output.read_text())
+    assert report.source_binding == "native_package_verified"
+    assert report.cases[0].source_comparison.status.value == "matching"

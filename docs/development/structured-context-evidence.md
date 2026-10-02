@@ -366,3 +366,40 @@ Series D does not add canonical adoption, new Golden decisions, external-evidenc
 ontology, Applicability logic or model-quality claims. The AP01 `FrozenSourceResolver` and historical
 audit reader remain separate and unchanged. Full native source-package evaluation and persistence/
 projection/provider roundtrip remain assigned to Series E.
+
+## 16. Series E evaluator source separation
+
+The clause-local evaluator now has two deliberately distinct source bases. Historical review
+snapshots continue to resolve evidence through the byte-bound AP01 audit. Native proposals may
+instead carry their current text-free `ContextSourcePackageBinding` values and be evaluated with the
+matching private packages. When that native package entrance is selected, candidate evidence is
+resolved only against the exact delivered package; historical source bytes are not a fallback.
+
+A text-free per-case source comparison reports whether overlapping current source surfaces match the
+historical audit (when supplied) or the Golden target-body hash. Additional current context is
+reported separately. This comparison does not participate in semantic or span matching and cannot
+improve AP01 metrics. Missing package bytes remain missing even when their public hash is known.
+
+Current review assertion-evidence annotations can identify source clause plus body/heading kind.
+Historical annotations that omit those fields remain selected-clause-body spans. Publication keeps
+assertion ownership clause-local while preserving the reviewed evidence owner. No entity-evidence
+annotation is synthesized.
+
+## 17. Series E persistence, projection and source access
+
+`DocumentKnowledgeProposal` and `ContextSourcePackage` retain their existing split persistence:
+proposal artifacts expose only package bindings, while source text stays in the private
+hash-addressed package repository. Reloading either artifact does not create a new source revision or
+copy protected text into the proposal.
+
+Formal projections already carry `evidence_ids`. `FormalProjectionEvidenceResolver` is a small
+application resolver that maps those IDs back to canonical `DocumentKnowledge` anchors or existing
+artifact lineage and then uses `SourceSurfaceResolver` for the real body/heading surface. It adds no
+GraphStore and no new adoption state. The existing `SourceAccessPolicy` controls whether the
+resolved source may expose text.
+
+The existing MCP access surface remains unchanged in tool count. Text denial now covers clause body,
+headings and ancestor context, source-text reference mentions, table textual content and neighboring
+formula context. Document allowlists continue to gate clause/table/formula access. Structured table
+and formula handles retain their actual status; Series E does not fabricate textual evidence from
+markers, images or unavailable transcriptions.

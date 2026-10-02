@@ -32,11 +32,13 @@ from standards_atlas.application.assertion_qualification.review_pilot_models imp
     ApplicabilitySelectionCorpus,
     AssertionReviewApplicabilitySource,
     AssertionReviewCase,
+    AssertionReviewEvidenceSpan,
     AssertionReviewPilot,
     AssertionReviewProposalSnapshot,
     AssertionReviewSelection,
     AssertionReviewSourceCorpus,
     AssertionReviewTargetSuite,
+    _review_evidence_source_text,
 )
 from standards_atlas.application.knowledge_proposal_extraction import (
     assertion_cbox_context,
@@ -485,6 +487,36 @@ def _proposal_snapshot(
         assertions=candidate.assertions,
         violations=candidate.violations,
         failures=candidate.failures,
+        source_package_binding=next(
+            (
+                binding
+                for binding in proposal.context_source_bindings
+                if binding.target_clause_id == clause_id
+            ),
+            None,
+        ),
+    )
+
+
+def _publish_review_evidence_span(
+    case: AssertionReviewCase, span: AssertionReviewEvidenceSpan
+) -> GoldenEvidenceSpan:
+    # The review model validator has already established that this exact source surface is
+    # present in the fixed review context. Re-resolve it here to derive the Golden hash without
+    # copying or normalizing source text.
+    source_text = _review_evidence_source_text(case, span)
+    if source_text is None:  # pragma: no cover - protected by model validation
+        raise ValueError("review evidence source disappeared before publication")
+    source_clause_id = span.source_clause_id or case.clause_id
+    return GoldenEvidenceSpan(
+        source_document_key=case.document_key,
+        clause_id=ClauseId(value=source_clause_id),
+        source_kind=span.source_kind,
+        start_offset=span.start_offset,
+        end_offset=span.end_offset,
+        content_hash=hashlib.sha256(
+            source_text[span.start_offset : span.end_offset].encode("utf-8")
+        ).hexdigest(),
     )
 
 
@@ -514,17 +546,7 @@ def _publish_clause_case(case: AssertionReviewCase) -> AssertionGoldenCase:
                 object=assertion.object,
                 normative_force=assertion.normative_force,
                 evidence=tuple(
-                    GoldenEvidenceSpan(
-                        source_document_key=case.document_key,
-                        clause_id=ClauseId(value=case.clause_id),
-                        source_kind="body",
-                        start_offset=span.start_offset,
-                        end_offset=span.end_offset,
-                        content_hash=hashlib.sha256(
-                            case.text[span.start_offset : span.end_offset].encode("utf-8")
-                        ).hexdigest(),
-                    )
-                    for span in assertion.evidence
+                    _publish_review_evidence_span(case, span) for span in assertion.evidence
                 ),
             )
             for assertion in case.expected.assertions

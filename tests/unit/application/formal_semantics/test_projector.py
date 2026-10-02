@@ -4,8 +4,14 @@ import hashlib
 
 import pytest
 
-from standards_atlas.application.formal_semantics import DeterministicFormalSemanticProjector
+from standards_atlas.application.context import SourceAccessPolicy
+from standards_atlas.application.formal_semantics import (
+    DeterministicFormalSemanticProjector,
+    FormalEvidenceResolutionStatus,
+    FormalProjectionEvidenceResolver,
+)
 from standards_atlas.domain.model import (
+    ArtifactLineage,
     Clause,
     ClauseId,
     ClauseType,
@@ -25,6 +31,7 @@ from standards_atlas.domain.model import (
     SemanticResource,
     StandardReference,
     TextBlock,
+    artifact_reference,
 )
 
 STAT = "http://lunetix.org/standards-atlas#"
@@ -179,3 +186,91 @@ def test_projector_rejects_knowledge_class_not_declared_by_bound_ontologies() ->
 def test_projector_rejects_knowledge_predicate_not_declared_by_bound_ontologies() -> None:
     with pytest.raises(ValueError, match="terms not declared.*unknownPredicate"):
         DeterministicFormalSemanticProjector().project(_document(unknown_predicate=True))
+
+
+def _document_with_multisurface_evidence() -> EngineeringDocument:
+    base = _document()
+    clause = base.clauses[0].with_baseline_updates(heading="Verification context")
+    heading_anchor = EvidenceAnchor(
+        id="anchor:C1:heading",
+        source_clause_id=clause.id,
+        source_kind=EvidenceSourceKind.HEADING,
+        start_offset=0,
+        end_offset=len(clause.heading or ""),
+        content_hash=hashlib.sha256((clause.heading or "").encode()).hexdigest(),
+    )
+    knowledge = base.knowledge.model_copy(
+        update={
+            "evidence_anchors": (*base.knowledge.evidence_anchors, heading_anchor),
+            "entities": tuple(
+                entity.model_copy(
+                    update={"source_anchor_ids": (*entity.source_anchor_ids, heading_anchor.id)}
+                )
+                for entity in base.knowledge.entities
+            ),
+            "assertions": tuple(
+                assertion.model_copy(
+                    update={
+                        "evidence_anchor_ids": (
+                            *assertion.evidence_anchor_ids,
+                            heading_anchor.id,
+                        )
+                    }
+                )
+                for assertion in base.knowledge.assertions
+            ),
+        }
+    )
+    candidate = base.model_copy(update={"clauses": (clause,), "knowledge": knowledge})
+    document = EngineeringDocument.model_validate(candidate.model_dump(mode="json"))
+    lineage = ArtifactLineage(artifact=artifact_reference("engineering_document", document))
+    return EngineeringDocument.model_validate(
+        document.model_copy(update={"lineage": lineage}).model_dump(mode="json")
+    )
+
+
+def test_every_formal_projection_evidence_id_resolves_to_canonical_owner_and_surface() -> None:
+    document = _document_with_multisurface_evidence()
+    projection = DeterministicFormalSemanticProjector().project(document)
+    resolver = FormalProjectionEvidenceResolver(document, projection)
+
+    resolutions = [
+        resolution
+        for assertion in projection.assertions
+        for resolution in resolver.resolve_assertion_evidence(assertion)
+    ]
+
+    assert resolutions
+    assert all(item.status is FormalEvidenceResolutionStatus.RESOLVED for item in resolutions)
+    assert {item.kind for item in resolutions} == {"knowledge_anchor", "artifact_lineage"}
+    knowledge_sources = [item.source for item in resolutions if item.kind == "knowledge_anchor"]
+    assert any(
+        item is not None and item.identity.source_kind is EvidenceSourceKind.BODY
+        for item in knowledge_sources
+    )
+    assert any(
+        item is not None and item.identity.source_kind is EvidenceSourceKind.HEADING
+        for item in knowledge_sources
+    )
+
+
+def test_formal_evidence_resolution_honors_text_access_policy() -> None:
+    document = _document_with_multisurface_evidence()
+    projection = DeterministicFormalSemanticProjector().project(document)
+    resolver = FormalProjectionEvidenceResolver(
+        document,
+        projection,
+        access_policy=SourceAccessPolicy(
+            allowed_document_keys=(document.key.value,),
+            expose_text=False,
+        ),
+    )
+    relation = next(
+        item for item in projection.assertions if item.predicate.iri == f"{STAT}specifies"
+    )
+
+    resolutions = resolver.resolve_assertion_evidence(relation)
+
+    assert resolutions
+    assert all(item.status is FormalEvidenceResolutionStatus.NOT_AUTHORIZED for item in resolutions)
+    assert all(item.source is not None and item.source.text is None for item in resolutions)

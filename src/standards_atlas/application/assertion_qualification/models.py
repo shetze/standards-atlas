@@ -15,6 +15,7 @@ from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.domain.model import (
     AssertionObject,
     ClauseId,
+    ContextSourcePackageBinding,
     EvidenceSourceKind,
     NormativeForce,
 )
@@ -629,6 +630,45 @@ type CandidateProvenance = Annotated[
 ]
 
 
+class CandidateSourceComparisonStatus(StrEnum):
+    """Comparability of native candidate sources to historical expected-source material."""
+
+    NOT_EVALUATED = "not_evaluated"
+    MATCHING = "matching"
+    CHANGED = "changed"
+    PARTIAL = "partial"
+
+
+class CandidateSourceComparison(BaseModel):
+    """Text-free source-state comparison; it never changes strict semantic matching."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    status: CandidateSourceComparisonStatus = CandidateSourceComparisonStatus.NOT_EVALUATED
+    basis: Literal["none", "golden_target_body", "historical_audit_overlap"] = "none"
+    candidate_package_sha256: str | None = Field(
+        default=None, pattern=r"^sha256:[0-9a-f]{64}$"
+    )
+    candidate_document_revision: str | None = Field(
+        default=None, pattern=r"^sha256:[0-9a-f]{64}$"
+    )
+    compared_surfaces: int = Field(default=0, ge=0)
+    matching_surfaces: int = Field(default=0, ge=0)
+    changed_surfaces: int = Field(default=0, ge=0)
+    additional_candidate_surfaces: int = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def counts_are_consistent(self) -> CandidateSourceComparison:
+        if self.compared_surfaces != self.matching_surfaces + self.changed_surfaces:
+            raise ValueError("source comparison surface counts are inconsistent")
+        if self.status is CandidateSourceComparisonStatus.NOT_EVALUATED:
+            if self.basis != "none" or self.compared_surfaces or self.additional_candidate_surfaces:
+                raise ValueError("non-evaluated source comparison cannot contain comparison data")
+        elif self.basis == "none":
+            raise ValueError("evaluated source comparison requires a comparison basis")
+        return self
+
+
 class AssertionQualificationCaseReport(BaseModel):
     """Deterministic comparison result for one golden clause case."""
 
@@ -641,6 +681,7 @@ class AssertionQualificationCaseReport(BaseModel):
     candidate_status: Literal["present", "missing"]
     candidate_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     provenance: CandidateProvenance | None = None
+    source_comparison: CandidateSourceComparison = CandidateSourceComparison()
     entities: CountMetrics
     typed_entities: CountMetrics
     entity_class_accuracy: AccuracyMetrics
@@ -746,6 +787,19 @@ class AssertionQualificationProposalSource(BaseModel):
     request_contract_id: str | None = None
     output_contract_id: str | None = None
     source_binding_contract_id: str | None = None
+    context_source_bindings: tuple[ContextSourcePackageBinding, ...] = ()
+
+    @model_validator(mode="after")
+    def package_bindings_belong_to_source(self) -> AssertionQualificationProposalSource:
+        targets = [binding.target_clause_id for binding in self.context_source_bindings]
+        if len(targets) != len(set(targets)):
+            raise ValueError("qualification proposal source bindings must be unique per target")
+        if any(
+            binding.document_key != self.source_document_key
+            for binding in self.context_source_bindings
+        ):
+            raise ValueError("qualification proposal source binding belongs to another document")
+        return self
 
 
 class AssertionQualificationReport(SchemaBoundModel):
@@ -758,7 +812,12 @@ class AssertionQualificationReport(SchemaBoundModel):
     evaluation_contract: Literal["assertion-clause-local-v1"]
     candidate_mode: Literal["native_proposal", "review_snapshot"]
     audit: AssertionAuditBinding
-    source_binding: Literal["golden_declared", "audit_verified"]
+    source_binding: Literal[
+        "golden_declared",
+        "audit_verified",
+        "native_package_verified",
+        "native_package_partial",
+    ]
     golden_suite_id: str
     golden_suite_version: str
     golden_partition: AssertionGoldenPartition
@@ -806,6 +865,9 @@ class AssertionQualificationReport(SchemaBoundModel):
                 )
             if self.aggregate.candidate_clauses != self.aggregate.clauses:
                 raise ValueError("review snapshot reports require complete candidate coverage")
+        elif self.source_binding in {"native_package_verified", "native_package_partial"}:
+            if not any(source.context_source_bindings for source in self.proposal_sources):
+                raise ValueError("native package source binding requires proposal package bindings")
         for case in self.cases:
             source = source_by_key.get(case.source_document_key)
             provenance = case.provenance

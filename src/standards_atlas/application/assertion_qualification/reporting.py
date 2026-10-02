@@ -123,6 +123,18 @@ def render_assertion_qualification_summary(report: AssertionQualificationReport)
         ]
     )
 
+    source_comparisons = Counter(
+        case.source_comparison.status.value
+        for case in report.cases
+        if case.source_comparison.status.value != "not_evaluated"
+    )
+    if source_comparisons:
+        lines.append(
+            "- Native candidate-source comparability (reporting only): "
+            + ", ".join(f"{status}={count}" for status, count in sorted(source_comparisons.items()))
+            + "; this does not change strict matching."
+        )
+
     rejected = _historical_rejections(report)
     violations = sum(case.proposal_violations for case in report.cases)
     failures = sum(case.proposal_failures for case in report.cases)

@@ -157,12 +157,21 @@ class McpClauseService:
         table = self._knowledge_tables.get_table(table_id)
         self._ensure_document_allowed(table.document_key)
         records = self._knowledge_tables.list_records(table_id, offset=offset, limit=bounded_limit)
-        return [self._redact_source_evidence(item.model_dump(mode="json")) for item in records]
+        payloads = [item.model_dump(mode="json") for item in records]
+        if not self._config.expose.clause_text:
+            payloads = [
+                self._redact_knowledge_table_text({"records": [payload]})["records"][0]
+                for payload in payloads
+            ]
+        return [self._redact_source_evidence(item) for item in payloads]
 
     def get_knowledge_record(self, record_id: str) -> dict[str, Any]:
         record = self._knowledge_tables.get_record(record_id)
         self._ensure_document_allowed(record.document_key)
-        return self._redact_source_evidence(record.model_dump(mode="json"))
+        payload = record.model_dump(mode="json")
+        if not self._config.expose.clause_text:
+            payload = self._redact_knowledge_table_text({"records": [payload]})["records"][0]
+        return self._redact_source_evidence(payload)
 
     def list_untranscribed_formulas(
         self,
@@ -183,6 +192,8 @@ class McpClauseService:
     def get_formula(self, formula_id: str) -> dict[str, Any]:
         payload = self._formula_transcriptions.get(formula_id)
         self._ensure_document_allowed(payload["document_key"])
+        if not self._config.expose.clause_text and isinstance(payload.get("context"), dict):
+            payload["context"] = {"preceding_text": None, "following_text": None}
         return self._redact_source_evidence(payload)
 
     def submit_formula_transcription(
@@ -251,6 +262,11 @@ class McpClauseService:
     ) -> dict[str, Any]:
         if not include_records:
             payload.pop("records", None)
+        elif not self._config.expose.clause_text:
+            payload = self._redact_knowledge_table_text(payload)
+        if not self._config.expose.clause_text:
+            payload["title"] = None
+            payload["header_rows"] = []
         return self._redact_source_evidence(payload)
 
     def _redact_source_evidence(self, value: Any) -> Any:
@@ -306,6 +322,31 @@ class McpClauseService:
     def _serialize_clause(self, payload: dict[str, Any]) -> dict[str, Any]:
         if not self._config.expose.clause_text:
             payload["text"] = ""
+            payload["heading"] = None
+            payload["ancestor_headings"] = []
+            for mention in payload.get("reference_mentions") or []:
+                if isinstance(mention, dict) and "surface_text" in mention:
+                    mention["surface_text"] = ""
+            structure = payload.get("source_structure")
+            if isinstance(structure, dict):
+                for fact in structure.get("facts") or []:
+                    if isinstance(fact, dict) and fact.get("field") in {
+                        "heading",
+                        "ancestor_heading",
+                    }:
+                        fact["value"] = None
         else:
             payload["text"] = payload["text"][: self._config.limits.max_clause_characters]
+        return payload
+
+    @staticmethod
+    def _redact_knowledge_table_text(payload: dict[str, Any]) -> dict[str, Any]:
+        for record in payload.get("records") or []:
+            if not isinstance(record, dict):
+                continue
+            for cell in record.get("cells") or []:
+                if isinstance(cell, dict):
+                    cell["text"] = ""
+            record["technique_recommendation"] = None
+            record["structured_knowledge"] = None
         return payload

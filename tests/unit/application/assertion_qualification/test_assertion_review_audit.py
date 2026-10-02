@@ -901,3 +901,96 @@ def test_wrong_hash_on_available_frozen_surface_is_invalid_not_unavailable() -> 
     assert report.aggregate.evidence_integrity.unavailable == 0
     assert report.aggregate.evidence_integrity.conflicting == 0
     assert report.aggregate.evidence_integrity.validity.value == 0.5
+
+
+def test_native_package_source_is_separate_from_historical_expectation_sources() -> None:
+    from standards_atlas.application.assertion_qualification import (
+        AssertionQualificationEvaluator,
+        publish_assertion_review_pilot,
+    )
+    from standards_atlas.application.context import (
+        build_context_source_package,
+        build_structured_context_candidates,
+        context_source_package_binding,
+        select_structured_context,
+    )
+    from standards_atlas.domain.model import (
+        Clause,
+        ClauseId,
+        ClauseType,
+        DocumentKey,
+        DocumentType,
+        EngineeringDocument,
+        EvidenceAnchor,
+        EvidenceSourceKind,
+        GeneratedAttribute,
+        GenerationMethod,
+        StandardReference,
+        TextBlock,
+    )
+
+    audit = audit_from_payload(_snapshot_payload())
+    suite = publish_assertion_review_pilot(audit)
+    current_text = "Plan updated"
+    clause = Clause(
+        id=ClauseId(value="c1"),
+        reference=StandardReference(standard="DOC", clause="1"),
+        clause_type=ClauseType.REQUIREMENT,
+        content=(TextBlock(id="current", text=current_text),),
+    ).mark_generated(
+        GeneratedAttribute(
+            path="baseline.content",
+            generator="synthetic-source-extraction",
+            method=GenerationMethod.SOURCE_EXTRACTION,
+        )
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Synthetic current document",
+        document_type=DocumentType.STANDARD,
+        clauses=(clause,),
+    )
+    inventory = build_structured_context_candidates(document, clause)
+    selection = select_structured_context(inventory)
+    package = build_context_source_package(document, inventory, selection)
+    binding = context_source_package_binding(package)
+
+    proposal = _native_proposal()
+    current_anchor = EvidenceAnchor(
+        id="current-only-anchor",
+        source_clause_id=ClauseId(value="c1"),
+        source_kind=EvidenceSourceKind.BODY,
+        start_offset=5,
+        end_offset=len(current_text),
+        content_hash=hashlib.sha256(b"updated").hexdigest(),
+    )
+    proposal = proposal.model_copy(
+        update={
+            "evidence_anchors": (current_anchor,),
+            "entity_proposals": tuple(
+                item.model_copy(update={"source_anchor_ids": (current_anchor.id,)})
+                for item in proposal.entity_proposals
+            ),
+            "assertion_proposals": tuple(
+                item.model_copy(update={"evidence_anchor_ids": (current_anchor.id,)})
+                for item in proposal.assertion_proposals
+            ),
+            "context_source_bindings": (binding,),
+        }
+    )
+
+    report = AssertionQualificationEvaluator().evaluate(
+        suite,
+        (proposal,),
+        source_audit=audit,
+        source_packages=(package,),
+    )
+
+    assert report.source_binding == "native_package_verified"
+    assert report.aggregate.evidence_integrity.valid == 2
+    assert report.aggregate.evidence_integrity.invalid == 0
+    assert report.aggregate.evidence_span_exact_match.accuracy.value == 0.0
+    comparison = report.cases[0].source_comparison
+    assert comparison.status.value == "changed"
+    assert comparison.basis == "historical_audit_overlap"
+    assert comparison.changed_surfaces == 1

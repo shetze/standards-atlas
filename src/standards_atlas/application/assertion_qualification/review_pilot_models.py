@@ -13,7 +13,12 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from standards_atlas.application.assertion_qualification.models import AssertionGoldenPartition
 from standards_atlas.application.schema.model import SchemaBoundModel
-from standards_atlas.domain.model import AssertionObject, EvidenceSourceKind, NormativeForce
+from standards_atlas.domain.model import (
+    AssertionObject,
+    ContextSourcePackageBinding,
+    EvidenceSourceKind,
+    NormativeForce,
+)
 
 ASSERTION_REVIEW_PILOT_SCHEMA_VERSION = 1
 _IRI_SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*$")
@@ -152,10 +157,15 @@ class AssertionReviewTargetSuite(BaseModel):
 
 
 class AssertionReviewEvidenceSpan(BaseModel):
-    """Reviewer-authored exact evidence offsets inside the selected clause text."""
+    """Reviewer-authored exact offsets on one explicitly identified review source surface."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
+    # Historical AP01 audit spans omitted these fields and therefore continue to mean the
+    # selected clause body. Current reviews may identify another clause-local body/heading
+    # surface without changing assertion ownership or inventing entity evidence.
+    source_clause_id: str | None = None
+    source_kind: EvidenceSourceKind = EvidenceSourceKind.BODY
     start_offset: int = Field(ge=0)
     end_offset: int = Field(gt=0)
 
@@ -322,6 +332,7 @@ class AssertionReviewProposalSnapshot(BaseModel):
     assertions: tuple[AssertionProposalAssertionSnapshot, ...] = ()
     violations: tuple[str, ...] = ()
     failures: tuple[str, ...] = ()
+    source_package_binding: ContextSourcePackageBinding | None = None
 
 
 class AssertionReviewCase(BaseModel):
@@ -361,11 +372,54 @@ class AssertionReviewCase(BaseModel):
         if self.expected is not None:
             for assertion in self.expected.assertions:
                 for span in assertion.evidence:
-                    if span.end_offset > len(self.text):
+                    source_text = _review_evidence_source_text(self, span)
+                    if source_text is None:
+                        source_clause_id = span.source_clause_id or self.clause_id
                         raise ValueError(
-                            f"assertion review evidence exceeds clause text for {self.clause_id!r}"
+                            "assertion review evidence source is unavailable in the fixed review "
+                            "context: "
+                            f"{self.document_key}:{source_clause_id}:{span.source_kind.value}"
+                        )
+                    if span.end_offset > len(source_text):
+                        raise ValueError(
+                            "assertion review evidence exceeds its declared source surface for "
+                            f"{self.clause_id!r}"
                         )
         return self
+
+
+def _review_evidence_source_text(
+    case: AssertionReviewCase, span: AssertionReviewEvidenceSpan
+) -> str | None:
+    """Resolve only source surfaces actually embedded in this fixed review case."""
+
+    source_clause_id = span.source_clause_id or case.clause_id
+    if source_clause_id == case.clause_id:
+        if span.source_kind is EvidenceSourceKind.BODY:
+            return case.text
+        heading = case.context.get("heading")
+        return heading if isinstance(heading, str) else None
+
+    if span.source_kind is EvidenceSourceKind.HEADING:
+        headings = case.context.get("ancestor_headings")
+        if isinstance(headings, list):
+            for item in headings:
+                if not isinstance(item, dict) or item.get("clause_id") != source_clause_id:
+                    continue
+                value = item.get("heading")
+                if isinstance(value, str):
+                    return value
+
+    associative = case.context.get("associative_context")
+    if isinstance(associative, list):
+        for item in associative:
+            if not isinstance(item, dict) or item.get("clause_id") != source_clause_id:
+                continue
+            field = "text" if span.source_kind is EvidenceSourceKind.BODY else "heading"
+            value = item.get(field)
+            if isinstance(value, str):
+                return value
+    return None
 
 
 class AssertionReviewPilot(SchemaBoundModel):

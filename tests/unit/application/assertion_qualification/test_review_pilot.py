@@ -885,3 +885,75 @@ def test_scope_selection_with_structural_profile_keeps_existing_exclusion_contra
     )
     document = document.model_copy(update={"clauses": (clause,)})
     assert _case_is_in_assertion_review_scope(source, {"DOC": document})
+
+
+def test_publish_preserves_reviewed_parent_heading_evidence_identity() -> None:
+    source = _source_case(clause_id="child", reference="DOC:1.1", text="Child detail.")
+    parent = Clause(
+        id=ClauseId(value="parent"),
+        reference=StandardReference(standard="DOC", clause="1"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Verification plan",
+    )
+    child = Clause(
+        id=ClauseId(value="child"),
+        reference=StandardReference(standard="DOC", clause="1.1"),
+        clause_type=ClauseType.REQUIREMENT,
+        parent_id=parent.id,
+        content=(TextBlock(id="child-text", text=source.text),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Synthetic review source",
+        document_type=DocumentType.OTHER,
+        clauses=(parent, child),
+    )
+    pilot = build_assertion_review_pilot(
+        _corpus(source),
+        (source,),
+        {"DOC": document},
+        _request(clause_ids=("child",)),
+    )
+    expected = AssertionReviewExpected(
+        entities=(
+            AssertionReviewEntity(
+                id="plan",
+                class_iri=f"{STAT}VerificationPlan",
+                normalized_label="Verification plan",
+            ),
+        ),
+        assertions=(
+            AssertionReviewAssertion(
+                id="a1",
+                subject_id="plan",
+                predicate=f"{STAT}specifies",
+                object={"kind": "literal", "value": "child detail"},
+                evidence=(
+                    AssertionReviewEvidenceSpan(
+                        source_clause_id="parent",
+                        source_kind=EvidenceSourceKind.HEADING,
+                        start_offset=0,
+                        end_offset=len("Verification plan"),
+                    ),
+                ),
+            ),
+        ),
+    )
+    completed = pilot.model_copy(
+        update={
+            "cases": (
+                pilot.cases[0].model_copy(
+                    update={"review_status": AssertionReviewStatus.REVIEWED, "expected": expected}
+                ),
+            )
+        }
+    )
+
+    suite = publish_assertion_review_pilot(
+        AssertionReviewAudit(completed.model_dump_json().encode(), json_format=True)
+    )
+
+    evidence = suite.cases[0].assertions[0].evidence[0]
+    assert evidence.clause_id.value == "parent"
+    assert evidence.source_kind is EvidenceSourceKind.HEADING
+    assert evidence.content_hash == hashlib.sha256(b"Verification plan").hexdigest()
