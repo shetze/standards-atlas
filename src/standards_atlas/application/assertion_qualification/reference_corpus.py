@@ -130,6 +130,9 @@ class ReferenceCorpusPlan(BaseModel):
             raise ValueError("development and holdout source groups overlap")
         if any(c.expected_status != "pending" for c in (*self.development, *self.holdout)):
             raise ValueError("corpus planning cannot publish expected knowledge")
+        expected_hash = _canonical_sha256(self.model_dump(mode="json", exclude={"plan_sha256"}))
+        if self.plan_sha256 != expected_hash:
+            raise ValueError("reference corpus plan_sha256 does not match plan content")
         return self
 
 

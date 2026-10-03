@@ -161,3 +161,21 @@ def test_holdout_cannot_expose_or_confirm_model_proposal_by_default():
             suite_id="h",
             suite_version="1",
         )
+
+
+def test_review_ontology_options_use_productive_extraction_vocabulary():
+    from standards_atlas.application.assertion_qualification.assertion_review import (
+        review_ontology_options,
+    )
+
+    classes, predicates = review_ontology_options(
+        ("standards-atlas-core@2.0.0", "functional-safety@2.1.0")
+    )
+    by_class = {item.label: item.iri for item in classes}
+    by_predicate = {item.label: item.iri for item in predicates}
+    assert by_class["WorkProduct"] == "http://lunetix.org/standards-atlas#WorkProduct"
+    assert by_class["AssessmentActivity"] == (
+        "http://lunetix.org/standards-atlas#AssessmentActivity"
+    )
+    assert by_predicate["requires"] == "http://lunetix.org/standards-atlas#requires"
+    assert by_predicate["assesses"] == "http://lunetix.org/standards-atlas#assesses"

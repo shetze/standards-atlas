@@ -10,6 +10,58 @@ experiment was executed in Series E. The local environment has no `codex` execut
 Codex-client MCP tool-read probe is therefore implemented but recorded as **not executed**. All new
 access-control, handoff and staging tests use synthetic data only.
 
+## Post-Series-E correction — S07/S08 preparation binding
+
+A locally observed Series-D usability/integration gap was corrected on the post-Series-E snapshot
+without starting Series F. `evaluation assertion-review-workbench-build` no longer asks an operator to
+copy `corpus_plan_sha256`, `partition`, `source_group`, source-package paths, or ontology class/property
+lists into a second manifest. Its build manifest now binds the actual S07
+`partition-and-exposure.json`; Atlas verifies that file's `plan_sha256`, resolves the selected case from
+the plan, obtains partition/source group from that plan, reconstructs the deterministic AP02
+`ContextSourcePackage` from the persisted `EngineeringDocument`, persists it through the existing
+hash-addressed private repository, and derives review class/predicate choices from the same formal
+ontology `extraction_vocabulary` used by productive source extraction. An empty `cases` list builds all
+planned Development/Holdout cases; an explicit list can select a smaller review package and optionally
+bind a Development proposal. Holdout proposals remain rejected by default.
+
+The correction also closes a cross-series hash defect: S08 previously calculated
+`source_package_sha256` with a JSON digest that did not include the canonical newline used by the AP02
+source-package repository. Review packages now use the existing
+`context_source_package_content_sha256()` contract, so persisted AP02 package hashes, S08 review
+bindings and the Series-E Development experiment allowlist agree exactly. The serialized S08 review
+package contract itself is unchanged, so existing Series-E MCP/Codex readers require no parallel path
+or compatibility alias. Previously prepared S08 packages should be rebuilt before using them as
+Series-E Development authority.
+
+A minimal corrected build manifest is therefore:
+
+```json
+{
+  "contract_id": "assertion-review-workbench-build-v1",
+  "id": "ap03-review",
+  "version": "1",
+  "corpus_plan": "partition-and-exposure.json",
+  "ontology_versions": [
+    "standards-atlas-core@2.0.0",
+    "functional-safety@2.1.0"
+  ],
+  "cases": [
+    {"document_key": "ISO26262-10", "clause_id": "clause-6c47b353e379"}
+  ]
+}
+```
+
+`corpus_plan` is resolved relative to the build manifest. Source packages are written below the
+selected `--workspace` by the existing private repository; no model call is performed.
+
+Correction verification used the already installed Python 3.13 environment and no model/network
+calls: the combined assertion-qualification, Series-E MCP/Codex, Review/Web, CLI, architecture and
+AP01/AP02 integration regression set reports **379 passed, 4 skipped**; the schema suite reports
+**369 passed**. The skipped tests are existing optional-runtime cases. `uv run --offline ruff check`
+was attempted, but dependency resolution stopped before Ruff because `jsonschema` is not present in
+the local uv cache and network access is unavailable. Ruff therefore remains explicitly not executed;
+the full project pytest suite remains for the user's local verification.
+
 ## S09 — server-side Development-only MCP exposure
 
 A dedicated `profile: ap03-development` is added to the existing MCP server. It fails closed unless
@@ -98,13 +150,14 @@ environment, so Ruff remains for the user's local verification together with the
 
 ## Handover to Series F
 
-Series E ends at S10. The next permitted work is AP03-S11 followed by S12. Before any real run, use the
-registered Series-D Development corpus/review packages and an explicitly authorized experiment/data
-route/budget. Generate and inspect the AP03 MCP profile from those real registrations; if Codex will be
-used as an optimizer, perform the real client tool-recognition probe only with an approved provider
-route and the synthetic/text-free probe. Series F may then run B0/P1/P2 and at most the bounded
-Development prompt variant(s). Holdout remains inaccessible and must not be used for optimization.
-No S11/S12 model result is part of this Series-E delivery.
+Series E ends at S10. The next permitted work is AP03-S11 followed by S12. Before any real run, rebuild
+any previously prepared S08 review packages with the corrected plan-bound build path above, then use
+the registered Development packages and an explicitly authorized experiment/data route/budget.
+Generate and inspect the AP03 MCP profile from those real registrations; if Codex will be used as an
+optimizer, perform the real client tool-recognition probe only with an approved provider route and the
+synthetic/text-free probe. Series F may then run B0/P1/P2 and at most the bounded Development prompt
+variant(s). Holdout remains inaccessible and must not be used for optimization. No S11/S12 model
+result is part of this Series-E delivery.
 
 ---
 
@@ -164,10 +217,11 @@ forged origins are rejected. Model proposals never write this state.
 
 Publication is a separate operation over the persisted human state.
 `evaluation assertion-review-workbench-publish` emits an `AssertionGoldenSuite` only for genuinely
-confirmed/corrected cases; pending/deferred/rejected cases remain unpublished. Package preparation is
-available through `evaluation assertion-review-workbench-build` from already bound source-package
-files and explicit ontology options. Neither operation adopts `DocumentKnowledge` or enables canonical
-knowledge adoption.
+confirmed/corrected cases; pending/deferred/rejected cases remain unpublished. The original Series-D
+build input used already-bound source-package files and explicit ontology options; the post-Series-E
+correction documented above supersedes only that preparation input and leaves the persisted review
+package/publication contract unchanged. Neither operation adopts `DocumentKnowledge` or enables
+canonical knowledge adoption.
 
 ## Series-D tests and execution status
 

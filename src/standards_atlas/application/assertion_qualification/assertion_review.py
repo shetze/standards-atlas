@@ -33,7 +33,13 @@ from standards_atlas.application.assertion_qualification.review_pilot_models imp
     AssertionReviewExpected,
     AssertionReviewProposalSnapshot,
 )
-from standards_atlas.application.context.input_binding import ContextSourcePackage
+from standards_atlas.application.context.input_binding import (
+    ContextSourcePackage,
+    context_source_package_content_sha256,
+)
+from standards_atlas.application.knowledge_proposal_extraction.vocabulary import (
+    FormalOntologyVocabulary,
+)
 from standards_atlas.domain.model import ClauseId, EvidenceSourceKind
 
 
@@ -49,6 +55,55 @@ def _digest(value: Any) -> str:
 class ReviewOntologyOption(_Frozen):
     iri: str = Field(min_length=1)
     label: str = Field(min_length=1)
+
+
+class AssertionReviewBuildCase(_Frozen):
+    """One planned case selected for Workbench preparation.
+
+    Partition and source-group authority deliberately do not live here; they are
+    resolved from the bound S07 reference-corpus plan.
+    """
+
+    document_key: str = Field(min_length=1)
+    clause_id: str = Field(min_length=1)
+    proposal: str | None = Field(default=None, min_length=1)
+
+
+class AssertionReviewBuildManifest(_Frozen):
+    """Operator-friendly S08 build request bound to an actual S07 plan file."""
+
+    contract_id: Literal["assertion-review-workbench-build-v1"] = (
+        "assertion-review-workbench-build-v1"
+    )
+    id: str = Field(min_length=1)
+    version: str = Field(min_length=1)
+    corpus_plan: str = Field(min_length=1)
+    ontology_versions: tuple[str, ...] = Field(min_length=1)
+    cases: tuple[AssertionReviewBuildCase, ...] = ()
+
+    @model_validator(mode="after")
+    def case_ids_are_unique(self):
+        keys = [(item.document_key, item.clause_id) for item in self.cases]
+        if len(keys) != len(set(keys)):
+            raise ValueError("assertion review build cases must be unique")
+        return self
+
+
+def review_ontology_options(
+    ontology_versions: tuple[str, ...],
+) -> tuple[tuple[ReviewOntologyOption, ...], tuple[ReviewOntologyOption, ...]]:
+    """Derive Workbench choices from the productive extraction vocabulary."""
+
+    vocabulary = FormalOntologyVocabulary.load(ontology_versions)
+
+    def option(iri: str) -> ReviewOntologyOption:
+        local = iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+        return ReviewOntologyOption(iri=iri, label=local)
+
+    return (
+        tuple(option(iri) for iri in sorted(vocabulary.classes)),
+        tuple(option(iri) for iri in sorted(vocabulary.properties)),
+    )
 
 
 class AssertionReviewSurface(_Frozen):
@@ -228,7 +283,7 @@ def case_from_source_package(
         reference=package.target_reference,
         partition=partition,
         source_group=source_group,
-        source_package_sha256="sha256:" + _digest(package.model_dump(mode="json")),
+        source_package_sha256=context_source_package_content_sha256(package),
         surfaces=surfaces,
         proposal=proposal,
     )

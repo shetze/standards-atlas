@@ -82,3 +82,39 @@ def test_unknown_exposure_can_never_claim_independent_holdout():
     row = next(e for e in plan.exposure_register if e.clause_id == "1")
     assert not row.holdout_independence_eligible
     assert "unknown" in row.blockers
+
+
+def test_plan_hash_detects_tampering():
+    from pydantic import ValidationError
+
+    from standards_atlas.application.assertion_qualification.reference_corpus import (
+        ReferenceCorpusPlan,
+    )
+
+    plan = build_reference_corpus_plan(
+        ReferenceCorpusRequest(
+            plan_id="p",
+            plan_version="1",
+            seed=7,
+            development_limit=1,
+            holdout_limit=1,
+            candidates=(
+                candidate(
+                    "1",
+                    "g1",
+                    exposures=(
+                        ReferenceExposure(kind=ExposureKind.LEGACY_DEVELOPMENT, reference="old"),
+                    ),
+                ),
+                candidate("2", "g2"),
+            ),
+        )
+    )
+    payload = plan.model_dump(mode="json")
+    payload["development"][0]["source_group"] = "tampered"
+    try:
+        ReferenceCorpusPlan.model_validate(payload)
+    except ValidationError as exc:
+        assert "plan_sha256 does not match plan content" in str(exc)
+    else:
+        raise AssertionError("tampered plan was accepted")

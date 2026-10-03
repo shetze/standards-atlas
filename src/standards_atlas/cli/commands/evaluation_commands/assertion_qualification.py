@@ -1225,58 +1225,121 @@ def assertion_review_workbench_build_command(
     manifest: Annotated[
         Path, typer.Option("--manifest", exists=True, dir_okay=False, readable=True)
     ],
+    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = (
+        cli_defaults.DEFAULT_WORKSPACE
+    ),
     output: Annotated[Path, typer.Option("--output", file_okay=False)] = Path(
         "local/review/assertions/ap03/workbench/ap03-assertions"
     ),
 ) -> None:
-    """Prepare one source-first assertion review package from already bound source packages."""
+    """Prepare a source-first assertion review package from a verified S07 corpus plan."""
     from standards_atlas.application.assertion_qualification.assertion_review import (
-        ReviewOntologyOption,
+        AssertionReviewBuildManifest,
         case_from_source_package,
         package_from_cases,
+        review_ontology_options,
         write_assertion_review_package,
+    )
+    from standards_atlas.application.assertion_qualification.reference_corpus import (
+        PlannedReferenceCase,
+        ReferenceCorpusPlan,
     )
     from standards_atlas.application.assertion_qualification.review_pilot_models import (
         AssertionReviewProposalSnapshot,
     )
-    from standards_atlas.application.context.input_binding import ContextSourcePackage
+    from standards_atlas.application.knowledge_proposal_extraction import (
+        assertion_context_source_package,
+    )
 
     try:
-        raw = json.loads(manifest.read_text(encoding="utf-8"))
+        build = AssertionReviewBuildManifest.model_validate_json(manifest.read_bytes())
         base = manifest.parent
+        plan_path = (base / build.corpus_plan).resolve()
+        if not plan_path.is_file():
+            raise ValueError(f"reference corpus plan does not exist: {plan_path}")
+        plan = ReferenceCorpusPlan.model_validate_json(plan_path.read_bytes())
+        planned_cases: dict[tuple[str, str], PlannedReferenceCase] = {
+            (item.document_key, item.clause_id): item for item in (*plan.development, *plan.holdout)
+        }
+        if build.cases:
+            requested = [(item.document_key, item.clause_id, item.proposal) for item in build.cases]
+        else:
+            requested = [
+                (item.document_key, item.clause_id, None)
+                for item in (*plan.development, *plan.holdout)
+            ]
+
+        documents_repo = FileSystemEngineeringDocumentRepository(workspace)
+        source_repo = FileSystemContextSourcePackageRepository(workspace)
+        documents = {}
         cases = []
-        for item in raw["cases"]:
-            source_path = (base / item["source_package"]).resolve()
-            source = ContextSourcePackage.model_validate_json(source_path.read_bytes())
+        for document_key, clause_id, proposal_path in requested:
+            planned = planned_cases.get((document_key, clause_id))
+            if planned is None:
+                raise ValueError(
+                    "review case is not selected by the bound corpus plan: "
+                    f"{document_key}:{clause_id}"
+                )
+            document = documents.get(document_key)
+            if document is None:
+                document = documents_repo.load(DocumentKey(value=document_key))
+                documents[document_key] = document
+            clause = next((item for item in document.clauses if item.id.value == clause_id), None)
+            if clause is None:
+                raise ValueError(
+                    f"reference corpus case clause is unavailable: {document_key}:{clause_id}"
+                )
+            if clause.reference.clause != planned.reference:
+                raise ValueError(
+                    "reference corpus case no longer matches the persisted EngineeringDocument: "
+                    f"{document_key}:{clause_id} expected {planned.reference!r}, "
+                    f"found {clause.reference.clause!r}"
+                )
+
+            source = assertion_context_source_package(document, clause)
+            binding = source_repo.save(source)
             proposal = None
-            if item.get("proposal"):
+            if proposal_path is not None:
+                if planned.partition != "development":
+                    raise ValueError("Holdout review cases cannot bind model proposals by default")
                 proposal = AssertionReviewProposalSnapshot.model_validate_json(
-                    (base / item["proposal"]).resolve().read_bytes()
+                    (base / proposal_path).resolve().read_bytes()
                 )
-            cases.append(
-                case_from_source_package(
-                    source,
-                    partition=AssertionGoldenPartition(item["partition"]),
-                    source_group=item["source_group"],
-                    proposal=proposal,
-                )
+                if (
+                    proposal.source_package_binding is not None
+                    and proposal.source_package_binding != binding
+                ):
+                    raise ValueError(
+                        "review proposal source-package binding differs from the reconstructed "
+                        "S08 source package"
+                    )
+            case = case_from_source_package(
+                source,
+                partition=AssertionGoldenPartition(planned.partition),
+                source_group=planned.source_group,
+                proposal=proposal,
             )
+            if case.source_package_sha256 != binding.package_sha256:
+                raise ValueError("persisted source-package hash differs from review case binding")
+            cases.append(case)
+
+        class_options, predicate_options = review_ontology_options(build.ontology_versions)
         package = package_from_cases(
-            id=raw["id"],
-            version=raw["version"],
-            corpus_plan_sha256=raw["corpus_plan_sha256"],
-            ontology_versions=tuple(raw["ontology_versions"]),
-            class_options=tuple(ReviewOntologyOption.model_validate(v) for v in raw["classes"]),
-            predicate_options=tuple(
-                ReviewOntologyOption.model_validate(v) for v in raw["predicates"]
-            ),
+            id=build.id,
+            version=build.version,
+            corpus_plan_sha256=plan.plan_sha256,
+            ontology_versions=build.ontology_versions,
+            class_options=class_options,
+            predicate_options=predicate_options,
             cases=tuple(cases),
         )
         write_assertion_review_package(output, package)
     except (KeyError, OSError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
     typer.echo(f"Assertion review package : {output}")
+    typer.echo(f"Corpus plan SHA-256      : {package.corpus_plan_sha256}")
     typer.echo(f"Cases                    : {len(package.cases)}")
+    typer.echo(f"Source packages          : {len(package.cases)}")
     typer.echo("Golden publication       : disabled in package preparation")
 
 
