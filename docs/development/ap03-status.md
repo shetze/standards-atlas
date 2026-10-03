@@ -1,4 +1,89 @@
-# AP03 status — Series C / S01-S06 complete
+# AP03 status — Series D / S01-S08 complete
+
+Date: 2026-10-03. Series D implements only AP03-S07 and AP03-S08 on the supplied, locally
+verified post-Series-C snapshot `standards-atlas-current-202610030420.zip`. Series E is not started.
+
+No real model, remote LLM, Codex client, private standards corpus or semantic-quality experiment was
+executed in Series D. All new selection/review tests use public synthetic inputs. No human review
+decision or Golden content was invented by the implementation.
+
+## S07 — grouped reference corpus, partition and exposure contract
+
+Series D adds `assertion-reference-corpus-plan-v1`, a text-free planning contract that separates
+corpus selection from semantic truth. Candidate clauses declare their primary source group and every
+source group that can carry their interpretation. The planner computes transitive connected source
+groups before partitioning; Development and Holdout therefore cannot split a target from a shared
+introduction, exception or other declared bearing context.
+
+The exposure register records legacy Development use, AP02 synthetic use, prior review, prompt
+examples, optimization/diagnosis/Codex exposure and unknown exposure explicitly. Any such exposure
+blocks an independent-Holdout claim for the complete connected group. The historical 20-case
+Development set and AP02 synthetic references are thus provenance, never silently relabeled as
+Holdout. Selection is deterministic for identical candidates/seed and combines source-group
+disjointness with declared diversity traits. Ineligible cases and shortfalls remain explicit blockers.
+Every selected new case has `expected_status=pending`; partition creation itself cannot publish labels.
+
+A new CLI operation `evaluation assertion-reference-corpus-plan` consumes an explicit JSON request and
+writes `partition-and-exposure.json`. It does not inspect arbitrary user directories, run a model or
+create Golden knowledge.
+
+## S08 — task-specific Entity/Assertion review in the existing Workbench
+
+The existing loopback Review Workbench now recognizes task-specific assertion packages alongside the
+existing applicability packages. It reuses the same HTTP application, signed server view receipts,
+Origin/CSRF middleware, reviewer binding and optimistic revision checks; no second web platform was
+introduced. Applicability review behavior remains available unchanged.
+
+Assertion review is source-first. A case exposes the exact bound AP02 source-package surfaces and keeps
+a Development model proposal as a separate, collapsible preparation view. Holdout proposals are hidden
+by default. Review editing uses human-readable Entity/Assertion IDs, ontology-bound class/predicate
+choices, explicit endpoints and normative force. Browser text selection records quote/source identity;
+Atlas resolves the quote against the canonical bound source surface, rejects ambiguous/nonexistent
+quotes and computes offsets/hashes server-side. Entity evidence is retained in the review decision even
+though the current Golden-suite contract evaluates assertion evidence only.
+
+The decision model distinguishes `confirmed`, `corrected`, `deferred`, `rejected` and an expressly
+confirmed empty Entity/Assertion result. Deleting/changing an Entity is validated through the existing
+case-local endpoint integrity rules before a decision is accepted. A JSON `human_attested=true` value
+alone has no authority: assertion writes additionally require the signed server view to contain the
+Workbench human origin, exact package/state revision, case and reviewer identity. Stale revisions and
+forged origins are rejected. Model proposals never write this state.
+
+Publication is a separate operation over the persisted human state.
+`evaluation assertion-review-workbench-publish` emits an `AssertionGoldenSuite` only for genuinely
+confirmed/corrected cases; pending/deferred/rejected cases remain unpublished. Package preparation is
+available through `evaluation assertion-review-workbench-build` from already bound source-package
+files and explicit ontology options. Neither operation adopts `DocumentKnowledge` or enables canonical
+knowledge adoption.
+
+## Series-D tests and execution status
+
+Executed in this implementation environment:
+
+- new S07/S08 unit tests: **6 passed**;
+- assertion qualification + assertion CLI + existing web adapter + architecture regression set after
+  CLI integration: **300 passed**;
+- earlier assertion qualification + web adapter + architecture regression set: **292 passed**;
+- existing AP01 assertion review-pilot regression before the new tests: **21 passed**;
+- JavaScript syntax check for the modified Workbench `app.js`: **passed** using `node --check`.
+
+`uv run --offline ruff check ...` was attempted. `uv` created `.venv` but dependency resolution could
+not find `jsonschema` in the local cache while network access is disabled. Therefore Ruff did **not**
+run and no Ruff success is claimed. The full project pytest suite was not executed; the user will run
+Ruff and the full suite after applying the delta. No genuine model/client/private qualification run was
+performed.
+
+## Handover to Series E
+
+Series D ends at S08. The next allowed work is AP03-S09/S10. Series E may expose these task-specific
+review/read contracts only through an explicitly scoped Development MCP profile; it must not infer that
+`local/` itself is an access boundary or expose Holdout source surfaces/proposals through indirect reads.
+No S09/S10 functionality is included here.
+
+---
+
+## Preserved Series-C handover/history
+
 
 Date: 2026-10-03. Series C implements only AP03-S05 and AP03-S06 on the supplied, locally verified
 post-Series-B snapshot `standards-atlas-current-202610022211.zip`. Series D is not started.

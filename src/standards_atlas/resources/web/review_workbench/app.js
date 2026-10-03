@@ -63,6 +63,16 @@ function fillSelect(node, choices, allText, current = "") {
   node.value = current;
 }
 function renderOverview() {
+  if (S.package.task === "assertion_knowledge") {
+    const report = S.package.report;
+    $("coverage").replaceChildren(element("section", null, "panel coverage-card"));
+    $("coverage").firstChild.append(element("h3", "Entity-/Assertion-Review"),
+      element("strong", `${report.confirmed} / ${report.selected} Fälle bestätigt`),
+      element("p", `${report.pending} Fälle bleiben pending. Auswahl oder Modellvorschläge publizieren keine Goldeninhalte.`, "muted"));
+    $("report").replaceChildren(element("p", "Publikation erfolgt ausschließlich aus servergebundenen menschlichen Entscheidungen; die Workbench selbst publiziert keine Suite."));
+    $("rules").replaceChildren(element("p", `Ontologien: ${S.package.ontology_versions.join(", ")}`, "muted"));
+    return;
+  }
   const {report, profile, rules} = S.package;
   $("coverage").replaceChildren();
   for (const split of ["development", "holdout"]) {
@@ -239,7 +249,79 @@ function attributeCard(attribute) {
   };
   return card;
 }
+function assertionSelect(options, value = "") {
+  const select = element("select"); select.append(option("", "Aus Ontologie auswählen …"));
+  options.forEach(item => select.append(option(item.iri, `${item.label} · ${item.iri}`))); select.value = value; return select;
+}
+function assertionEvidencePicker(data, changed) {
+  const root = element("div", null, "panel"), picks = [];
+  root.append(element("p", "Evidence markieren: Text in einer Quellenfläche auswählen und anschließend hinzufügen.", "muted"));
+  const list = element("div");
+  data.source.surfaces.forEach(surface => {
+    const block = element("div", null, "fact");
+    const text = element("pre", surface.text); text.dataset.sourceRef = surface.source_ref;
+    const add = element("button", "Markierte Passage hinzufügen"); add.type = "button";
+    add.addEventListener("click", () => {
+      const selection = window.getSelection(); const quote = selection?.toString() || "";
+      if (!quote || !text.contains(selection.anchorNode) || !text.contains(selection.focusNode)) {showError(new Error("Bitte innerhalb dieser Quellenfläche Text markieren.")); return;}
+      picks.push({source_ref: surface.source_ref, quote});
+      list.append(element("p", `${surface.label}: „${quote}“`, "muted")); changed(); selection.removeAllRanges();
+    });
+    block.append(element("strong", `${surface.label} · ${surface.source_clause_id} · ${surface.source_kind}`), text, add); root.append(block);
+  });
+  root.append(list); return {root, read: () => picks};
+}
+function assertionKnowledgeEditor(data, changed) {
+  const root = element("div"), entityRows = [], assertionRows = [];
+  const entitiesBox = element("div"), assertionsBox = element("div");
+  function addEntity(value = {}) {
+    const row = element("div", null, "relation-row"); const id = element("input"); id.value = value.id || "";
+    const label = element("input"); label.value = value.normalized_label || "";
+    const cls = assertionSelect(data.class_options, value.class_iri || "");
+    const evidence = assertionEvidencePicker(data, changed); const entry = {row,id,label,cls,evidence}; entityRows.push(entry);
+    const remove=element("button","Entity entfernen"); remove.type="button"; remove.addEventListener("click",()=>{row.remove();entityRows.splice(entityRows.indexOf(entry),1);changed();});
+    row.append(labelled("Lesbare ID",id), labelled("Normalisiertes Label",label), labelled("Klasse",cls), evidence.root, remove); entitiesBox.append(row);
+  }
+  function addAssertion(value = {}) {
+    const row=element("div",null,"relation-row"), id=element("input"); id.value=value.id||"";
+    const subject=element("input"); subject.value=value.subject_id||""; const predicate=assertionSelect(data.predicate_options,value.predicate||"");
+    const kind=element("select"); kind.append(option("entity","Entity-Endpunkt"),option("literal","Literal")); kind.value=value.object?.kind||"entity";
+    const object=element("input"); object.value=value.object?.entity_id||value.object?.value||"";
+    const force=element("select"); ["unspecified","requirement","recommendation","permission","informative"].forEach(v=>force.append(option(v,v))); force.value=value.normative_force||"unspecified";
+    const evidence=assertionEvidencePicker(data,changed); const entry={row,id,subject,predicate,kind,object,force,evidence}; assertionRows.push(entry);
+    const remove=element("button","Assertion entfernen"); remove.type="button"; remove.addEventListener("click",()=>{row.remove();assertionRows.splice(assertionRows.indexOf(entry),1);changed();});
+    row.append(labelled("Lesbare ID",id),labelled("Subject-ID",subject),labelled("Predicate",predicate),labelled("Objektart",kind),labelled("Objekt / Literal",object),labelled("Normative Force",force),evidence.root,remove); assertionsBox.append(row);
+  }
+  const addE=element("button","+ Entity"); addE.type="button"; addE.addEventListener("click",()=>{addEntity();changed();});
+  const addA=element("button","+ Assertion"); addA.type="button"; addA.addEventListener("click",()=>{addAssertion();changed();});
+  root.append(element("h4","Entities"),entitiesBox,addE,element("h4","Assertions"),assertionsBox,addA);
+  return {root, seed(expected){(expected?.entities||[]).forEach(addEntity); (expected?.assertions||[]).forEach(addAssertion);}, read(){
+    const entities=entityRows.map(e=>{if(!e.id.value.trim()||!e.label.value.trim()||!e.cls.value) throw new Error("Entity benötigt ID, Label und Ontologieklasse."); return {id:e.id.value.trim(),class_iri:e.cls.value,normalized_label:e.label.value.trim(),evidence:e.evidence.read()};});
+    const assertions=assertionRows.map(a=>{if(!a.id.value.trim()||!a.subject.value.trim()||!a.predicate.value||!a.object.value.trim()) throw new Error("Assertion benötigt ID, Subject, Predicate und Objekt."); return {id:a.id.value.trim(),subject_id:a.subject.value.trim(),predicate:a.predicate.value,object:a.kind.value==="entity"?{kind:"entity",entity_id:a.object.value.trim()}:{kind:"literal",value:a.object.value.trim()},normative_force:a.force.value,evidence:a.evidence.read()};});
+    return {entities,assertions};
+  }};
+}
+function renderAssertionCase() {
+  const data=S.current; S.cards=[]; $("empty").hidden=true; $("caseContent").hidden=false;
+  $("reference").textContent=`${data.source.document_key} · ${data.source.reference}`; $("casePosition").textContent=`Fall ${data.position+1} von ${data.selected_total} · Reviewer: ${S.reviewer}`;
+  $("splitBadge").textContent=data.case.split==="holdout"?"Holdout":"Development";
+  $("priority").textContent=data.case.split==="holdout"?"Holdout: Modellvorschläge sind standardmäßig ausgeblendet.":"Quelle zuerst prüfen; Modellvorschlag ist getrennte Vorbereitung und keine Bestätigung.";
+  $("conflicts").hidden=true; $("attributes").replaceChildren(); $("sourceText").replaceChildren(); $("sourceFacts").replaceChildren();
+  data.source.surfaces.forEach(surface=>{const block=element("div",null,"fact"); block.append(element("strong",`${surface.label} · ${surface.source_clause_id} · ${surface.source_kind}`),element("pre",surface.text)); $("sourceFacts").append(block);});
+  const root=element("section",null,"attribute-card"), status=element("select"); status.append(option("","Noch nicht entscheiden"),option("confirmed","Sichtbaren Vorschlag bestätigen"),option("corrected","Gezielt korrigieren / eigenes Ergebnis"),option("deferred","Unklar / Quelle fehlt"),option("rejected","Vorschlag verwerfen"));
+  if(!data.proposal){[...status.options].find(o=>o.value==="confirmed").disabled=true;}
+  const comment=element("textarea"); comment.rows=2; const explicitEmpty=element("input"); explicitEmpty.type="checkbox";
+  const editorBox=element("div"), proposalBox=element("details"); proposalBox.append(element("summary",data.proposal?"Modellvorschlag getrennt anzeigen":"Kein Modellvorschlag vorhanden"),element("pre",data.proposal?JSON.stringify(data.proposal,null,2):""));
+  const editor=assertionKnowledgeEditor(data,updateDirty); if(data.human_review?.expected) editor.seed(data.human_review.expected);
+  function redraw(){editorBox.replaceChildren(); if(status.value==="corrected") editorBox.append(editor.root,labelled("Bewusst leeres Entity-/Assertion-Ergebnis",explicitEmpty)); else if(status.value==="confirmed") editorBox.append(element("p","Bestätigt wird exakt der sichtbare, gebundene Vorschlag.","muted")); updateDirty();}
+  status.addEventListener("change",redraw); comment.addEventListener("input",updateDirty); root.append(proposalBox,labelled("Meine Entscheidung",status),editorBox,labelled("Kommentar",comment)); $("attributes").append(root); redraw();
+  const card={status,hasNote:()=>Boolean(comment.value.trim()),selectedProposal:()=>data.proposal,showEditor:redraw,current:data.human_review,read:()=>{if(!status.value)return null; const out={status:status.value,comment:comment.value.trim(),explicit_empty:false}; if(status.value==="confirmed") out.proposal_sha256=data.proposal.proposal_sha256; if(status.value==="corrected"){const value=editor.read(); out.entities=value.entities; out.assertions=value.assertions; out.explicit_empty=explicitEmpty.checked; if(out.explicit_empty&&(out.entities.length||out.assertions.length))throw new Error("Bewusst leer kann nicht zugleich Entities/Assertions enthalten.");} return out;}}; S.cards=[card];
+  $("blindPanel").hidden=true; $("assessment").value=""; S.assessmentDirty=false; $("exposureHistory").replaceChildren(); $("reviewHistory").replaceChildren();
+  if(data.human_review) $("reviewHistory").append(element("pre",JSON.stringify(data.human_review,null,2))); else $("reviewHistory").append(element("p","Noch keine menschliche Entscheidung.","muted"));
+  $("attested").checked=false; updateDirty(); renderQueue();
+}
 function renderCase() {
+  if (S.current?.task === "assertion_knowledge") {renderAssertionCase(); return;}
   const data = S.current;
   S.cards = [];
   $("empty").hidden = true; $("caseContent").hidden = false;
@@ -276,7 +358,7 @@ async function loadCase(exampleId) {
   S.current = await api(`${base()}/case?${new URLSearchParams({example_id: exampleId, reviewer: S.reviewer})}`);
   renderCase();
   // Only position/identity are persisted here, never an implicit annotation or approval.
-  await api(`${base()}/bookmark`, {package_sha256: S.current.package_sha256,
+  if (S.current.task !== "assertion_knowledge") await api(`${base()}/bookmark`, {package_sha256: S.current.package_sha256,
     reviewer: S.reviewer, example_id: exampleId});
 }
 async function adjacent(step) {
@@ -323,7 +405,8 @@ async function openPackage() {
   $("caseContent").hidden = true; $("overview").hidden = true; $("workbench").hidden = true;
   try {localStorage.setItem("atlas-review-identity", reviewer); localStorage.setItem("atlas-review-handle", handle);} catch { /* optional convenience only */ }
   await refreshOverview();
-  fillSelect($("attribute"), S.package.profile.attributes.map(a => [a, labels[a] || a]), "Alle Attribute");
+  fillSelect($("attribute"), S.package.task === "assertion_knowledge" ? [] : S.package.profile.attributes.map(a => [a, labels[a] || a]), "Alle Attribute");
+  $("attribute").disabled = S.package.task === "assertion_knowledge";
   $("split").value = "all"; $("status").value = "all"; $("query").value = ""; $("document").value = "";
   S.filters = readFilters();
   $("overview").hidden = false; $("workbench").hidden = false;
@@ -357,6 +440,7 @@ $("showEvidence").addEventListener("change", () => {if (S.current) renderSource(
 $("assessment").addEventListener("input", () => {S.assessmentDirty = Boolean($("assessment").value);});
 $("reveal").addEventListener("click", () => run(async () => {
   assertActiveIdentity();
+  if (S.current?.task === "assertion_knowledge") throw new Error("Assertion-Review trennt Quelle und Vorschlag direkt; Holdout-Vorschläge bleiben ausgeblendet.");
   if (S.cards.some(c => c.status.value)) throw new Error("Zuerst die ausgewählten Entscheidungen speichern oder zurücksetzen. Einblenden lädt den Fall neu.");
   const assessment = $("assessment").value.trim();
   if (!assessment) throw new Error("Bitte zuerst eine eigene fachliche Ersteinschätzung notieren.");

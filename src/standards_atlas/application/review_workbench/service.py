@@ -13,6 +13,13 @@ from pathlib import Path
 
 from pydantic import TypeAdapter
 
+from standards_atlas.application.assertion_qualification.assertion_review import (
+    AssertionHumanDecisionInput,
+    active_assertion_decisions,
+    load_assertion_review_package,
+    record_assertion_human_decision,
+    write_assertion_review_state,
+)
 from standards_atlas.application.semantic_qualification.review_package.candidates import safe_read
 from standards_atlas.application.semantic_qualification.review_package.model import (
     HumanDecisionInput,
@@ -61,6 +68,15 @@ class ReviewWorkbenchService:
 
     def _load(self, handle: str):
         root = self._root(handle)
+        if (root / "assertion-review-package.json").exists():
+            for name in ("assertion-review-package.json", "assertion-review-state.json"):
+                path = root / name
+                self._safe_path(path)
+                if path.exists() and path.stat().st_size > self.max_artifact_bytes:
+                    raise ValueError(
+                        "review artifact exceeds local size limit; source is not truncated"
+                    )
+            return root, *load_assertion_review_package(root)
         for name in ("review-package.json", "review-state.json", "workbench/state.json"):
             path = root / name
             self._safe_path(path)
@@ -77,7 +93,10 @@ class ReviewWorkbenchService:
         for root in sorted(self.workspace.iterdir()):
             if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", root.name):
                 continue
-            if not (root / "review-package.json").exists():
+            if not (
+                (root / "review-package.json").exists()
+                or (root / "assertion-review-package.json").exists()
+            ):
                 continue
             try:
                 _, package, state = self._load(root.name)
@@ -89,6 +108,11 @@ class ReviewWorkbenchService:
                         "version": package.version,
                         "cases": len(package.cases),
                         "revision": state.revision,
+                        "task": (
+                            "assertion_knowledge"
+                            if hasattr(package, "class_options")
+                            else "applicability_presence"
+                        ),
                     }
                 )
             except (OSError, KeyError, ValueError):
@@ -98,6 +122,41 @@ class ReviewWorkbenchService:
     def get_package(self, handle: str, *, reviewer: str) -> dict:
         reviewer = TypeAdapter(Reviewer).validate_python(reviewer)
         root, package, state = self._load(handle)
+        if hasattr(package, "class_options"):
+            active = active_assertion_decisions(state)
+            completed = sum(
+                1
+                for case in package.cases
+                if case.case_id in active
+                and active[case.case_id].status in {"confirmed", "corrected"}
+            )
+            return {
+                "handle": handle,
+                "id": package.id,
+                "version": package.version,
+                "package_sha256": package.package_sha256,
+                "state_sha256": state.state_sha256,
+                "revision": state.revision,
+                "task": "assertion_knowledge",
+                "ontology_versions": list(package.ontology_versions),
+                "class_options": [item.model_dump(mode="json") for item in package.class_options],
+                "predicate_options": [
+                    item.model_dump(mode="json") for item in package.predicate_options
+                ],
+                "report": {
+                    "selected": len(package.cases),
+                    "confirmed": completed,
+                    "pending": len(package.cases) - completed,
+                },
+                "resume_example_id": None,
+                "queue_order": [case.case_id for case in package.cases],
+                "capabilities": {
+                    "human_decisions": True,
+                    "suite_publication": False,
+                    "model_invocation": False,
+                    "selection_changes": False,
+                },
+            }
         audit = journal.load_journal(root, package, state)
         return {
             "handle": handle,
@@ -161,6 +220,61 @@ class ReviewWorkbenchService:
         if len(query) > 500:
             raise ValueError("review search is too long")
         root, package, state = self._load(handle)
+        if hasattr(package, "class_options"):
+            active = active_assertion_decisions(state)
+            rows = []
+            for position, case in enumerate(package.cases):
+                decision = active.get(case.case_id)
+                complete = bool(decision and decision.status in {"confirmed", "corrected"})
+                deferred = bool(decision and decision.status == "deferred")
+                if split != "all" and case.partition.value != split:
+                    continue
+                if document_key and case.document_key != document_key:
+                    continue
+                haystack = f"{case.reference}\n{case.case_id}\n{case.clause_id}"
+                if query.casefold() not in haystack.casefold():
+                    continue
+                if status == "open" and complete:
+                    continue
+                if status == "complete" and not complete:
+                    continue
+                if status == "deferred" and not deferred:
+                    continue
+                if status == "conflict":
+                    continue
+                rows.append(
+                    {
+                        "example_id": case.case_id,
+                        "reference": case.reference,
+                        "document_key": case.document_key,
+                        "split": case.partition.value,
+                        "clause_type": "assertion-review",
+                        "position": position,
+                        "complete": complete,
+                        "confirmed_count": 1 if complete else 0,
+                        "attribute_count": 1,
+                        "deferred": deferred,
+                        "conflicts": [],
+                    }
+                )
+            if anchor:
+                pos = next(
+                    (i for i, row in enumerate(rows) if row["example_id"] == anchor),
+                    None,
+                )
+                if pos is not None:
+                    offset = (pos // limit) * limit
+            return {
+                "package_sha256": package.package_sha256,
+                "revision": state.revision,
+                "total": len(rows),
+                "selected_total": len(package.cases),
+                "offset": offset,
+                "next_offset": offset + limit if offset + limit < len(rows) else None,
+                "items": rows[offset : offset + limit],
+                "documents": sorted({case.document_key for case in package.cases}),
+                "task": "assertion_knowledge",
+            }
         if attribute and attribute not in package.profile.attributes:
             raise ValueError("unknown review attribute filter")
         sources = {s.example_id: s for s in package.population}
@@ -239,6 +353,72 @@ class ReviewWorkbenchService:
     def get_case(self, handle: str, example_id: str, *, reviewer: str) -> dict:
         reviewer = TypeAdapter(Reviewer).validate_python(reviewer)
         root, package, state = self._load(handle)
+        if hasattr(package, "class_options"):
+            case = next((c for c in package.cases if c.case_id == example_id), None)
+            if case is None:
+                raise KeyError("case is outside the selected review package")
+            active = active_assertion_decisions(state)
+            current = active.get(case.case_id)
+            order = [item.case_id for item in package.cases]
+            position = order.index(case.case_id)
+            proposal = (
+                None
+                if case.partition.value == "holdout"
+                else case.proposal.model_dump(mode="json")
+                if case.proposal
+                else None
+            )
+            payload = {
+                "task": "assertion_knowledge",
+                "package_sha256": package.package_sha256,
+                "state_sha256": state.state_sha256,
+                "revision": state.revision,
+                "source": {
+                    "example_id": case.case_id,
+                    "document_key": case.document_key,
+                    "clause_id": case.clause_id,
+                    "reference": case.reference,
+                    "surfaces": [surface.model_dump(mode="json") for surface in case.surfaces],
+                },
+                "case": {
+                    "example_id": case.case_id,
+                    "split": case.partition.value,
+                    "source_group": case.source_group,
+                },
+                "proposal": proposal,
+                "human_review": current.model_dump(mode="json") if current else None,
+                "class_options": [item.model_dump(mode="json") for item in package.class_options],
+                "predicate_options": [
+                    item.model_dump(mode="json") for item in package.predicate_options
+                ],
+                "progress": {
+                    "complete": bool(current and current.status in {"confirmed", "corrected"}),
+                    "deferred": bool(current and current.status == "deferred"),
+                    "conflicts": [],
+                },
+                "position": position,
+                "selected_total": len(order),
+                "previous_example_id": order[position - 1] if position else None,
+                "next_example_id": (order[position + 1] if position + 1 < len(order) else None),
+                "holdout": {
+                    "blind": case.partition.value == "holdout",
+                    "historical_proposals_withheld": case.partition.value == "holdout",
+                    "unrevealed_recommendation_count": 0,
+                    "assessments": [],
+                },
+            }
+            payload["view"] = {
+                "task": "assertion_knowledge",
+                "human_origin": "review-workbench",
+                "handle": handle,
+                "package_sha256": package.package_sha256,
+                "state_sha256": state.state_sha256,
+                "revision": state.revision,
+                "example_id": case.case_id,
+                "reviewer": reviewer,
+                "proposal_sha256": (case.proposal.proposal_sha256 if proposal else None),
+            }
+            return payload
         case = next((c for c in package.cases if c.example_id == example_id), None)
         if case is None:
             raise KeyError("case is outside the selected review package")
@@ -315,6 +495,38 @@ class ReviewWorkbenchService:
         if view["handle"] != handle:
             raise ValueError("displayed review belongs to another package handle")
         root, package, state = self._load(handle)
+        if hasattr(package, "class_options"):
+            if (
+                view.get("task") != "assertion_knowledge"
+                or view.get("human_origin") != "review-workbench"
+            ):
+                raise ValueError("assertion decisions require a server-bound human workbench view")
+            if package.package_sha256 != view["package_sha256"]:
+                raise ValueError("displayed review belongs to another package")
+            if state.revision != view["revision"] or state.state_sha256 != view["state_sha256"]:
+                raise ValueError("stale review revision; reload before deciding")
+            if len(decisions) != 1:
+                raise ValueError("assertion review accepts one atomic case decision")
+            raw = decisions[0]
+            decision = (
+                raw
+                if isinstance(raw, AssertionHumanDecisionInput)
+                else AssertionHumanDecisionInput.model_validate(raw)
+            )
+            updated = record_assertion_human_decision(
+                package,
+                state,
+                case_id=view["example_id"],
+                reviewer=view["reviewer"],
+                decision=decision,
+            )
+            write_assertion_review_state(root, updated)
+            return {
+                "revision": updated.revision,
+                "state_sha256": updated.state_sha256,
+                "decisions_saved": 1,
+                "suite_publication": False,
+            }
         if package.package_sha256 != view["package_sha256"]:
             raise ValueError("displayed review belongs to another package")
         if state.revision != view["revision"] or state.state_sha256 != view["state_sha256"]:

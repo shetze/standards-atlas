@@ -1128,3 +1128,126 @@ def _ap03_code_revision(project_root: Path) -> str:
         digest.update(path.read_bytes())
         digest.update(b"\0")
     return "sha256:" + digest.hexdigest()
+
+
+@evaluation_app.command("assertion-reference-corpus-plan")
+def assertion_reference_corpus_plan_command(
+    request: Annotated[Path, typer.Option("--request", exists=True, dir_okay=False, readable=True)],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)] = Path(
+        "local/review/assertions/ap03/partition-and-exposure.json"
+    ),
+) -> None:
+    """Create a text-free grouped Development/Holdout plan; never create Golden labels."""
+    from standards_atlas.application.assertion_qualification.reference_corpus import (
+        ReferenceCorpusRequest,
+        build_reference_corpus_plan,
+    )
+
+    try:
+        parsed = ReferenceCorpusRequest.model_validate_json(request.read_bytes())
+        plan = build_reference_corpus_plan(parsed)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(
+            json.dumps(plan.model_dump(mode="json"), indent=2, ensure_ascii=False, sort_keys=True)
+            + "\n",
+            encoding="utf-8",
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"Reference plan           : {output}")
+    typer.echo(f"Development pending      : {len(plan.development)}")
+    typer.echo(f"Holdout pending          : {len(plan.holdout)}")
+    typer.echo(f"Open blockers            : {len(plan.blockers)}")
+
+
+@evaluation_app.command("assertion-review-workbench-build")
+def assertion_review_workbench_build_command(
+    manifest: Annotated[
+        Path, typer.Option("--manifest", exists=True, dir_okay=False, readable=True)
+    ],
+    output: Annotated[Path, typer.Option("--output", file_okay=False)] = Path(
+        "local/review/assertions/ap03/workbench/ap03-assertions"
+    ),
+) -> None:
+    """Prepare one source-first assertion review package from already bound source packages."""
+    from standards_atlas.application.assertion_qualification.assertion_review import (
+        ReviewOntologyOption,
+        case_from_source_package,
+        package_from_cases,
+        write_assertion_review_package,
+    )
+    from standards_atlas.application.assertion_qualification.review_pilot_models import (
+        AssertionReviewProposalSnapshot,
+    )
+    from standards_atlas.application.context.input_binding import ContextSourcePackage
+
+    try:
+        raw = json.loads(manifest.read_text(encoding="utf-8"))
+        base = manifest.parent
+        cases = []
+        for item in raw["cases"]:
+            source_path = (base / item["source_package"]).resolve()
+            source = ContextSourcePackage.model_validate_json(source_path.read_bytes())
+            proposal = None
+            if item.get("proposal"):
+                proposal = AssertionReviewProposalSnapshot.model_validate_json(
+                    (base / item["proposal"]).resolve().read_bytes()
+                )
+            cases.append(
+                case_from_source_package(
+                    source,
+                    partition=AssertionGoldenPartition(item["partition"]),
+                    source_group=item["source_group"],
+                    proposal=proposal,
+                )
+            )
+        package = package_from_cases(
+            id=raw["id"],
+            version=raw["version"],
+            corpus_plan_sha256=raw["corpus_plan_sha256"],
+            ontology_versions=tuple(raw["ontology_versions"]),
+            class_options=tuple(ReviewOntologyOption.model_validate(v) for v in raw["classes"]),
+            predicate_options=tuple(
+                ReviewOntologyOption.model_validate(v) for v in raw["predicates"]
+            ),
+            cases=tuple(cases),
+        )
+        write_assertion_review_package(output, package)
+    except (KeyError, OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"Assertion review package : {output}")
+    typer.echo(f"Cases                    : {len(package.cases)}")
+    typer.echo("Golden publication       : disabled in package preparation")
+
+
+@evaluation_app.command("assertion-review-workbench-publish")
+def assertion_review_workbench_publish_command(
+    package: Annotated[
+        Path, typer.Option("--package", exists=True, file_okay=False, readable=True)
+    ],
+    partition: Annotated[AssertionGoldenPartition, typer.Option("--partition")],
+    suite_id: Annotated[str, typer.Option("--suite-id")],
+    suite_version: Annotated[str, typer.Option("--suite-version")],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+) -> None:
+    """Publish only human-confirmed task-specific review decisions into a Golden suite."""
+    from standards_atlas.application.assertion_qualification.assertion_review import (
+        load_assertion_review_package,
+        publish_confirmed_assertion_suite,
+    )
+
+    try:
+        contract, state = load_assertion_review_package(package)
+        suite = publish_confirmed_assertion_suite(
+            contract,
+            state,
+            partition=partition,
+            suite_id=suite_id,
+            suite_version=suite_version,
+        )
+        output.parent.mkdir(parents=True, exist_ok=True)
+        write_assertion_golden_suite(suite, output)
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"Published suite          : {output}")
+    typer.echo(f"Human-confirmed cases    : {len(suite.cases)}")

@@ -89,14 +89,29 @@ def create_review_workbench_app(
         return JSONResponse(value)
 
     async def decisions(request):
-        submission = DecisionSubmission.model_validate(await request.json())
-        view = receipts.verify(submission.view_token)
+        raw = await request.json()
+        token = raw.get("view_token") if isinstance(raw, dict) else None
+        if not isinstance(token, str) or not token:
+            raise ValueError("review decision requires a signed view token")
+        view = receipts.verify(token)
+        if view.get("task") == "assertion_knowledge":
+            # human_attested expresses intent only; authority comes from the signed server view,
+            # loopback/origin/CSRF middleware and the reviewer identity bound into that view.
+            if raw.get("human_attested") is not True:
+                raise ValueError("explicit human review attestation is required")
+            decisions_value = raw.get("decisions")
+            if not isinstance(decisions_value, list) or len(decisions_value) != 1:
+                raise ValueError("assertion review accepts one atomic case decision")
+            decisions = tuple(decisions_value)
+        else:
+            submission = DecisionSubmission.model_validate(raw)
+            decisions = submission.decisions
         return JSONResponse(
             await run_in_threadpool(
                 service.decide,
                 request.path_params["handle"],
                 view=view,
-                decisions=submission.decisions,
+                decisions=decisions,
             )
         )
 
