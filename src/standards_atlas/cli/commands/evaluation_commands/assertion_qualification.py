@@ -1374,3 +1374,177 @@ def assertion_review_workbench_publish_command(
         raise typer.BadParameter(str(exc)) from exc
     typer.echo(f"Published suite          : {output}")
     typer.echo(f"Human-confirmed cases    : {len(suite.cases)}")
+
+
+@evaluation_app.command("assertion-series-f-prepare")
+def prepare_assertion_series_f_command(
+    suite: Annotated[Path, typer.Option("--suite", exists=True, dir_okay=False, readable=True)],
+    campaign_id: Annotated[str, typer.Option("--campaign-id")],
+    model_route: Annotated[str, typer.Option("--model-route")],
+    model: Annotated[str | None, typer.Option("--model")] = None,
+    config: Annotated[
+        Path, typer.Option("--config", exists=True, dir_okay=False, readable=True)
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
+    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = (
+        cli_defaults.DEFAULT_WORKSPACE
+    ),
+    project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
+    smoke_cases: Annotated[int, typer.Option("--smoke-cases", min=0)] = 3,
+    repetitions: Annotated[int, typer.Option("--repetitions", min=1)] = 1,
+    max_calls: Annotated[int, typer.Option("--max-calls", min=1)] = 1,
+    max_retries_per_case: Annotated[int, typer.Option("--max-retries-per-case", min=0)] = 0,
+    max_total_tokens: Annotated[int | None, typer.Option("--max-total-tokens", min=1)] = None,
+    max_runtime_seconds: Annotated[
+        float | None, typer.Option("--max-runtime-seconds", min=0.001)
+    ] = None,
+    max_output_tokens: Annotated[int | None, typer.Option("--max-output-tokens", min=1)] = None,
+    temperature: Annotated[float, typer.Option("--temperature", min=0.0, max=2.0)] = 0.0,
+    seed: Annotated[int | None, typer.Option("--seed")] = None,
+    reasoning_enabled: Annotated[
+        bool | None, typer.Option("--reasoning-enabled/--reasoning-disabled")
+    ] = None,
+    authorize_execution: Annotated[
+        bool, typer.Option("--authorize-execution/--do-not-authorize-execution")
+    ] = False,
+    authorization_reference: Annotated[
+        str | None, typer.Option("--authorization-reference")
+    ] = None,
+    output: Annotated[Path | None, typer.Option("--output", dir_okay=False)] = None,
+) -> None:
+    """Prepare the Development-only B0 smoke/full and P1/P2 Series-F run order."""
+    from standards_atlas.adapters.filesystem import FileSystemAssertionExperimentRepository
+    from standards_atlas.application.assertion_qualification import (
+        SERIES_F_PROMPTS,
+        ExperimentBudget,
+        build_series_f_plan,
+        plan_assertion_experiment,
+    )
+
+    try:
+        golden = load_assertion_golden_suite(suite)
+        if golden.partition is not AssertionGoldenPartition.DEVELOPMENT:
+            raise ValueError("AP03 Series F accepts only a Development golden suite")
+        if smoke_cases >= len(golden.cases) and smoke_cases != 0:
+            raise ValueError(
+                "--smoke-cases must be zero or a strict subset of the Development suite"
+            )
+        required_calls = len(golden.cases) * repetitions * (1 + max_retries_per_case)
+        if max_calls < required_calls:
+            raise ValueError(
+                f"--max-calls={max_calls} is below the full per-variant bound {required_calls}"
+            )
+        if authorize_execution and not authorization_reference:
+            raise ValueError("authorized Series-F preparation requires --authorization-reference")
+
+        documents_repo = FileSystemEngineeringDocumentRepository(workspace)
+        documents = {
+            key: documents_repo.load(DocumentKey(value=key))
+            for key in sorted({case.source_document_key for case in golden.cases})
+        }
+        if any(document is None for document in documents.values()):
+            missing = sorted(key for key, document in documents.items() if document is None)
+            raise ValueError(f"missing EngineeringDocument(s) for Series F: {missing!r}")
+        source_repo = FileSystemContextSourcePackageRepository(workspace)
+        repository = FileSystemAssertionExperimentRepository(project_root, workspace)
+        runtime_hash = hashlib.sha256(config.read_bytes()).hexdigest()
+        code_revision = _ap03_code_revision(project_root)
+        budget = ExperimentBudget(
+            max_calls=max_calls,
+            max_retries_per_case=max_retries_per_case,
+            max_total_tokens=max_total_tokens,
+            max_runtime_seconds=max_runtime_seconds,
+        )
+
+        manifests = []
+        for variant_id, prompt_version in SERIES_F_PROMPTS.items():
+            prompt_repository = _ap03_prompt_repository(project_root, prompt_version, None)
+            manifest = plan_assertion_experiment(
+                golden,
+                documents,
+                experiment_id=(
+                    f"{campaign_id}-{variant_id.lower().replace('_', '-').replace('/', '-')}"
+                ),
+                code_revision=code_revision,
+                variant_id=variant_id,
+                prompt_version=prompt_version,
+                model_route=model_route,
+                source_packages=source_repo,
+                budget=budget,
+                requested_model=model,
+                runtime_config_sha256=runtime_hash,
+                temperature=temperature,
+                seed=seed,
+                max_output_tokens_per_call=max_output_tokens,
+                reasoning_enabled=reasoning_enabled,
+                repetitions=repetitions,
+                execution_authorized=authorize_execution,
+                authorization_reference=authorization_reference,
+                prompt_repository=prompt_repository,
+            )
+            repository.save_manifest(manifest)
+            manifests.append(manifest)
+
+        smoke_manifest = None
+        if smoke_cases:
+            smoke_suite = golden.model_copy(update={"cases": golden.cases[:smoke_cases]})
+            smoke_budget = ExperimentBudget(
+                max_calls=max_calls,
+                max_retries_per_case=max_retries_per_case,
+                max_total_tokens=max_total_tokens,
+                max_runtime_seconds=max_runtime_seconds,
+            )
+            smoke_prompt = SERIES_F_PROMPTS["B0-AP02"]
+            smoke_manifest = plan_assertion_experiment(
+                smoke_suite,
+                documents,
+                experiment_id=f"{campaign_id}-b0-smoke",
+                code_revision=code_revision,
+                variant_id="B0-AP02",
+                prompt_version=smoke_prompt,
+                model_route=model_route,
+                source_packages=source_repo,
+                budget=smoke_budget,
+                requested_model=model,
+                runtime_config_sha256=runtime_hash,
+                temperature=temperature,
+                seed=seed,
+                max_output_tokens_per_call=max_output_tokens,
+                reasoning_enabled=reasoning_enabled,
+                repetitions=repetitions,
+                execution_authorized=authorize_execution,
+                authorization_reference=authorization_reference,
+                prompt_repository=_ap03_prompt_repository(project_root, smoke_prompt, None),
+            )
+            repository.save_manifest(smoke_manifest)
+
+        plan = build_series_f_plan(
+            campaign_id=campaign_id,
+            full_manifests=tuple(manifests),
+            smoke_manifest=smoke_manifest,
+        )
+        target = output or (
+            project_root
+            / "local"
+            / "evaluation"
+            / "assertions"
+            / "ap03"
+            / campaign_id
+            / "series-f-plan.json"
+        )
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(
+            json.dumps(plan.model_dump(mode="json"), indent=2, ensure_ascii=False, sort_keys=True)
+            + "\n",
+            encoding="utf-8",
+        )
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"Series-F campaign : {plan.campaign_id}")
+    typer.echo(f"Development cases : {len(golden.cases)}")
+    typer.echo(f"Experiments       : {len(plan.experiments)}")
+    typer.echo(f"Execution allowed : {authorize_execution}")
+    typer.echo(f"Plan              : {target}")
+    typer.echo("Model calls       : 0 (preparation only)")
+    typer.echo("Holdout access    : forbidden")

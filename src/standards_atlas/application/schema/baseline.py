@@ -134,6 +134,12 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         (1,),
         "local/evaluation/assertions/ap03/**/comparison.json",
     ),
+    "ap03-series-f-development-plan": SchemaPolicy(
+        "ap03-series-f-development-plan",
+        1,
+        (1,),
+        "local/evaluation/assertions/ap03/**/series-f-plan.json",
+    ),
     "assertion-qualification-cascade-report": SchemaPolicy(
         "assertion-qualification-cascade-report",
         1,

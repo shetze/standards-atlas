@@ -469,6 +469,11 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         "assertion-experiment-report",
     ),
     SchemaMarkerDecision(
+        "standards_atlas.application.assertion_qualification.series_f:SeriesFDevelopmentPlan",
+        SchemaMarkerDisposition.CENTRAL,
+        "ap03-series-f-development-plan",
+    ),
+    SchemaMarkerDecision(
         "standards_atlas.application.assertion_qualification.cascade_models:"
         "AssertionQualificationCascadeReport",
         SchemaMarkerDisposition.CENTRAL,
@@ -1052,6 +1057,14 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         (VersionAxis.SCHEMA,),
         "assertion-experiment-report",
         "Stage-aware AP03 wrapper around the existing clause-local qualification report.",
+    ),
+    VersionedInterface(
+        "ap03-series-f-development-plan",
+        "local/evaluation/assertions/ap03/**/series-f-plan.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "ap03-series-f-development-plan",
+        "Development-only B0/P1/P2 run order with one-factor comparison binding.",
     ),
     VersionedInterface(
         "assertion-qualification-cascade-report",

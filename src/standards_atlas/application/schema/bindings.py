@@ -250,6 +250,10 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
         "standards_atlas.application.assertion_qualification.experiment:AssertionExperimentReport",
     ),
     ModelBinding(
+        "ap03-series-f-development-plan",
+        "standards_atlas.application.assertion_qualification.series_f:SeriesFDevelopmentPlan",
+    ),
+    ModelBinding(
         "assertion-qualification-cascade-report",
         "standards_atlas.application.assertion_qualification.cascade_models:"
         "AssertionQualificationCascadeReport",

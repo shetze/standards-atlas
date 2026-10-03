@@ -297,4 +297,19 @@ __all__ = [
     "auto_adoption_policy_sha256",
     "cascade_report_sha256",
     "qualification_report_sha256",
+    "AP03_SERIES_F_PLAN_CONTRACT",
+    "SERIES_F_PROMPTS",
+    "SeriesFDevelopmentPlan",
+    "SeriesFExperimentRef",
+    "build_series_f_plan",
+    "same_factor_fingerprint",
 ]
+
+from standards_atlas.application.assertion_qualification.series_f import (
+    AP03_SERIES_F_PLAN_CONTRACT,
+    SERIES_F_PROMPTS,
+    SeriesFDevelopmentPlan,
+    SeriesFExperimentRef,
+    build_series_f_plan,
+    same_factor_fingerprint,
+)

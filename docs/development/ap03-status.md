@@ -1,3 +1,57 @@
+# AP03 status — Series F / S01-S12 technically complete; private measurements open
+
+## Series F — S11/S12 Development baseline and prompt comparison
+
+Date: 2026-10-03. Series F implements only AP03-S11 and AP03-S12 on the supplied post-Series-E
+snapshot `standards-atlas-current-202610031442.zip` (SHA-256
+`2c8b0d3aa2563bcccc9252948bb630eb078ba1e6b0f67bb960e8091c9ad8a776`). Series G is not started.
+
+The supplied snapshot does not contain the private v8 review audit, the published Development Golden
+suite, the historical v8 qualification report, or registered AP03 private experiment data. The
+model-free AP03 preflight therefore reports `historical_replay_ready=false` and
+`b0_experiment_inputs_ready=false`. B0 is intact (`ap03-b0.json` SHA-256
+`888622019e6339379a470dccdf498109b5b1be162197ffbe4324a9b9989bb92a`), and model configurations
+are declared, but their runtime availability is not verified by preflight. No real B0, P1, P2, v8
+replay, Codex diagnosis, standards-text inference or semantic-quality measurement was executed in
+this implementation environment. No result is invented.
+
+S11/S12 add a Development-only Series-F preparation contract and CLI command
+`evaluation assertion-series-f-prepare`. It prepares a strict B0 smoke subset followed by B0 full, P1
+and P2 using the existing bounded experiment manifests/runner. B0/P1/P2 are required to have one
+identical non-prompt-factor fingerprint covering code revision, Development Golden identity,
+ontologies, source-package bindings, task schema, model/runtime route, effective requested parameters,
+repetitions and budgets. Holdout, automatic knowledge adoption and hidden factor changes are rejected.
+The preparation itself performs zero model calls and records `measured_results_present=false`.
+
+Historical v8 replay deliberately remains the existing offline `assertion-evaluate --review` path; it
+uses the stored audit snapshots and unchanged evaluator rather than regenerating v8 proposals. B0/P1/P2
+execution and reporting remain the existing `assertion-experiment-run|resume|report` operations. The
+new runbook `docs/development/ap03-series-f-runbook.md` gives the exact sequence and keeps the B0 smoke
+separate from the full B0 statistics. P1/P2 reports can bind the B0 qualification report without a
+second matcher.
+
+The Series-E handover still records the genuine text-free Codex client tool-read as a local user gate.
+That gate affects optional Codex Development diagnosis; it is not silently treated as successful here.
+No Codex optimization is required to run the approved B0/P1/P2 cells.
+
+Implementation verification in this environment: the new Series-F unit tests pass, and the focused
+assertion-qualification/CLI/AP03 prompt architecture regression completed as **168 passed**. A smaller
+initial focused set completed as **24 passed**. `uv run --offline ruff ...` was attempted but dependency
+resolution failed before Ruff started because `jsonschema` is absent from the local uv cache and network
+access is disabled. No full project pytest is claimed; the user performs final local Ruff and full pytest.
+
+### Exact continuation point
+
+Before claiming S11/S12 experimental completion, restore/register the original v8 audit, Development
+Golden suite and required private EngineeringDocuments/source packages; confirm the approved data/model
+route and budget; verify runtime availability; run the offline v8 replay when the original audit is
+present; prepare and execute B0 smoke → B0 full → P1 → P2 using the generated Series-F plan; then
+produce the bound reports. Optional Codex diagnosis additionally requires the real S10 client probe to
+be green. Do not begin Series G until the required Development measurements or their explicit blockers
+are carried forward.
+
+---
+
 # AP03 status — Series E / S01-S10 complete
 
 ## Post-Series-E correction 5 — preserve Codex login in isolated client probe
