@@ -33,6 +33,7 @@ class CodexMcpConfig:
     tool_timeout_sec: int = 60
     required: bool = True
     review_preparation: bool = False
+    enabled_tools: tuple[str, ...] | None = None
 
     def __post_init__(self) -> None:
         if not self.url.startswith(("http://", "https://")):
@@ -43,6 +44,16 @@ class CodexMcpConfig:
             raise ValueError("bearer token environment variable has an invalid name")
         if self.startup_timeout_sec <= 0 or self.tool_timeout_sec <= 0:
             raise ValueError("Codex MCP timeouts must be positive")
+        if self.enabled_tools is not None:
+            if self.review_preparation:
+                raise ValueError(
+                    "explicit enabled_tools cannot be combined with review_preparation"
+                )
+            if not self.enabled_tools or len(set(self.enabled_tools)) != len(self.enabled_tools):
+                raise ValueError("explicit Codex enabled_tools must be non-empty and unique")
+            for tool in self.enabled_tools:
+                if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", tool):
+                    raise ValueError("Codex MCP tool names must be simple registered identifiers")
 
     @property
     def normalized_url(self) -> str:
@@ -52,9 +63,13 @@ class CodexMcpConfig:
         """Render a token-free Codex config.toml fragment."""
         # A dedicated review client must not bypass Holdout policy through generic readers.
         enabled = (
-            ("get_server_info", *REVIEW_PREPARATION_TOOLS)
-            if self.review_preparation
-            else (REQUIRED_TOOLS)
+            self.enabled_tools
+            if self.enabled_tools is not None
+            else (
+                ("get_server_info", *REVIEW_PREPARATION_TOOLS)
+                if self.review_preparation
+                else REQUIRED_TOOLS
+            )
         )
         tools = ", ".join(f'"{tool}"' for tool in enabled)
         required = str(self.required).lower()

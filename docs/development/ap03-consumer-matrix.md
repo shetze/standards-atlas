@@ -86,3 +86,20 @@ items without changing later-slice ownership:
 | CLI | Adds bounded plan/run/resume/report operations. Plan performs zero model calls; Run/Resume require explicit plan authorization. | No background daemon or model manager. |
 | Private raw data | New filesystem experiment repository stores request/raw-response/parser details only below private `.atlas/data/assertion-experiments`. | Public state/report carry hashes/status only; S09 later adds MCP access controls without exposing this private store. |
 | Golden/Holdout/review | No contents or publisher changed. | S07/S08 retain corpus/partition/HITL ownership; Series C creates no human semantic decisions. |
+
+## Series-E S09/S10 consumer update
+
+| Consumer / boundary | Series-E change | Guard / resulting owner |
+|---|---|---|
+| MCP server configuration | Adds a dedicated `ap03-development` profile with non-empty server-owned source/review scope. | Mixed Development/Holdout source clause/group/package overlap fails before serving; general profile remains unchanged. |
+| Clause reads/search/sample | Development profile resolves only S08 Development source-surface IDs and searches that in-memory allowed population. | No broad provider enumeration/search; generic CBox/reference routing is stripped from clause payloads. |
+| MCP resources/media/formulas | Not registered in the Development profile. | No resource URI, table/formula/media or arbitrary path bypass. |
+| Assertion review | Reuses S08 package/state but projects Development cases only. | No Holdout selector, no model write to human state, no Golden publication. |
+| Experiment diagnostics | Adds opaque-ID reads for explicitly registered Development manifests/state/comparison. | Partition/data route/cases/source packages are revalidated; private raw paths/messages and arbitrary report paths are not exposed. |
+| `mcp probe` | Can bind expected tools/resources/profile to the supplied server config. | Generic server handshake does not stand in for scoped-profile verification. |
+| `mcp codex-config` | Can derive `enabled_tools` from the exact configured server profile. | Client allowlist remains an additional fence, never server authorization. |
+| Codex optimization handoff | One narrow idempotent proposal stages a `codex-*` role-prompt bundle under a server-owned AP03 local path. | Exact authorized Development manifest, path, data route, cases and budget checked; schema/user/policy/examples inherited and validated; zero inference on submission. |
+| Existing experiment runner | Adds explicit bounded staged-prompt repository input for `codex-*` variants. | Plan/Run/Resume remain the existing operations and preserve request-hash/budget/authorization enforcement. |
+| Codex client probe | New opt-in probe uses only `get_server_info`, requires explicit model for a real call. | Missing client/approval is `not_executed`; no standards text is used. |
+| `CodexCliLlmGateway` | Kept separate from optimizer; direct inference disabled by default. Unsupported decoder controls are rejected and removed from request identity. | Not a controlled AP03 qualification arm; S11/S12 should use the approved experiment model route instead. |
+| Golden/evaluator/Holdout | No content or semantic matcher changed. | S11/S12 own real Development measurement; Holdout remains reserved for S15. |

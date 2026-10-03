@@ -22,6 +22,9 @@ class CodexCliConfig:
     executable: str = "codex"
     timeout_seconds: int = 300
     sandbox: str = "read-only"
+    # Codex-as-optimizer is a separate MCP client.  Direct model inference through this legacy
+    # gateway remains disabled unless a caller explicitly opts into the non-qualifying arm.
+    allow_uncontrolled_inference: bool = False
 
 
 class CodexCliLlmGateway:
@@ -51,7 +54,25 @@ class CodexCliLlmGateway:
     def generate_structured(
         self, request: StructuredGenerationRequest
     ) -> StructuredGenerationResult:
-        model = request.model or "default"
+        if not self._config.allow_uncontrolled_inference:
+            raise RuntimeError(
+                "direct Codex CLI inference is disabled: use the AP03 optimizer client profile; "
+                "this gateway is not a controlled qualification arm"
+            )
+        if not request.model:
+            raise RuntimeError(
+                "direct Codex CLI inference requires an explicit model; "
+                "default model selection is uncontrolled"
+            )
+        if request.temperature != 0.0:
+            raise RuntimeError("Codex CLI gateway cannot effectively set temperature")
+        if request.seed is not None:
+            raise RuntimeError("Codex CLI gateway cannot effectively set seed")
+        if request.max_tokens is not None:
+            raise RuntimeError("Codex CLI gateway cannot effectively set max_tokens")
+        if request.reasoning_enabled is not None:
+            raise RuntimeError("Codex CLI gateway cannot effectively set reasoning_enabled")
+        model = request.model
         with tempfile.TemporaryDirectory(prefix="standards-atlas-codex-") as directory:
             root = Path(directory)
             schema_path = root / "schema.json"
@@ -110,6 +131,14 @@ class CodexCliLlmGateway:
                     "final_message": raw,
                     "stdout": completed.stdout,
                     "stderr": completed.stderr,
+                    "parameter_provenance": {
+                        "model": "effective_cli_argument",
+                        "temperature": "not_controllable_by_gateway",
+                        "seed": "not_controllable_by_gateway",
+                        "max_tokens": "not_controllable_by_gateway",
+                        "reasoning_enabled": "not_controllable_by_gateway",
+                    },
+                    "qualification_eligible": False,
                 },
             )
 
@@ -122,9 +151,8 @@ def _request_hash(request: StructuredGenerationRequest, model: str) -> str:
         "schema": request.output_schema,
         "prompt_version": request.prompt_version,
         "model": model,
-        "temperature": request.temperature,
-        "seed": request.seed,
-        "max_tokens": request.max_tokens,
+        # Only invocation-effective inputs belong in this hash.  Unsupported decoder controls are
+        # rejected before invocation instead of being hashed as if Codex received them.
         "metadata": request.metadata,
     }
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))

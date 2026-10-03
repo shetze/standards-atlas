@@ -30,6 +30,7 @@ class McpClauseService:
         provider: ClauseProvider,
         config: McpServerConfig,
         knowledge_tables: FileSystemKnowledgeTableRepository | None = None,
+        development_scope: Any | None = None,
     ) -> None:
         self._provider = provider
         self._config = config
@@ -40,6 +41,15 @@ class McpClauseService:
             FileSystemEngineeringDocumentRepository(config.workspace),
             FileSystemFormulaTranscriptionRepository(config.workspace),
         )
+        self._development = None
+        if config.is_ap03_development:
+            from standards_atlas.adapters.mcp.development import (
+                McpDevelopmentClauseView,
+                McpDevelopmentScope,
+            )
+
+            scope = development_scope or McpDevelopmentScope(config)
+            self._development = McpDevelopmentClauseView(provider, scope)
 
     def get_server_info(self) -> dict[str, Any]:
         """Report the loaded runtime, not SDK metadata or files changed after startup."""
@@ -50,6 +60,7 @@ class McpClauseService:
         policy = SCHEMA_POLICIES["engineering-document"]
         return {
             "application": {"name": "standards-atlas", "version": __version__},
+            "mcp_profile": self._config.profile,
             "engineering_document_schema": {
                 "current": policy.current,
                 "readable": list(policy.readable),
@@ -68,10 +79,14 @@ class McpClauseService:
                     and self._config.expose.clause_text
                     and self._config.review.allow_holdout_assistance
                 ),
+                "ap03_development_scope": self._config.is_ap03_development,
+                "read_side_inference": False,
             },
         }
 
     def list_documents(self) -> list[dict[str, Any]]:
+        if self._development is not None:
+            return self._development.list_documents()
         documents = self._provider.list_documents()
         if self._config.allowed_document_keys:
             allowed = set(self._config.allowed_document_keys)
@@ -79,6 +94,8 @@ class McpClauseService:
         return [item.model_dump(mode="json") for item in documents]
 
     def get_clause(self, clause_id: str) -> dict[str, Any]:
+        if self._development is not None:
+            return self._development.get_clause(clause_id)
         clause = self._provider.get_clause(clause_id)
         self._ensure_document_allowed(clause.document_key)
         return self._serialize_clause(clause.model_dump(mode="json"))
@@ -93,6 +110,15 @@ class McpClauseService:
         limit: int = 20,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
+        if self._development is not None:
+            return self._development.list_clauses(
+                document_keys=document_keys,
+                clause_types=clause_types,
+                min_text_length=min_text_length,
+                max_text_length=max_text_length,
+                limit=limit,
+                offset=offset,
+            )
         bounded_limit = self._bounded_result_limit(limit)
         filters = self._filters(
             document_keys=document_keys,
@@ -115,6 +141,13 @@ class McpClauseService:
         clause_types: list[str] | None = None,
         limit: int = 20,
     ) -> list[dict[str, Any]]:
+        if self._development is not None:
+            return self._development.search_clauses(
+                query,
+                document_keys=document_keys,
+                clause_types=clause_types,
+                limit=limit,
+            )
         bounded_limit = self._bounded_result_limit(limit)
         clauses = self._provider.search_clauses(
             query,
@@ -133,6 +166,7 @@ class McpClauseService:
         limit: int = 20,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
+        self._reject_development_media()
         bounded_limit = self._bounded_result_limit(limit)
         keys = self._allowed_document_keys(document_keys)
         tables = self._knowledge_tables.list_tables(keys)
@@ -142,6 +176,7 @@ class McpClauseService:
         ]
 
     def get_knowledge_table(self, table_id: str) -> dict[str, Any]:
+        self._reject_development_media()
         table = self._knowledge_tables.get_table(table_id)
         self._ensure_document_allowed(table.document_key)
         return self._serialize_knowledge_table(table.model_dump(mode="json"))
@@ -153,6 +188,7 @@ class McpClauseService:
         limit: int = 20,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
+        self._reject_development_media()
         bounded_limit = self._bounded_result_limit(limit)
         table = self._knowledge_tables.get_table(table_id)
         self._ensure_document_allowed(table.document_key)
@@ -166,6 +202,7 @@ class McpClauseService:
         return [self._redact_source_evidence(item) for item in payloads]
 
     def get_knowledge_record(self, record_id: str) -> dict[str, Any]:
+        self._reject_development_media()
         record = self._knowledge_tables.get_record(record_id)
         self._ensure_document_allowed(record.document_key)
         payload = record.model_dump(mode="json")
@@ -180,6 +217,7 @@ class McpClauseService:
         limit: int = 20,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
+        self._reject_development_media()
         bounded_limit = self._bounded_result_limit(limit)
         keys = list(self._allowed_document_keys(document_keys))
         return [
@@ -190,6 +228,7 @@ class McpClauseService:
         ]
 
     def get_formula(self, formula_id: str) -> dict[str, Any]:
+        self._reject_development_media()
         payload = self._formula_transcriptions.get(formula_id)
         self._ensure_document_allowed(payload["document_key"])
         if not self._config.expose.clause_text and isinstance(payload.get("context"), dict):
@@ -207,6 +246,7 @@ class McpClauseService:
         confidence: float | None = None,
         notes: str | None = None,
     ) -> dict[str, Any]:
+        self._reject_development_media()
         if not self._config.capabilities.formula_transcription:
             raise ValueError("formula transcription is disabled by MCP configuration")
         formula = self._formula_transcriptions.get(formula_id)
@@ -230,6 +270,14 @@ class McpClauseService:
         document_keys: list[str] | None = None,
         clause_types: list[str] | None = None,
     ) -> list[dict[str, Any]]:
+        if self._development is not None:
+            return self._development.sample_clauses(
+                count=count,
+                strategy=strategy,
+                seed=seed,
+                document_keys=document_keys,
+                clause_types=clause_types,
+            )
         if count > self._config.limits.max_sample_size:
             raise ValueError(
                 f"count exceeds configured maximum of {self._config.limits.max_sample_size}"
@@ -244,6 +292,12 @@ class McpClauseService:
             ),
         )
         return [self._serialize_clause(item.model_dump(mode="json")) for item in clauses]
+
+    def _reject_development_media(self) -> None:
+        if self._development is not None:
+            raise ValueError(
+                "media/table/formula reads are not exposed by the AP03 Development profile"
+            )
 
     def _allowed_document_keys(self, document_keys: list[str] | None) -> tuple[str, ...]:
         keys = tuple(document_keys or ())

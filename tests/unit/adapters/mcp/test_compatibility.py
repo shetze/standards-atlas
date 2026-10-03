@@ -224,3 +224,27 @@ def test_decodes_json_and_sse_responses() -> None:
         ]
         == 2
     )
+
+
+def test_probe_accepts_scoped_profile_without_resources() -> None:
+    transport = _transport()
+    transport.responses["tools/list"] = {
+        "result": {"tools": [{"name": name} for name in REQUIRED_TOOLS]}
+    }
+    runtime = _runtime()
+    runtime["mcp_profile"] = "ap03-development"
+    transport.tool_responses["get_server_info"] = {
+        "result": {"content": [], "structuredContent": runtime}
+    }
+    transport.responses["resources/list"] = {"result": {"resources": []}}
+
+    report = McpCompatibilityProbe(
+        transport,
+        required_tools=REQUIRED_TOOLS,
+        require_documents_resource=False,
+        expected_profile="ap03-development",
+    ).run()
+
+    assert report.passed
+    assert next(c for c in report.checks if c.name == "server_profile").passed
+    assert next(c for c in report.checks if c.name == "documents_resource").passed

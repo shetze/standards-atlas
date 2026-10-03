@@ -14,6 +14,7 @@ from standards_atlas.adapters.llm import (
     RamaLamaServerManager,
 )
 from standards_atlas.adapters.mcp import (
+    CodexClientMcpProbe,
     CodexMcpConfig,
     McpCompatibilityProbe,
     McpServerConfig,
@@ -240,6 +241,16 @@ def probe_mcp(
             help="Also probe formula listing for this document (repeatable; never writes).",
         ),
     ] = cli_defaults.DEFAULT_NONE,
+    server_config: Annotated[
+        Path | None,
+        typer.Option(
+            "--server-config",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Bind probe expectations to the actual configured MCP profile/tool surface.",
+        ),
+    ] = cli_defaults.DEFAULT_NONE,
 ) -> None:
     """Verify MCP interoperability, loaded document schemas and optional formula reads."""
     import os
@@ -251,7 +262,28 @@ def probe_mcp(
         timeout_seconds=timeout_seconds,
     )
     try:
-        report = McpCompatibilityProbe(transport, document_keys=tuple(document_keys or ())).run()
+        required_tools = None
+        require_documents_resource = True
+        expected_profile = None
+        if server_config is not None:
+            from standards_atlas.adapters.mcp.tool_policy import registered_tool_names
+
+            server_policy = McpServerConfig.load(server_config)
+            required_tools = registered_tool_names(server_policy)
+            expected_profile = server_policy.profile
+            require_documents_resource = not server_policy.is_ap03_development
+            if server_policy.is_ap03_development and document_keys:
+                raise ValueError(
+                    "AP03 Development profile intentionally exposes no formula/media probe path"
+                )
+        kwargs = {
+            "document_keys": tuple(document_keys or ()),
+            "require_documents_resource": require_documents_resource,
+            "expected_profile": expected_profile,
+        }
+        if required_tools is not None:
+            kwargs["required_tools"] = required_tools
+        report = McpCompatibilityProbe(transport, **kwargs).run()
     except (OSError, RuntimeError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
@@ -287,6 +319,16 @@ def render_codex_mcp_config(
             help="Use a review-only tool allowlist plus server information for a dedicated client.",
         ),
     ] = cli_defaults.DEFAULT_FALSE,
+    server_config: Annotated[
+        Path | None,
+        typer.Option(
+            "--server-config",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Bind enabled_tools to the tools actually registered by this MCP server profile.",
+        ),
+    ] = cli_defaults.DEFAULT_NONE,
     output: Annotated[
         Path | None,
         typer.Option("--output", help="Optional config fragment path."),
@@ -298,11 +340,20 @@ def render_codex_mcp_config(
 ) -> None:
     """Render a secure Codex Streamable HTTP MCP configuration fragment."""
     try:
+        if server_config is not None and review_preparation:
+            raise ValueError("--server-config cannot be combined with --review-preparation")
+        enabled_tools = None
+        if server_config is not None:
+            from standards_atlas.adapters.mcp.tool_policy import registered_tool_names
+
+            server_policy = McpServerConfig.load(server_config)
+            enabled_tools = registered_tool_names(server_policy)
         config = CodexMcpConfig(
             url=url,
             server_name=server_name,
             bearer_token_env_var=token_environment_variable,
             review_preparation=review_preparation,
+            enabled_tools=enabled_tools,
         )
         if output is not None:
             config.write(output, overwrite=overwrite)
@@ -313,3 +364,75 @@ def render_codex_mcp_config(
     typer.echo(config.render_toml())
     typer.echo("Endpoint registration (apply the fragment above for tool allowlists):", err=True)
     typer.echo(" ".join(config.codex_add_command()), err=True)
+
+
+@mcp_app.command("codex-client-probe")
+def probe_codex_client(
+    url: Annotated[str, typer.Option("--url", help="Streamable HTTP MCP endpoint.")],
+    server_config: Annotated[
+        Path,
+        typer.Option(
+            "--server-config",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="AP03 Development MCP server profile used to validate the expected tool surface.",
+        ),
+    ],
+    token_environment_variable: Annotated[
+        str,
+        typer.Option("--token-env", help="Environment variable containing the bearer token."),
+    ] = cli_defaults.DEFAULT_MCP_TOKEN_ENVIRONMENT_VARIABLE,
+    executable: Annotated[str, typer.Option("--executable")] = "codex",
+    allow_synthetic_model_call: Annotated[
+        bool,
+        typer.Option(
+            "--allow-synthetic-model-call",
+            help=(
+                "Explicitly permit one text-free get_server_info call through the real Codex "
+                "client."
+            ),
+        ),
+    ] = cli_defaults.DEFAULT_FALSE,
+    model: Annotated[
+        str | None,
+        typer.Option("--model", help="Explicit Codex model for the optional real client probe."),
+    ] = cli_defaults.DEFAULT_NONE,
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", help="Optional JSON report path."),
+    ] = cli_defaults.DEFAULT_NONE,
+) -> None:
+    """Verify actual Codex MCP tool recognition without exposing standards text."""
+    try:
+        policy = McpServerConfig.load(server_config)
+        if not policy.is_ap03_development:
+            raise ValueError("Codex AP03 client probe requires profile='ap03-development'")
+        from standards_atlas.adapters.mcp.tool_policy import registered_tool_names
+
+        if "get_server_info" not in registered_tool_names(policy):
+            raise ValueError("selected server profile does not register get_server_info")
+        report = CodexClientMcpProbe(executable).run(
+            url=url,
+            server_name=policy.name,
+            token_environment_variable=token_environment_variable,
+            allow_synthetic_model_call=allow_synthetic_model_call,
+            model=model,
+        )
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    payload = report.as_dict()
+    if report.status == "passed" and report.mcp_profile != "ap03-development":
+        payload["status"] = "failed"
+        payload["detail"] = (
+            "Codex reached an MCP server that did not report the AP03 Development profile"
+        )
+    rendered = json.dumps(payload, ensure_ascii=False, indent=2)
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(rendered + "\n", encoding="utf-8")
+    typer.echo(rendered)
+    if payload["status"] == "failed":
+        raise typer.Exit(code=1)

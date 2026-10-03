@@ -1,3 +1,116 @@
+# AP03 status — Series E / S01-S10 complete
+
+Date: 2026-10-03. Series E implements only AP03-S09 and AP03-S10 on the supplied,
+locally verified post-Series-D snapshot `standards-atlas-current-202610030602.zip`
+(SHA-256 `3860ea7cf07d519c2914c7ef55a97f3ce381457841dda86fd1234010a6d0c5dd`).
+Series F is not started.
+
+No real standards-text optimization, remote LLM inference, private corpus run or semantic-quality
+experiment was executed in Series E. The local environment has no `codex` executable. The genuine
+Codex-client MCP tool-read probe is therefore implemented but recorded as **not executed**. All new
+access-control, handoff and staging tests use synthetic data only.
+
+## S09 — server-side Development-only MCP exposure
+
+A dedicated `profile: ap03-development` is added to the existing MCP server. It fails closed unless
+it has a non-empty document allowlist, one or more explicitly registered S08 assertion-review
+packages, disabled Holdout assistance, text exposure enabled for the selected Development sources,
+no source-path exposure, and no legacy review/formula mutation capability.
+
+The effective source authority is built server-side from the exact source surfaces of the registered
+S08 **Development** cases. The same resolver also inspects reserved Holdout cases before startup and
+rejects any Development/Holdout overlap in source-clause IDs, source groups or source-package hashes.
+Document-level permission alone is therefore insufficient for a mixed Development/Holdout document.
+Generic list/search/sample operations are evaluated only over the resolved Development source IDs and
+do not delegate broad enumeration/search to the underlying corpus provider. Generic clause payloads
+strip document-wide reference/context routing that could reveal an unapproved source; the exact
+bearing context remains available only through the source-bound Development review case.
+
+The AP03 profile registers no MCP resources and no table/formula/media tools. Its review projection is
+S08 task-specific, Development-only and has no Human-confirmation or publication write. Experiment
+reads use only explicitly registered experiment IDs and revalidate `partition=development`, data route,
+case identity and source-package hashes against the same Development authority. Private raw-attempt
+paths/messages and authorization references are not returned. Comparison reads use a fixed path;
+client-supplied report/file paths do not exist. Symlinked review/experiment/report/staging paths are
+rejected.
+
+`mcp codex-config --server-config ...` now derives `enabled_tools` from the exact tools registered by
+the selected server profile. The client allowlist is therefore an additional fence, not the security
+boundary. `mcp probe --server-config ...` likewise binds its expected tool/resource surface to the
+profile; the scoped profile is expected to have no generic documents resource.
+
+## S10 — controlled Codex optimization handoff
+
+Codex optimization is a separate MCP client role, not `CodexCliLlmGateway`. The single Development
+write tool, `submit_prompt_variant_proposal`, accepts a narrow schema: one hypothesis, at most three
+Development diagnostic clusters and exactly one replacement of the extractor **role system prompt**.
+Extra fields are forbidden, so a proposal cannot submit Golden/evaluator/schema/source-policy/model/
+partition/budget controls through this contract.
+
+Atlas resolves the referenced experiment itself and requires an explicitly authorized Development
+manifest. It verifies the exact manifest hash, base prompt, registered cases/source packages, data
+route and existing call budget. Staging is server-owned and restricted below
+`local/evaluation/assertions/ap03`; the client supplies no filesystem path. The new version must use a
+`codex-*` identifier. Atlas copies the existing task schema and source-bound user template, preserves
+policy/example bindings, validates the resulting bundle with the existing `PromptRepository`, marks
+it `unqualified-development`, writes a hash-bound receipt, and makes an identical request idempotent.
+No inference is started by this write.
+
+The existing experiment plan/run/resume operations can consume a staged `codex-*` bundle only when the
+operator explicitly supplies its bounded `--prompt-staging-root`. Planning still performs zero model
+calls, and execution still requires the existing experiment authorization/budget checks. The staged
+receipt names only these existing operations; it does not create a second runner.
+
+`CodexCliLlmGateway` remains a different, optional direct-inference adapter. Its direct inference arm
+is disabled by default. An explicit non-qualifying opt-in additionally requires an explicit model and
+rejects seed, max-tokens, reasoning and non-default temperature because this CLI adapter does not
+actually pass those controls. Unsupported parameters were removed from its request hash and are
+reported as uncontrolled rather than being presented as effective reproducibility inputs.
+
+`mcp codex-client-probe` checks the actual Codex executable. A real MCP tool-read happens only with
+`--allow-synthetic-model-call` **and** an explicit `--model`; it generates a temporary token-free MCP
+config whose only enabled tool is `get_server_info`. The prompt expressly uses no standards text. A
+server handshake or generic `mcp probe` is not reported as successful Codex client tool recognition.
+
+See `docs/development/ap03-codex-workflow.md` and `cfg/mcp-ap03-development.example.yaml` for the local
+operating sequence.
+
+## Series-E tests and execution status
+
+Executed with the locally installed Python 3.13 packages, without model/network calls:
+
+- S09 configuration/source/review protection set: 12 passed; the FastMCP registration test is skipped
+  when the optional `mcp` package is unavailable.
+- S10 prompt-staging contract: 3 passed.
+- Experiment and assertion CLI regression after staged-prompt integration: 17 passed.
+- Codex client/gateway/CLI tests: 11 passed.
+- MCP compatibility/profile and CLI probe/config tests: 24 passed.
+- final combined assertion-qualification/MCP/Codex/CLI/architecture regression: **356 passed,
+  4 skipped** (optional MCP runtime unavailable);
+- AP01/AP02 offline assertion/source-bound/schema integration regression: **95 passed**.
+
+`uv run pytest ...` was attempted first. `uv` could not resolve the missing `chromadb` dependency
+because this environment has no DNS/network access, so that invocation did not start pytest. The same
+available test subsets were then run with `PYTHONPATH=src python3.13 -m pytest` using already installed
+packages. The optional `mcp` package and `codex` executable are not installed here. No real client or
+model run is claimed. Ruff is not installed in the local interpreter and `uv` cannot resolve the dev
+environment, so Ruff remains for the user's local verification together with the full pytest suite.
+
+## Handover to Series F
+
+Series E ends at S10. The next permitted work is AP03-S11 followed by S12. Before any real run, use the
+registered Series-D Development corpus/review packages and an explicitly authorized experiment/data
+route/budget. Generate and inspect the AP03 MCP profile from those real registrations; if Codex will be
+used as an optimizer, perform the real client tool-recognition probe only with an approved provider
+route and the synthetic/text-free probe. Series F may then run B0/P1/P2 and at most the bounded
+Development prompt variant(s). Holdout remains inaccessible and must not be used for optimization.
+No S11/S12 model result is part of this Series-E delivery.
+
+---
+
+## Preserved Series-D and earlier history
+
+
 # AP03 status — Series D / S01-S08 complete
 
 Date: 2026-10-03. Series D implements only AP03-S07 and AP03-S08 on the supplied, locally

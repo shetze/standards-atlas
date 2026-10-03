@@ -1,0 +1,44 @@
+# AP03 Series E example only. Replace placeholders with the registered Series-D Development package.
+# The dedicated profile fails closed when its non-empty server-owned scope cannot be resolved.
+mcp:
+  name: standards-atlas-ap03-development
+  transport: streamable-http
+  profile: ap03-development
+  workspace: .atlas/data
+  allowed_document_keys:
+    - REPLACE_WITH_DEVELOPMENT_DOCUMENT_KEY
+  limits:
+    max_results: 20
+    max_sample_size: 20
+    max_clause_characters: 20000
+  expose:
+    clause_text: true
+    source_paths: false
+    internal_metadata: false
+  capabilities:
+    formula_transcription: false
+    review_preparation: false
+  review:
+    enabled: true
+    workspace: local/review/assertions/ap03/workbench
+    allow_holdout_assistance: false
+  ap03_development:
+    review_handles:
+      - REPLACE_WITH_ASSERTION_REVIEW_HANDLE
+    experiment_ids:
+      - REPLACE_WITH_DEVELOPMENT_EXPERIMENT_ID
+    project_root: .
+    staging_directory: local/evaluation/assertions/ap03/codex-staging
+    allowed_data_routes:
+      - local-private-context-source-packages
+    max_prompt_characters: 24000
+  http:
+    host: 127.0.0.1
+    port: 8765
+    path: /mcp
+    allowed_hosts: ["localhost:*", "127.0.0.1:*"]
+    allowed_origins: ["http://localhost:*", "http://127.0.0.1:*"]
+    stateless: true
+  auth:
+    enabled: true
+    token_environment_variable: STANDARDS_ATLAS_MCP_TOKEN

@@ -1,4 +1,4 @@
-"""MCP server factory for read-only Standards Atlas clause access."""
+"""Inbound MCP adapter for read-only and explicitly bounded preparation workflows."""
 
 from __future__ import annotations
 
@@ -20,9 +20,16 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
     except ImportError as exc:
         raise RuntimeError("MCP support is not installed. Run 'uv sync --extra mcp'.") from exc
 
+    development_scope = None
+    if config.is_ap03_development:
+        from standards_atlas.adapters.mcp.development import McpDevelopmentScope
+
+        development_scope = McpDevelopmentScope(config)
+
     clause_service = McpClauseService(
         provider or EngineeringDocumentClauseProvider(config.workspace),
         config,
+        development_scope=development_scope,
     )
     mcp = FastMCP(
         config.name,
@@ -35,6 +42,7 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
             allowed_origins=list(config.http.allowed_origins),
         ),
     )
+    read = {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False}
 
     def tool_call(operation: Any, *args: Any, **kwargs: Any) -> Any:
         try:
@@ -43,22 +51,22 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
             message = exc.args[0] if exc.args else str(exc)
             raise ToolError(str(message)) from exc
 
-    @mcp.tool()
+    @mcp.tool(annotations=read)
     def get_server_info() -> dict[str, Any]:
-        """Read the loaded application version, document schema policy and write capabilities."""
+        """Read loaded runtime/schema policy and the active server-side exposure profile."""
         return clause_service.get_server_info()
 
-    @mcp.tool()
+    @mcp.tool(annotations=read)
     def list_standards() -> list[dict[str, Any]]:
-        """List standards available to this server, including clause counts."""
+        """List standards visible through this server-side scope."""
         return tool_call(clause_service.list_documents)
 
-    @mcp.tool()
+    @mcp.tool(annotations=read)
     def get_clause(clause_id: str) -> dict[str, Any]:
         """Read one exposed clause by its stable Standards Atlas clause identifier."""
         return tool_call(clause_service.get_clause, clause_id)
 
-    @mcp.tool()
+    @mcp.tool(annotations=read)
     def list_clauses(
         document_keys: list[str] | None = None,
         clause_types: list[str] | None = None,
@@ -67,7 +75,7 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
         limit: int = 20,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
-        """List exposed clauses with optional metadata and text-length filters."""
+        """List clauses after the active server-side source policy has been applied."""
         return tool_call(
             clause_service.list_clauses,
             document_keys=document_keys,
@@ -78,14 +86,14 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
             offset=offset,
         )
 
-    @mcp.tool()
+    @mcp.tool(annotations=read)
     def search_clauses(
         query: str,
         document_keys: list[str] | None = None,
         clause_types: list[str] | None = None,
         limit: int = 20,
     ) -> list[dict[str, Any]]:
-        """Search exposed clause titles, references, and text for all query terms."""
+        """Search only source text visible through the active server-side scope."""
         return tool_call(
             clause_service.search_clauses,
             query,
@@ -93,6 +101,92 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
             clause_types=clause_types,
             limit=limit,
         )
+
+    @mcp.tool(annotations=read)
+    def sample_clauses(
+        count: int,
+        strategy: str = "random",
+        seed: int = 0,
+        document_keys: list[str] | None = None,
+        clause_types: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Sample only the source population visible through the active server-side scope."""
+        return tool_call(
+            clause_service.sample_clauses,
+            count=count,
+            strategy=strategy,
+            seed=seed,
+            document_keys=document_keys,
+            clause_types=clause_types,
+        )
+
+    if config.is_ap03_development:
+        assert development_scope is not None
+        from standards_atlas.adapters.mcp.development import (
+            McpCodexOptimizationService,
+            McpDevelopmentExperimentService,
+            McpDevelopmentReviewService,
+        )
+
+        review_service = McpDevelopmentReviewService(development_scope)
+        experiment_service = McpDevelopmentExperimentService(development_scope)
+        optimization_service = McpCodexOptimizationService(development_scope)
+
+        @mcp.tool(annotations=read)
+        def list_review_packages(limit: int = 20, offset: int = 0) -> dict[str, Any]:
+            """List registered S08 assertion packages projected to Development only."""
+            return tool_call(review_service.list_packages, limit=limit, offset=offset)
+
+        @mcp.tool(annotations=read)
+        def get_review_package(handle: str) -> dict[str, Any]:
+            """Read one Development-only assertion review contract; no human write authority."""
+            return tool_call(review_service.get_package, handle)
+
+        @mcp.tool(annotations=read)
+        def list_review_cases(handle: str, limit: int = 20, offset: int = 0) -> dict[str, Any]:
+            """Page Development assertion cases; Holdout is not an accepted parameter or result."""
+            return tool_call(review_service.list_cases, handle, limit=limit, offset=offset)
+
+        @mcp.tool(annotations=read)
+        def get_review_case(handle: str, case_id: str) -> dict[str, Any]:
+            """Read exact bound Development source surfaces and separate proposal state."""
+            return tool_call(review_service.get_case, handle, case_id)
+
+        @mcp.tool(annotations=read)
+        def list_development_experiments(limit: int = 20, offset: int = 0) -> dict[str, Any]:
+            """List explicitly registered Development experiment identities."""
+            return tool_call(experiment_service.list_experiments, limit=limit, offset=offset)
+
+        @mcp.tool(annotations=read)
+        def get_development_experiment_manifest(experiment_id: str) -> dict[str, Any]:
+            """Read one approved Development manifest without arbitrary filesystem paths."""
+            return tool_call(experiment_service.get_manifest, experiment_id)
+
+        @mcp.tool(annotations=read)
+        def get_development_experiment_state(experiment_id: str) -> dict[str, Any]:
+            """Read sanitized attempt status; private raw paths/messages are never exposed."""
+            return tool_call(experiment_service.get_state, experiment_id)
+
+        @mcp.tool(annotations=read)
+        def get_development_experiment_comparison(experiment_id: str) -> dict[str, Any]:
+            """Read fixed-path comparison after Development manifest/scope validation."""
+            return tool_call(experiment_service.get_comparison, experiment_id)
+
+        write_proposal = {
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        }
+
+        @mcp.tool(annotations=write_proposal)
+        def submit_prompt_variant_proposal(proposal: dict[str, Any]) -> dict[str, Any]:
+            """Validate/stage one prompt proposal; never run a model or alter Golden."""
+            return tool_call(optimization_service.submit_prompt_variant_proposal, proposal)
+
+        # No MCP resources or media/table/formula tools are registered in this profile.  A resource
+        # URI or client allowlist therefore cannot bypass the same clause/review/experiment scope.
+        return mcp
 
     @mcp.tool()
     def list_knowledge_tables(
@@ -169,24 +263,6 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
             model=model,
             confidence=confidence,
             notes=notes,
-        )
-
-    @mcp.tool()
-    def sample_clauses(
-        count: int,
-        strategy: str = "random",
-        seed: int = 0,
-        document_keys: list[str] | None = None,
-        clause_types: list[str] | None = None,
-    ) -> list[dict[str, Any]]:
-        """Create a reproducible random or document-balanced sample of exposed clauses."""
-        return tool_call(
-            clause_service.sample_clauses,
-            count=count,
-            strategy=strategy,
-            seed=seed,
-            document_keys=document_keys,
-            clause_types=clause_types,
         )
 
     @mcp.resource("standards-atlas://documents")

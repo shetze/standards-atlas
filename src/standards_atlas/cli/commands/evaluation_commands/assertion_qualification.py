@@ -754,6 +754,14 @@ def plan_assertion_experiment_command(
     reasoning_enabled: Annotated[
         bool | None, typer.Option("--reasoning-enabled/--reasoning-disabled")
     ] = None,
+    prompt_staging_root: Annotated[
+        Path | None,
+        typer.Option(
+            "--prompt-staging-root",
+            file_okay=False,
+            help="Optional AP03 Codex staging root; only codex-* prompt versions may use it.",
+        ),
+    ] = None,
     authorize_execution: Annotated[
         bool, typer.Option("--authorize-execution/--do-not-authorize-execution")
     ] = False,
@@ -776,6 +784,9 @@ def plan_assertion_experiment_command(
             for key in sorted({case.source_document_key for case in golden.cases})
         }
         source_repo = FileSystemContextSourcePackageRepository(workspace)
+        prompt_repository = _ap03_prompt_repository(
+            project_root, prompt_version, prompt_staging_root
+        )
         runtime_hash = hashlib.sha256(config.read_bytes()).hexdigest()
         manifest = plan_assertion_experiment(
             golden,
@@ -801,6 +812,7 @@ def plan_assertion_experiment_command(
             repetitions=repetitions,
             execution_authorized=authorize_execution,
             authorization_reference=authorization_reference,
+            prompt_repository=prompt_repository,
         )
         repository = FileSystemAssertionExperimentRepository(project_root, workspace)
         digest = repository.save_manifest(manifest)
@@ -827,6 +839,7 @@ def _run_assertion_experiment_cli(
     workspace: Path,
     project_root: Path,
     resume: bool,
+    prompt_staging_root: Path | None = None,
 ) -> None:
     from dataclasses import replace
 
@@ -864,6 +877,9 @@ def _run_assertion_experiment_cli(
         llm_config = replace(LlmConfig.load(config), cache_directory=None)
         gateway = OpenAICompatibleLlmGateway(llm_config)
         source_repo = FileSystemContextSourcePackageRepository(workspace)
+        prompt_repository = _ap03_prompt_repository(
+            project_root, manifest.prompt_version, prompt_staging_root
+        )
 
         def extractor_factory(bound_gateway, bound_manifest):
             return OntologyGuidedKnowledgeProposalExtractor(
@@ -876,6 +892,7 @@ def _run_assertion_experiment_cli(
                 seed=bound_manifest.seed,
                 max_tokens=bound_manifest.max_output_tokens_per_call,
                 reasoning_enabled=bound_manifest.reasoning_enabled,
+                prompt_repository=prompt_repository,
             )
 
         state = AssertionExperimentService(
@@ -905,6 +922,10 @@ def run_assertion_experiment_command(
         cli_defaults.DEFAULT_WORKSPACE
     ),
     project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
+    prompt_staging_root: Annotated[
+        Path | None,
+        typer.Option("--prompt-staging-root", file_okay=False),
+    ] = None,
 ) -> None:
     """Execute a previously planned AP03 experiment in the foreground."""
     _run_assertion_experiment_cli(
@@ -914,6 +935,7 @@ def run_assertion_experiment_command(
         workspace=workspace,
         project_root=project_root,
         resume=False,
+        prompt_staging_root=prompt_staging_root,
     )
 
 
@@ -928,6 +950,10 @@ def resume_assertion_experiment_command(
         cli_defaults.DEFAULT_WORKSPACE
     ),
     project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
+    prompt_staging_root: Annotated[
+        Path | None,
+        typer.Option("--prompt-staging-root", file_okay=False),
+    ] = None,
 ) -> None:
     """Resume only unfinished cells of a bound AP03 experiment."""
     _run_assertion_experiment_cli(
@@ -937,6 +963,7 @@ def resume_assertion_experiment_command(
         workspace=workspace,
         project_root=project_root,
         resume=True,
+        prompt_staging_root=prompt_staging_root,
     )
 
 
@@ -1104,6 +1131,39 @@ def _render_assertion_experiment_summary(report) -> str:
     )
     lines.extend(f"- {item}" for item in report.open_diagnostics or ("none",))
     return "\n".join(lines) + "\n"
+
+
+def _ap03_prompt_repository(
+    project_root: Path, prompt_version: str, prompt_staging_root: Path | None
+):
+    """Load packaged prompts or an explicitly bounded codex-* staging root."""
+    from standards_atlas.application.evaluation.repository import PromptRepository
+    from standards_atlas.application.evaluation.source_bound_prompt import (
+        semantic_prompt_repository,
+    )
+
+    if not prompt_version.startswith("codex-"):
+        if prompt_staging_root is not None:
+            raise ValueError("--prompt-staging-root is accepted only for codex-* prompt versions")
+        return semantic_prompt_repository()
+    if prompt_staging_root is None:
+        raise ValueError("codex-* prompt versions require --prompt-staging-root")
+    project = project_root.resolve()
+    staging = (
+        prompt_staging_root if prompt_staging_root.is_absolute() else project / prompt_staging_root
+    ).resolve()
+    allowed = (project / "local" / "evaluation" / "assertions" / "ap03").resolve()
+    if not staging.is_relative_to(allowed):
+        raise ValueError("Codex prompt staging must stay under local/evaluation/assertions/ap03")
+    if staging.is_symlink() or any(parent.is_symlink() for parent in staging.parents):
+        raise ValueError("Codex prompt staging paths must not contain symlinks")
+    semantic_root = Path(__file__).resolve().parents[3] / "resources" / "semantic"
+    return PromptRepository(
+        staging / "prompts",
+        task_root=semantic_root / "tasks",
+        policy_root=semantic_root / "policies",
+        example_root=semantic_root / "examples",
+    )
 
 
 def _ap03_code_revision(project_root: Path) -> str:

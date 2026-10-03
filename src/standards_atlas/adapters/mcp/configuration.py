@@ -1,4 +1,4 @@
-"""Configuration for the read-only Standards Atlas MCP adapter."""
+"""Configuration for the Standards Atlas MCP adapter."""
 
 from __future__ import annotations
 
@@ -100,12 +100,38 @@ class McpReviewConfig(BaseModel):
     allow_holdout_assistance: bool = False
 
 
+class McpAp03DevelopmentConfig(BaseModel):
+    """Server-owned AP03 optimizer scope; client tool allowlists are only an extra fence."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    review_handles: tuple[str, ...] = ()
+    experiment_ids: tuple[str, ...] = ()
+    project_root: Path = Path(".")
+    staging_directory: Path = Path("local/evaluation/assertions/ap03/codex-staging")
+    allowed_data_routes: tuple[str, ...] = ("local-private-context-source-packages",)
+    max_prompt_characters: int = Field(default=24_000, ge=256, le=200_000)
+
+    @model_validator(mode="after")
+    def validate_scope(self) -> McpAp03DevelopmentConfig:
+        if not self.review_handles:
+            raise ValueError("AP03 development profile requires at least one review handle")
+        for value in (*self.review_handles, *self.experiment_ids):
+            if not value or "/" in value or "\\" in value or value in {".", ".."}:
+                raise ValueError(
+                    "AP03 development handles/experiment ids must be safe path components"
+                )
+        if not self.allowed_data_routes:
+            raise ValueError("AP03 development profile requires an explicit data-route allowlist")
+        return self
+
+
 class McpServerConfig(BaseModel):
     """Runtime configuration for the MCP inbound adapter."""
 
     model_config = ConfigDict(frozen=True)
     name: str = Field(default="standards-atlas", min_length=1)
     transport: Literal["stdio", "streamable-http"] = "stdio"
+    profile: Literal["general", "ap03-development"] = "general"
     workspace: Path = Path(".atlas/data")
     allowed_document_keys: tuple[str, ...] = ()
     limits: McpLimitConfig = McpLimitConfig()
@@ -116,6 +142,7 @@ class McpServerConfig(BaseModel):
     audit: McpAuditConfig = McpAuditConfig()
     process: McpProcessConfig = McpProcessConfig()
     review: McpReviewConfig = McpReviewConfig()
+    ap03_development: McpAp03DevelopmentConfig | None = None
 
     @model_validator(mode="after")
     def validate_remote_configuration(self) -> McpServerConfig:
@@ -123,7 +150,35 @@ class McpServerConfig(BaseModel):
             public = self.http.host not in {"127.0.0.1", "localhost", "::1"}
             if public and not self.auth.enabled:
                 raise ValueError("authentication is required when binding MCP beyond localhost")
+        if self.profile == "ap03-development":
+            if self.ap03_development is None:
+                raise ValueError("AP03 development profile requires ap03_development configuration")
+            if not self.allowed_document_keys:
+                raise ValueError("AP03 development profile requires a non-empty document allowlist")
+            if not self.review.enabled:
+                raise ValueError("AP03 development profile requires the assertion review registry")
+            if self.review.allow_holdout_assistance:
+                raise ValueError("AP03 development profile cannot enable holdout assistance")
+            if not self.expose.clause_text:
+                raise ValueError(
+                    "AP03 development review requires explicit Development text exposure"
+                )
+            if self.expose.source_paths:
+                raise ValueError("AP03 development profile cannot expose source filesystem paths")
+            if self.capabilities.formula_transcription:
+                raise ValueError("AP03 development profile cannot enable formula transcription")
+            if self.capabilities.review_preparation:
+                raise ValueError(
+                    "AP03 development profile uses task-specific read-only review; "
+                    "legacy model-review preparation must stay disabled"
+                )
+        elif self.ap03_development is not None:
+            raise ValueError("ap03_development configuration requires profile='ap03-development'")
         return self
+
+    @property
+    def is_ap03_development(self) -> bool:
+        return self.profile == "ap03-development"
 
     @classmethod
     def load(cls, path: Path) -> McpServerConfig:

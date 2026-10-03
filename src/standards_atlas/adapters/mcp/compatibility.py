@@ -158,11 +158,15 @@ class McpCompatibilityProbe:
         protocol_version: str = DEFAULT_PROTOCOL_VERSION,
         required_tools: tuple[str, ...] = REQUIRED_TOOLS,
         document_keys: tuple[str, ...] = (),
+        require_documents_resource: bool = True,
+        expected_profile: str | None = None,
     ) -> None:
         self.transport = transport
         self.protocol_version = protocol_version
         self.required_tools = required_tools
         self.document_keys = tuple(sorted(set(document_keys)))
+        self.require_documents_resource = require_documents_resource
+        self.expected_profile = expected_profile
 
     def run(self) -> CompatibilityReport:
         checks: list[CompatibilityCheck] = []
@@ -210,6 +214,15 @@ class McpCompatibilityProbe:
 
         schema_check, runtime = self._check_runtime(tool_names)
         checks.append(schema_check)
+        if self.expected_profile is not None:
+            actual_profile = runtime.get("mcp_profile") if runtime else None
+            checks.append(
+                CompatibilityCheck(
+                    "server_profile",
+                    actual_profile == self.expected_profile,
+                    f"server profile {actual_profile!r}; expected {self.expected_profile!r}",
+                )
+            )
 
         try:
             self._call_tool("list_standards", {}, 4)
@@ -224,14 +237,23 @@ class McpCompatibilityProbe:
             str(resource.get("uri")) for resource in resources if isinstance(resource, dict)
         }
         documents_resource = "standards-atlas://documents"
+        documents_present = documents_resource in resource_uris
         checks.append(
             CompatibilityCheck(
                 "documents_resource",
-                documents_resource in resource_uris,
+                documents_present if self.require_documents_resource else not documents_present,
                 (
                     "documents resource registered"
-                    if documents_resource in resource_uris
-                    else "documents resource missing"
+                    if self.require_documents_resource and documents_present
+                    else (
+                        "documents resource intentionally absent for the scoped profile"
+                        if not self.require_documents_resource and not documents_present
+                        else (
+                            "documents resource must be absent for the scoped profile"
+                            if not self.require_documents_resource
+                            else "documents resource missing"
+                        )
+                    )
                 ),
             )
         )

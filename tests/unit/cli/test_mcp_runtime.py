@@ -107,3 +107,81 @@ def test_codex_config_can_opt_in_to_model_only_review_tools() -> None:
     assert '"submit_review_selection"' in result.output
     assert '"submit_review_annotations"' in result.output
     assert "apply the fragment above" in result.output
+
+
+def _development_server_config(tmp_path):
+    path = tmp_path / "mcp-ap03.yaml"
+    path.write_text(
+        """
+mcp:
+  name: standards-atlas-ap03
+  transport: streamable-http
+  profile: ap03-development
+  workspace: .atlas/data
+  allowed_document_keys: [SYNTHETIC]
+  expose:
+    clause_text: true
+    source_paths: false
+  capabilities:
+    formula_transcription: false
+    review_preparation: false
+  review:
+    enabled: true
+    workspace: local/review/assertions/ap03
+    allow_holdout_assistance: false
+  ap03_development:
+    review_handles: [synthetic]
+    experiment_ids: [synthetic-exp]
+    project_root: .
+    allowed_data_routes: [synthetic-local]
+  http:
+    host: 127.0.0.1
+    port: 8765
+    path: /mcp
+""",
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_codex_config_uses_only_tools_registered_by_development_profile(tmp_path) -> None:
+    config = _development_server_config(tmp_path)
+    result = runner.invoke(
+        app,
+        [
+            "mcp",
+            "codex-config",
+            "--url",
+            "http://127.0.0.1:8765/mcp",
+            "--server-config",
+            str(config),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert '"submit_prompt_variant_proposal"' in result.output
+    assert '"get_development_experiment_manifest"' in result.output
+    assert '"get_formula"' not in result.output
+    assert '"submit_review_annotations"' not in result.output
+
+
+def test_real_codex_client_probe_reports_missing_client_without_model_call(tmp_path) -> None:
+    config = _development_server_config(tmp_path)
+    result = runner.invoke(
+        app,
+        [
+            "mcp",
+            "codex-client-probe",
+            "--url",
+            "http://127.0.0.1:8765/mcp",
+            "--server-config",
+            str(config),
+            "--executable",
+            "definitely-not-installed-codex",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["status"] == "not_executed"
+    assert payload["real_norm_text_used"] is False

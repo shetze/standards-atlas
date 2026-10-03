@@ -21,6 +21,7 @@ from standards_atlas.application.assertion_qualification.models import (
     AssertionQualificationReport,
 )
 from standards_atlas.application.context.input_binding import ContextSourcePackage
+from standards_atlas.application.evaluation.repository import PromptRepository
 from standards_atlas.application.evaluation.source_bound_prompt import semantic_prompt_repository
 from standards_atlas.application.knowledge_proposal_extraction import (
     KnowledgeProposalExtractionService,
@@ -310,6 +311,7 @@ def plan_assertion_experiment(
     repetitions: int = 1,
     execution_authorized: bool = False,
     authorization_reference: str | None = None,
+    prompt_repository: PromptRepository | None = None,
 ) -> AssertionExperimentManifest:
     bindings: list[ExperimentCaseBinding] = []
     for case in suite.cases:
@@ -327,7 +329,7 @@ def plan_assertion_experiment(
             interpretation_context=assertion_interpretation_context(
                 document, clause, applicability=ClauseApplicability()
             ),
-            prompt_repository=semantic_prompt_repository(),
+            prompt_repository=prompt_repository or semantic_prompt_repository(),
             prompt_version=prompt_version,
             task_schema_version=task_schema_version,
             model=requested_model,
