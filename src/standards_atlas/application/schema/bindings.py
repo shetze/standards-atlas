@@ -238,6 +238,18 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
         "standards_atlas.application.assertion_qualification.models:AssertionQualificationReport",
     ),
     ModelBinding(
+        "assertion-experiment-manifest",
+        "standards_atlas.application.assertion_qualification.experiment:AssertionExperimentManifest",
+    ),
+    ModelBinding(
+        "assertion-experiment-state",
+        "standards_atlas.application.assertion_qualification.experiment:AssertionExperimentState",
+    ),
+    ModelBinding(
+        "assertion-experiment-report",
+        "standards_atlas.application.assertion_qualification.experiment:AssertionExperimentReport",
+    ),
+    ModelBinding(
         "assertion-qualification-cascade-report",
         "standards_atlas.application.assertion_qualification.cascade_models:"
         "AssertionQualificationCascadeReport",

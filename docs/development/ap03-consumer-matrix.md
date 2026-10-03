@@ -71,3 +71,18 @@ items without changing later-slice ownership:
 | AP02 source contract | Consumed unchanged by both productive extraction and Workbench. | Integration/architecture regression set retains headings, gaps, source refs and multi-span grounding. |
 | B0 | No resource modification and no implicit policy/example binding. | Full synthetic `StructuredGenerationRequest` byte equality start vs Series-B tree for both roles. |
 | Golden/evaluator/Holdout | No change. | Historical expected content remains untouched; S05+ and S07+ retain ownership. |
+
+
+## Series-C S05/S06 consumer update
+
+| Consumer / boundary | Series-C change | Guard / resulting owner |
+|---|---|---|
+| `LlmGateway` | Wrapped only at the AP03 attempt boundary to enforce budgets before calls and capture effective attempt provenance/raw bytes privately. | Existing gateway remains the only model transport; S10 may inspect provider-specific parameter support, not replace this path. |
+| `KnowledgeProposalExtractionService` | Reused as the sequential clause runner for every experiment cell. | No second parser/runner; native proposal failures and successes remain the productive contract. |
+| Source-package repository | Planning stores/loads the existing immutable AP02 package and binds its hash plus exact rendered request per case. | Source drift blocks before inference. |
+| Proposal repository | Successful native clause proposals are persisted through the existing filesystem proposal repository. | Resume/reports reload the same native candidates; no alternate experiment proposal format. |
+| Schema governance | Adds central schema-1 families for experiment manifest, public resume state and comparison report. | Architecture/schema tests enforce current/readable versions. |
+| `AssertionQualificationEvaluator` | Called unchanged by S06 on persisted native candidates. | No new matcher, fuzzy alignment or diagnostic score path; S11+ supplies real Development candidates. |
+| CLI | Adds bounded plan/run/resume/report operations. Plan performs zero model calls; Run/Resume require explicit plan authorization. | No background daemon or model manager. |
+| Private raw data | New filesystem experiment repository stores request/raw-response/parser details only below private `.atlas/data/assertion-experiments`. | Public state/report carry hashes/status only; S09 later adds MCP access controls without exposing this private store. |
+| Golden/Holdout/review | No contents or publisher changed. | S07/S08 retain corpus/partition/HITL ownership; Series C creates no human semantic decisions. |

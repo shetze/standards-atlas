@@ -1,8 +1,9 @@
 # Engineering extraction qualification contract — AP03
 
-Status: Series-A contract baseline, 2026-10-02. This document defines the information that later
-AP03 experiment/release artifacts must bind. It does **not** execute an experiment, choose quality
-thresholds, qualify a model or create a second evaluator/runner.
+Status: Series-C technical contract, 2026-10-03. Series C implements the bounded experiment
+manifest, attempt ledger, plan/run/resume operations and stage-aware comparison wrapper described
+below. It does **not** execute a real model experiment, choose quality thresholds, qualify a model or
+create a second semantic evaluator.
 
 ## 1. Purpose and fixed baselines
 
@@ -36,29 +37,46 @@ The current start snapshot does not contain the private AP01 audit/Golden/v8-rep
 absence is therefore a normal explicit preflight gap, not a request to reconstruct them from status
 documents.
 
-## 3. Experiment-plan contract prepared for S05
+## 3. Implemented bounded experiment contract (S05/S06)
 
-S05 will implement the runner/ledger. Its manifest must not be weaker than this Series-A contract.
-A plan is executable only when the following information is explicit and internally bound:
+Series C implements one transport-neutral experiment application around the existing productive
+extractor and `LlmGateway`. Planning compiles the real source-bound request without a gateway call;
+execution delegates clause processing to `KnowledgeProposalExtractionService` and persists native
+`DocumentKnowledgeProposal` outputs in the existing proposal repository. The AP03 application does
+not own a second parser, matcher or model process manager.
 
-| Area | Required information |
-|---|---|
-| Plan identity | Contract/version, plan ID/revision, creation provenance and code/delivery revision. |
-| Data route | Source repository/authorization class, permitted text route, Development vs Holdout purpose and privacy classification. |
-| Partition | Suite/corpus/partition identity, source/grouping/exposure manifest and exact case selection. |
-| Source contract | Per-case source-package identity/fingerprints, context-selection policy and required source availability. |
-| Prompt/schema | B0/P1/P2 (or later approved variant) bundle, task schema, ontology versions and rendered request identity. |
-| Model route | Provider/backend/client/model/artifact identity where available; requested versus effectively supported parameters must be separate. |
-| Budgets | Absolute maxima for selected clauses, variants, repetitions, calls, technical retries, input/output tokens where enforceable, elapsed runtime and optional monetary cost. Verifier/escalation/warm-up calls count when present. |
-| Reuse/repetition | Complete experiment identity for reuse; cache replay and new inference are distinct; new-inference repetitions cannot reuse the same cached response. |
-| Primary metrics | Existing entity/assertion/class/predicate/force/exact-match metrics plus four Work-Product metrics with supports. |
-| Technical coverage | Selected, eligible, attempted, technically completed, verified, unresolved and not-executed counts; schema/parser/ontology/grounding errors remain separate. |
-| Critical semantics | Predeclared treatment of invented obligations, lost conditions/exclusions, wrong force and unjustified context transfer. |
-| Holdout use | Whether Holdout is planned, its frozen campaign identity, exposure status and prohibition of adaptive optimization from intermediate results. |
-| Human decisions | Required H1/H2/H3 decisions and the exact state that is pending; model output never represents human attestation. |
+The versioned `assertion-experiment-manifest` binds plan/code identity, Development/Holdout
+partition, Golden-suite hash, ontology versions, prompt/task schema, exact per-case source-package
+binding and rendered request hash, model route/runtime-config hash, requested parameters,
+repetitions, technical retry allowance and hard call/token/runtime budgets. A plan is model-free and
+not executable by default. `execution_authorized=true` plus a non-empty authorization reference is
+required before Run/Resume, so the implementation does not manufacture the H1 decision.
 
-Missing required fields block execution or release as appropriate; they are not silently filled from
-a model name, current directory, default provider or historical report.
+Immediately before every model call the gateway wrapper validates the rendered request identity and
+the remaining budget. Every started call gets an immutable attempt ID and an `outcome_unknown`
+ledger entry before delegation. Success, timeout, context-limit, response error, unavailability,
+validation failure, budget blocking and rejected cache replay remain distinguishable. Technical
+timeout/unavailability retries create new attempts; semantic/validation retries are not used to
+search for a better answer. Fresh repetitions reject cached results. Resume skips completed cells
+and never overwrites an interrupted attempt whose remote outcome is unknown.
+
+Public experiment state contains hashes, status, usage/duration where available and sanitized
+diagnostics. Exact requests, raw model responses and detailed parser errors are stored only in the
+private `.atlas/data/assertion-experiments/.../attempts` area with restrictive filesystem
+permissions. The public report never copies those protected bytes.
+
+S06 passes persisted native candidates and their bound source packages to the existing
+`AssertionQualificationEvaluator`. The versioned comparison report embeds that evaluator report
+unchanged and adds fixed selected/planned/attempted/completed/failed/not-executed coverage,
+stage-failure counts, observed effort and separate open diagnostics/review questions. Failed or
+missing cells remain in coverage rather than disappearing from a score denominator. A repetition
+with multiple successful attempts for one cell is rejected instead of choosing the best one.
+Unknown usage or monetary cost stays `null`/unknown.
+
+The implemented CLI surface is `evaluation assertion-experiment-plan`,
+`assertion-experiment-run`, `assertion-experiment-resume` and `assertion-experiment-report`. Series-C
+tests use only Fake gateways and synthetic sources; no real model or client execution is part of
+this implementation delivery.
 
 ## 4. Release profile prepared for S14/S15
 
@@ -82,7 +100,7 @@ families:
   human finalist/release decision.
 
 Until those values, a frozen finalist, independent Holdout evidence and the required real runs exist,
-the only Series-A release state is `not_ready_for_release`.
+the AP03 release state remains `not_ready_for_release`.
 
 ## 5. Evidence/status semantics
 
@@ -97,12 +115,12 @@ A successful schema parse, grounding check, fake-gateway test, server health che
 is not a semantic qualification result. Likewise a missing/failed output is not a correctly empty
 semantic result.
 
-## 6. Series-A invariants
+## 6. AP03 invariants retained through Series C
 
 - Historical audit bytes, stored v8 proposals, confirmed Golden IDs and `expected` contents are not
   modified or reconstructed.
 - AP02 source-package, context, heading ownership and multi-span grounding contracts remain intact.
-- No semantic prompt optimization is performed; B0 remains selectable in the normal versioned
-  resource catalog.
-- No real model or Codex client is invoked by Series A.
+- B0 remains selectable in the normal versioned resource catalog; Series C does not alter B0/P1/P2
+  prompt content.
+- No real model or Codex client is invoked by Series C.
 - No new Golden, `DocumentKnowledge`, adoption, RAG/GraphRAG or release-write path is introduced.

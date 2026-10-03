@@ -116,6 +116,24 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         (1,),
         "local/evaluation/**/assertion-qualification*.json",
     ),
+    "assertion-experiment-manifest": SchemaPolicy(
+        "assertion-experiment-manifest",
+        1,
+        (1,),
+        "local/evaluation/assertions/ap03/**/experiment-plan.json",
+    ),
+    "assertion-experiment-state": SchemaPolicy(
+        "assertion-experiment-state",
+        1,
+        (1,),
+        "local/evaluation/assertions/ap03/**/experiment-state.json",
+    ),
+    "assertion-experiment-report": SchemaPolicy(
+        "assertion-experiment-report",
+        1,
+        (1,),
+        "local/evaluation/assertions/ap03/**/comparison.json",
+    ),
     "assertion-qualification-cascade-report": SchemaPolicy(
         "assertion-qualification-cascade-report",
         1,

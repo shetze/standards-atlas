@@ -454,6 +454,21 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         "assertion-qualification-report",
     ),
     SchemaMarkerDecision(
+        "standards_atlas.application.assertion_qualification.experiment:AssertionExperimentManifest",
+        SchemaMarkerDisposition.CENTRAL,
+        "assertion-experiment-manifest",
+    ),
+    SchemaMarkerDecision(
+        "standards_atlas.application.assertion_qualification.experiment:AssertionExperimentState",
+        SchemaMarkerDisposition.CENTRAL,
+        "assertion-experiment-state",
+    ),
+    SchemaMarkerDecision(
+        "standards_atlas.application.assertion_qualification.experiment:AssertionExperimentReport",
+        SchemaMarkerDisposition.CENTRAL,
+        "assertion-experiment-report",
+    ),
+    SchemaMarkerDecision(
         "standards_atlas.application.assertion_qualification.cascade_models:"
         "AssertionQualificationCascadeReport",
         SchemaMarkerDisposition.CENTRAL,
@@ -1013,6 +1028,30 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
             "Clause-local AP01 dimensional metrics with strict matching, ontology-bound "
             "WorkProduct metrics, conservative diagnostics and frozen-source evidence checks."
         ),
+    ),
+    VersionedInterface(
+        "assertion-experiment-manifest",
+        "local/evaluation/assertions/ap03/**/experiment-plan.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "assertion-experiment-manifest",
+        "Bounded AP03 experiment identity, call budget, source bindings and authorization state.",
+    ),
+    VersionedInterface(
+        "assertion-experiment-state",
+        "local/evaluation/assertions/ap03/**/experiment-state.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "assertion-experiment-state",
+        "Resume-safe public attempt ledger without protected request/response bytes.",
+    ),
+    VersionedInterface(
+        "assertion-experiment-report",
+        "local/evaluation/assertions/ap03/**/comparison.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "assertion-experiment-report",
+        "Stage-aware AP03 wrapper around the existing clause-local qualification report.",
     ),
     VersionedInterface(
         "assertion-qualification-cascade-report",

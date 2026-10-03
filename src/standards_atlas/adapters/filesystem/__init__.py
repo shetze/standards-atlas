@@ -22,9 +22,11 @@ from standards_atlas.adapters.filesystem.retrieval_projection_repository import 
     FileSystemTableRetrievalProjectionRepository,
 )
 
+from .assertion_experiment_repository import FileSystemAssertionExperimentRepository
 from .publication_document_provider import FileSystemPublicationDocumentProvider
 
 __all__ = [
+    "FileSystemAssertionExperimentRepository",
     "FileSystemPublicationDocumentProvider",
     "FileSystemEngineeringDocumentRepository",
     "FileSystemContextSourcePackageRepository",

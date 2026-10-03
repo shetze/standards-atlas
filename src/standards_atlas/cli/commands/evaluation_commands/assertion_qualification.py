@@ -724,3 +724,407 @@ def evaluate_assertion_auto_adoption(
     typer.echo(f"Auto-adoption eligible  : {report.auto_adoption_eligible_assertions}")
     typer.echo(f"Review required         : {report.review_required_assertions}")
     typer.echo(f"Report                  : {report_path}")
+
+
+@evaluation_app.command("assertion-experiment-plan")
+def plan_assertion_experiment_command(
+    suite: Annotated[Path, typer.Option("--suite", exists=True, dir_okay=False, readable=True)],
+    experiment_id: Annotated[str, typer.Option("--experiment-id")],
+    variant_id: Annotated[str, typer.Option("--variant-id")],
+    prompt_version: Annotated[str, typer.Option("--prompt-version")],
+    model_route: Annotated[str, typer.Option("--model-route")] = "openai-compatible",
+    model: Annotated[str | None, typer.Option("--model")] = None,
+    config: Annotated[
+        Path, typer.Option("--config", exists=True, dir_okay=False, readable=True)
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
+    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = (
+        cli_defaults.DEFAULT_WORKSPACE
+    ),
+    project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
+    repetitions: Annotated[int, typer.Option("--repetitions", min=1)] = 1,
+    max_calls: Annotated[int, typer.Option("--max-calls", min=0)] = 1,
+    max_retries_per_case: Annotated[int, typer.Option("--max-retries-per-case", min=0)] = 0,
+    max_total_tokens: Annotated[int | None, typer.Option("--max-total-tokens", min=1)] = None,
+    max_runtime_seconds: Annotated[
+        float | None, typer.Option("--max-runtime-seconds", min=0.001)
+    ] = None,
+    max_output_tokens: Annotated[int | None, typer.Option("--max-output-tokens", min=1)] = None,
+    temperature: Annotated[float, typer.Option("--temperature", min=0.0, max=2.0)] = 0.0,
+    seed: Annotated[int | None, typer.Option("--seed")] = None,
+    reasoning_enabled: Annotated[
+        bool | None, typer.Option("--reasoning-enabled/--reasoning-disabled")
+    ] = None,
+    authorize_execution: Annotated[
+        bool, typer.Option("--authorize-execution/--do-not-authorize-execution")
+    ] = False,
+    authorization_reference: Annotated[
+        str | None, typer.Option("--authorization-reference")
+    ] = None,
+) -> None:
+    """Plan and bind a bounded AP03 assertion experiment without model calls."""
+    from standards_atlas.adapters.filesystem import FileSystemAssertionExperimentRepository
+    from standards_atlas.application.assertion_qualification import (
+        ExperimentBudget,
+        plan_assertion_experiment,
+    )
+
+    try:
+        golden = load_assertion_golden_suite(suite)
+        documents_repo = FileSystemEngineeringDocumentRepository(workspace)
+        documents = {
+            key: documents_repo.load(DocumentKey(value=key))
+            for key in sorted({case.source_document_key for case in golden.cases})
+        }
+        source_repo = FileSystemContextSourcePackageRepository(workspace)
+        runtime_hash = hashlib.sha256(config.read_bytes()).hexdigest()
+        manifest = plan_assertion_experiment(
+            golden,
+            documents,
+            experiment_id=experiment_id,
+            code_revision=_ap03_code_revision(project_root),
+            variant_id=variant_id,
+            prompt_version=prompt_version,
+            model_route=model_route,
+            source_packages=source_repo,
+            budget=ExperimentBudget(
+                max_calls=max_calls,
+                max_retries_per_case=max_retries_per_case,
+                max_total_tokens=max_total_tokens,
+                max_runtime_seconds=max_runtime_seconds,
+            ),
+            requested_model=model,
+            runtime_config_sha256=runtime_hash,
+            temperature=temperature,
+            seed=seed,
+            max_output_tokens_per_call=max_output_tokens,
+            reasoning_enabled=reasoning_enabled,
+            repetitions=repetitions,
+            execution_authorized=authorize_execution,
+            authorization_reference=authorization_reference,
+        )
+        repository = FileSystemAssertionExperimentRepository(project_root, workspace)
+        digest = repository.save_manifest(manifest)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"Experiment              : {manifest.experiment_id}")
+    typer.echo(f"Variant                 : {manifest.variant_id}")
+    typer.echo(f"Cases                   : {len(manifest.cases)}")
+    typer.echo(f"Repetitions             : {manifest.repetitions}")
+    typer.echo(f"Conservative call bound : {manifest.conservative_call_upper_bound}")
+    typer.echo(f"Budget max calls        : {manifest.budget.max_calls}")
+    typer.echo(f"Execution authorized   : {manifest.execution_authorized}")
+    typer.echo(f"Manifest SHA-256        : {digest}")
+    typer.echo("Model calls             : 0 (plan only)")
+
+
+def _run_assertion_experiment_cli(
+    *,
+    experiment_id: str,
+    suite: Path,
+    config: Path,
+    workspace: Path,
+    project_root: Path,
+    resume: bool,
+) -> None:
+    from dataclasses import replace
+
+    from standards_atlas.adapters.filesystem import FileSystemAssertionExperimentRepository
+    from standards_atlas.adapters.llm import (
+        LlmConfig,
+        OntologyGuidedKnowledgeProposalExtractor,
+        OpenAICompatibleLlmGateway,
+    )
+    from standards_atlas.application.assertion_qualification import AssertionExperimentService
+
+    try:
+        repository = FileSystemAssertionExperimentRepository(project_root, workspace)
+        manifest = repository.load_manifest(experiment_id)
+        if manifest.model_route != "openai-compatible":
+            raise ValueError(
+                "this CLI execution path supports only model_route='openai-compatible'; "
+                "use a registered application composition for other routes"
+            )
+        current_code_revision = _ap03_code_revision(project_root)
+        if current_code_revision != manifest.code_revision:
+            raise ValueError("project code revision differs from the planned experiment")
+        runtime_hash = hashlib.sha256(config.read_bytes()).hexdigest()
+        if (
+            manifest.runtime_config_sha256 is not None
+            and runtime_hash != manifest.runtime_config_sha256
+        ):
+            raise ValueError("runtime configuration bytes differ from the planned experiment")
+        golden = load_assertion_golden_suite(suite)
+        documents_repo = FileSystemEngineeringDocumentRepository(workspace)
+        documents = {
+            key: documents_repo.load(DocumentKey(value=key))
+            for key in sorted({case.source_document_key for case in golden.cases})
+        }
+        llm_config = replace(LlmConfig.load(config), cache_directory=None)
+        gateway = OpenAICompatibleLlmGateway(llm_config)
+        source_repo = FileSystemContextSourcePackageRepository(workspace)
+
+        def extractor_factory(bound_gateway, bound_manifest):
+            return OntologyGuidedKnowledgeProposalExtractor(
+                bound_gateway,
+                model=bound_manifest.requested_model,
+                provider=gateway.provider,
+                prompt_version=bound_manifest.prompt_version,
+                task_schema_version=bound_manifest.task_schema_version,
+                temperature=bound_manifest.temperature,
+                seed=bound_manifest.seed,
+                max_tokens=bound_manifest.max_output_tokens_per_call,
+                reasoning_enabled=bound_manifest.reasoning_enabled,
+            )
+
+        state = AssertionExperimentService(
+            repository=repository,
+            source_packages=source_repo,
+            gateway=gateway,
+            extractor_factory=extractor_factory,
+        ).run(manifest, golden, documents, resume=resume)
+    except (OSError, ValueError, RuntimeError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"Experiment       : {state.experiment_id}")
+    typer.echo(f"Attempts         : {len(state.attempts)}")
+    typer.echo(f"Completed cells  : {len(state.completed_cells)}")
+    typer.echo(f"Blocked          : {state.blocked_reason or 'no'}")
+
+
+@evaluation_app.command("assertion-experiment-run")
+def run_assertion_experiment_command(
+    experiment_id: Annotated[str, typer.Option("--experiment-id")],
+    suite: Annotated[Path, typer.Option("--suite", exists=True, dir_okay=False, readable=True)],
+    config: Annotated[
+        Path, typer.Option("--config", exists=True, dir_okay=False, readable=True)
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
+    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = (
+        cli_defaults.DEFAULT_WORKSPACE
+    ),
+    project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
+) -> None:
+    """Execute a previously planned AP03 experiment in the foreground."""
+    _run_assertion_experiment_cli(
+        experiment_id=experiment_id,
+        suite=suite,
+        config=config,
+        workspace=workspace,
+        project_root=project_root,
+        resume=False,
+    )
+
+
+@evaluation_app.command("assertion-experiment-resume")
+def resume_assertion_experiment_command(
+    experiment_id: Annotated[str, typer.Option("--experiment-id")],
+    suite: Annotated[Path, typer.Option("--suite", exists=True, dir_okay=False, readable=True)],
+    config: Annotated[
+        Path, typer.Option("--config", exists=True, dir_okay=False, readable=True)
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
+    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = (
+        cli_defaults.DEFAULT_WORKSPACE
+    ),
+    project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
+) -> None:
+    """Resume only unfinished cells of a bound AP03 experiment."""
+    _run_assertion_experiment_cli(
+        experiment_id=experiment_id,
+        suite=suite,
+        config=config,
+        workspace=workspace,
+        project_root=project_root,
+        resume=True,
+    )
+
+
+@evaluation_app.command("assertion-experiment-report")
+def report_assertion_experiment_command(
+    experiment_id: Annotated[str, typer.Option("--experiment-id")],
+    suite: Annotated[Path, typer.Option("--suite", exists=True, dir_okay=False, readable=True)],
+    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = (
+        cli_defaults.DEFAULT_WORKSPACE
+    ),
+    project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
+    repetition: Annotated[int, typer.Option("--repetition", min=1)] = 1,
+    baseline_report: Annotated[
+        Path | None,
+        typer.Option("--baseline-report", exists=True, dir_okay=False, readable=True),
+    ] = None,
+    output: Annotated[Path | None, typer.Option("--output", dir_okay=False)] = None,
+    summary: Annotated[Path | None, typer.Option("--summary", dir_okay=False)] = None,
+) -> None:
+    """Evaluate native candidates with the existing evaluator plus stage diagnostics."""
+    from standards_atlas.adapters.filesystem import FileSystemAssertionExperimentRepository
+    from standards_atlas.application.assertion_qualification import (
+        evaluate_assertion_experiment,
+        materialize_experiment_inputs,
+    )
+
+    try:
+        repository = FileSystemAssertionExperimentRepository(project_root, workspace)
+        manifest = repository.load_manifest(experiment_id)
+        state = repository.load_state(experiment_id)
+        if state is None:
+            raise ValueError("experiment has no execution state")
+        golden = load_assertion_golden_suite(suite)
+        source_repo = FileSystemContextSourcePackageRepository(workspace)
+        proposals, packages = materialize_experiment_inputs(
+            repository,
+            source_repo,
+            manifest,
+            state,
+            repetition=repetition,
+        )
+        baseline = (
+            load_assertion_qualification_report(baseline_report)
+            if baseline_report is not None
+            else None
+        )
+        report = evaluate_assertion_experiment(
+            manifest,
+            state,
+            golden,
+            proposals=proposals,
+            source_packages=packages,
+            baseline_report=baseline,
+            evaluation_repetition=repetition,
+        )
+        root = project_root / "local" / "evaluation" / "assertions" / "ap03" / experiment_id
+        output_path = output or root / "comparison.json"
+        summary_path = summary or root / "comparison-summary.md"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(
+            json.dumps(report.model_dump(mode="json"), indent=2, ensure_ascii=False, sort_keys=True)
+            + "\n",
+            encoding="utf-8",
+        )
+        summary_path.parent.mkdir(parents=True, exist_ok=True)
+        summary_path.write_text(_render_assertion_experiment_summary(report), encoding="utf-8")
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"Comparison JSON : {output_path}")
+    typer.echo(f"Summary         : {summary_path}")
+    typer.echo(
+        "Coverage        : "
+        f"{report.coverage.technically_completed_cells}/"
+        f"{report.coverage.planned_cells} technically completed cells"
+    )
+    typer.echo(f"Evaluator       : {report.qualification_report.evaluation_contract}")
+
+
+def _render_assertion_experiment_summary(report) -> str:
+    baseline = (
+        "none"
+        if report.baseline_qualification_report is None
+        else (
+            f"{report.baseline_qualification_report.golden_suite_id}@"
+            f"{report.baseline_qualification_report.golden_suite_version}"
+        )
+    )
+    lines = [
+        f"# AP03 experiment comparison — {report.experiment_id}",
+        "",
+        f"- Variant: `{report.variant_id}`",
+        f"- Evaluated repetition: {report.evaluation_repetition}",
+        f"- Manifest SHA-256: `{report.manifest_sha256}`",
+        f"- Clause-local evaluator: `{report.qualification_report.evaluation_contract}`",
+        f"- Baseline report: {baseline}",
+        "",
+        "## Fixed coverage",
+        "",
+        f"- Selected cases: {report.coverage.selected_cases}",
+        f"- Planned cells: {report.coverage.planned_cells}",
+        f"- Attempted cells: {report.coverage.attempted_cells}",
+        f"- Technically completed cells: {report.coverage.technically_completed_cells}",
+        f"- Failed cells: {report.coverage.failed_cells}",
+        f"- Not executed cells: {report.coverage.not_executed_cells}",
+        "",
+        "## Stage failures / rejected candidates",
+        "",
+    ]
+    if report.stage_failures:
+        lines.extend(f"- `{key}`: {value}" for key, value in sorted(report.stage_failures.items()))
+    else:
+        lines.append("- none")
+    lines.extend(
+        [
+            "",
+            "## Effort",
+            "",
+            f"- Gateway attempts: {report.effort.calls}",
+            f"- Cached responses observed: {report.effort.cached_calls}",
+            "- Prompt tokens: "
+            + (
+                str(report.effort.prompt_tokens)
+                if report.effort.prompt_tokens is not None
+                else "unknown"
+            ),
+            "- Completion tokens: "
+            + (
+                str(report.effort.completion_tokens)
+                if report.effort.completion_tokens is not None
+                else "unknown"
+            ),
+            "- Total tokens: "
+            + (
+                str(report.effort.total_tokens)
+                if report.effort.total_tokens is not None
+                else "unknown"
+            ),
+            "- Duration ms: "
+            + (
+                str(report.effort.duration_ms)
+                if report.effort.duration_ms is not None
+                else "unknown"
+            ),
+            "- Monetary cost: unknown",
+            "",
+            "## Qualification aggregate",
+            "",
+            "The values below are the existing `AssertionQualificationEvaluator` aggregate; "
+            "this report does not rematch candidates.",
+            "",
+            "```json",
+            json.dumps(
+                report.qualification_report.aggregate.model_dump(mode="json"),
+                indent=2,
+                ensure_ascii=False,
+                sort_keys=True,
+            ),
+            "```",
+            "",
+            "## Open diagnostics",
+            "",
+        ]
+    )
+    lines.extend(f"- {item}" for item in report.open_diagnostics or ("none",))
+    return "\n".join(lines) + "\n"
+
+
+def _ap03_code_revision(project_root: Path) -> str:
+    """Bind execution-relevant project code without relying on an available Git checkout."""
+    digest = hashlib.sha256()
+    candidates = [project_root / "pyproject.toml"]
+    src_root = project_root / "src"
+    if src_root.is_dir():
+        candidates.extend(
+            sorted(
+                path
+                for path in src_root.rglob("*")
+                if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"
+            )
+        )
+    for path in candidates:
+        if not path.is_file():
+            continue
+        relative = path.relative_to(project_root).as_posix()
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return "sha256:" + digest.hexdigest()

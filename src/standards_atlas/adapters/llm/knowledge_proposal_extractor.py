@@ -32,6 +32,10 @@ class OntologyGuidedKnowledgeProposalExtractor:
         prompt_version: str = "ontology-guided-assertions-source-bound-v1",
         task_schema_version: str = "1.0.0",
         extractor_version: str = "4.0.0",
+        temperature: float = 0.0,
+        seed: int | None = None,
+        max_tokens: int | None = None,
+        reasoning_enabled: bool | None = None,
         prompt_repository: PromptRepository | None = None,
     ) -> None:
         self._gateway = gateway
@@ -40,6 +44,10 @@ class OntologyGuidedKnowledgeProposalExtractor:
         self._prompt_version = prompt_version
         self._task_schema_version = task_schema_version
         self._extractor_version = extractor_version
+        self._temperature = temperature
+        self._seed = seed
+        self._max_tokens = max_tokens
+        self._reasoning_enabled = reasoning_enabled
         self._prompt_repository = prompt_repository or semantic_prompt_repository()
 
     def provenance(self) -> KnowledgeProposalProvenance:
@@ -74,7 +82,18 @@ class OntologyGuidedKnowledgeProposalExtractor:
             prompt_version=self._prompt_version,
             task_schema_version=self._task_schema_version,
             model=self._model,
-            temperature=0.0,
+            temperature=self._temperature,
+            seed=self._seed,
+            max_tokens=self._max_tokens,
+            reasoning_enabled=self._reasoning_enabled,
+            metadata=(
+                {"use_cache": False}
+                if self._temperature != 0.0
+                or self._seed is not None
+                or self._max_tokens is not None
+                or self._reasoning_enabled is not None
+                else None
+            ),
         )
         result = self._gateway.generate_structured(prepared.generation_request)
         return parse_knowledge_proposal_result(
