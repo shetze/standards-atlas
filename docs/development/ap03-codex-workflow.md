@@ -59,8 +59,13 @@ standards-atlas mcp codex-client-probe \
 ```
 
 The temporary probe profile enables only `get_server_info`; no standards clause, review source,
-experiment text, media or report is offered. Success establishes only that this concrete client can see
-and call that MCP tool. It says nothing about semantic quality.
+experiment text, media or report is offered. The probe keeps its MCP/configuration surface isolated
+from the user's normal Codex configuration, but reuses an existing file-backed Codex login through a
+temporary reference to the normal `$CODEX_HOME/auth.json`; credential bytes are not copied into the
+probe profile or project artifacts. The Codex process runs from an empty temporary working directory,
+so repository-local Codex configuration and instructions are not part of this recognition probe.
+Success establishes only that this concrete authenticated client can see and call that MCP tool. It says
+nothing about semantic quality.
 
 ## 5. Codex optimization mandate
 

@@ -37,6 +37,25 @@ class CodexClientProbeReport:
         }
 
 
+def _codex_home(environment: dict[str, str]) -> Path:
+    configured = environment.get("CODEX_HOME")
+    if configured:
+        return Path(configured).expanduser().resolve()
+    home = environment.get("HOME")
+    if home:
+        return (Path(home).expanduser() / ".codex").resolve()
+    return (Path.home() / ".codex").resolve()
+
+
+def _preserve_codex_authentication(source_home: Path, probe_home: Path) -> None:
+    """Expose existing file-backed login to the isolated probe without copying credentials."""
+    source = source_home / "auth.json"
+    if not source.is_file():
+        return
+    target = probe_home / "auth.json"
+    target.symlink_to(source.resolve())
+
+
 class CodexClientMcpProbe:
     """Check the actual Codex binary and, only with opt-in, one safe MCP tool read."""
 
@@ -119,13 +138,21 @@ class CodexClientMcpProbe:
             "Return client_tool_read=true only if the tool call succeeded, and copy mcp_profile "
             "from that tool result. This probe intentionally uses no standards text."
         )
-        with tempfile.TemporaryDirectory(prefix="standards-atlas-codex-probe-") as directory:
+        environment = dict(os.environ)
+        source_codex_home = _codex_home(environment)
+        temporary_parent = source_codex_home if source_codex_home.is_dir() else None
+        with tempfile.TemporaryDirectory(
+            prefix=".standards-atlas-codex-probe-",
+            dir=temporary_parent,
+        ) as directory:
             root = Path(directory)
+            _preserve_codex_authentication(source_codex_home, root)
             (root / "config.toml").write_text(client_config.render_toml(), encoding="utf-8")
             schema_path = root / "schema.json"
             output_path = root / "result.json"
+            workspace = root / "workspace"
+            workspace.mkdir()
             schema_path.write_text(json.dumps(schema, indent=2), encoding="utf-8")
-            environment = dict(os.environ)
             environment["CODEX_HOME"] = str(root)
             command = [
                 executable,
@@ -150,6 +177,7 @@ class CodexClientMcpProbe:
                     timeout=timeout_seconds,
                     check=False,
                     env=environment,
+                    cwd=workspace,
                 )
             except (OSError, subprocess.SubprocessError) as exc:
                 return CodexClientProbeReport(

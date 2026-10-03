@@ -1,5 +1,30 @@
 # AP03 status — Series E / S01-S10 complete
 
+## Post-Series-E correction 5 — preserve Codex login in isolated client probe
+
+The user's real S10 client probe reached Codex CLI `0.160.0` but failed before MCP tool discovery with
+HTTP `401 Unauthorized`. A separate `codex login status` on the same machine reported
+`Logged in using ChatGPT`. The mismatch identified a probe-isolation defect: the probe replaced
+`CODEX_HOME` with a fresh temporary directory in order to isolate MCP configuration, which also hid
+the existing file-backed ChatGPT login. No standards text was used and no MCP tool call occurred in
+the failed probe.
+
+The probe now keeps the isolated temporary `CODEX_HOME` and single-tool MCP configuration, but if the
+normal Codex home contains `auth.json` it exposes that existing login through a temporary symbolic
+reference instead of copying credential bytes. The temporary probe home is created below the normal
+Codex home when available, avoiding the previous `/tmp` helper-path warning. Codex executes from an
+empty temporary working directory rather than the Standards Atlas repository, so project-local Codex
+configuration and instructions are not loaded into this recognition check. The probe still enables only
+`get_server_info`, uses the read-only sandbox, requires explicit model-call opt-in and model selection,
+and marks the data scope as `synthetic-text-free-server-info`.
+
+A deterministic subprocess-contract test verifies that the probe sees the existing auth file through a
+symlink, does not copy its contents into `config.toml`, does not import an unrelated user MCP server,
+runs outside the project workspace and can accept a successful `ap03-development` tool result. No
+Golden, evaluator, experiment, prompt, S09 scope or Series-F behavior changed. The real Codex model
+probe remains to be rerun by the user after applying this correction; no authenticated Codex/model call
+is claimed from this implementation environment.
+
 ## Post-Series-E correction 4 — bounded MCP clause batch lookup
 
 A real AP03 Development MCP probe on the user's registered corpus exposed a performance defect in
@@ -30,10 +55,11 @@ subsets completed as **2,167 passed, 4 skipped**; selected AP01/AP02/source-boun
 integrations **18 passed**. A broader integration/contract/property aggregate emitted 34 passing
 tests but did not complete before the environment timeout and is not reported as passed.
 `uv run --offline ruff check .` could not resolve `jsonschema` from the local uv cache, so Ruff was
-not executed. No model, Codex client, network or private standards-text run was performed here. The
-user should re-run the original default-timeout MCP probe on the real corpus after applying this
-correction; only that local probe can confirm the observed 17.879-second real-data bottleneck is
-closed in that environment.
+not executed. No model, Codex client, network or private standards-text run was performed in the
+implementation environment. After applying the correction, the user reran the original real-corpus
+probe with the default timeout: all checks passed in **0.697 seconds real time**, compared with the
+pre-correction 17.879-second run that required a 60-second timeout. The S09 real-data performance
+gate is therefore locally confirmed closed.
 
 ## Post-Series-E correction 3 — English Review Workbench and explicit target fields
 
@@ -195,9 +221,11 @@ actually pass those controls. Unsupported parameters were removed from its reque
 reported as uncontrolled rather than being presented as effective reproducibility inputs.
 
 `mcp codex-client-probe` checks the actual Codex executable. A real MCP tool-read happens only with
-`--allow-synthetic-model-call` **and** an explicit `--model`; it generates a temporary token-free MCP
-config whose only enabled tool is `get_server_info`. The prompt expressly uses no standards text. A
-server handshake or generic `mcp probe` is not reported as successful Codex client tool recognition.
+`--allow-synthetic-model-call` **and** an explicit `--model`; it generates an isolated temporary MCP
+config whose only enabled tool is `get_server_info` while preserving an existing file-backed Codex
+login by reference rather than copying credential bytes. The prompt expressly uses no standards text
+and the client runs outside the project workspace. A server handshake or generic `mcp probe` is not
+reported as successful Codex client tool recognition.
 
 See `docs/development/ap03-codex-workflow.md` and `cfg/mcp-ap03-development.example.yaml` for the local
 operating sequence.
