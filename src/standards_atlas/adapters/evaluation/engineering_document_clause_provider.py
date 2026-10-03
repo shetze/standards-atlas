@@ -21,6 +21,7 @@ from standards_atlas.application.semantic_qualification.clause_access import (
 from standards_atlas.domain.model import (
     Clause,
     ContentBlock,
+    DocumentKey,
     EngineeringDocument,
     NoteBlock,
     TableBlock,
@@ -38,12 +39,54 @@ class EngineeringDocumentClauseProvider:
         descriptors = [self._document_descriptor(document) for document in self._documents()]
         return tuple(sorted(descriptors, key=lambda item: item.key))
 
+    def get_documents(self, document_keys: tuple[str, ...]) -> tuple[DocumentDescriptor, ...]:
+        if not document_keys:
+            return ()
+        try:
+            documents = self._documents(document_keys)
+        except FileNotFoundError as exc:
+            raise KeyError("Unknown document key in bounded document lookup") from exc
+        return tuple(self._document_descriptor(document) for document in documents)
+
     def get_clause(self, clause_id: str) -> ClauseDescriptor:
-        for document in self._documents():
-            for clause in document.clauses:
-                if clause.id.value == clause_id:
-                    return self._clause_descriptor(document, clause, _ancestor_index(document))
-        raise KeyError(f"Unknown clause id: {clause_id}")
+        return self.get_clauses((clause_id,))[0]
+
+    def get_clauses(
+        self, clause_ids: tuple[str, ...], *, document_keys: tuple[str, ...] = ()
+    ) -> tuple[ClauseDescriptor, ...]:
+        """Resolve exact clause identifiers in one bounded repository pass.
+
+        The MCP Development profile supplies its approved document keys so a bounded source view
+        neither degenerates into one full repository scan per source clause nor needs to parse
+        documents outside the outer server allowlist. Only requested clause descriptors become
+        results of this operation.
+        """
+        if not clause_ids:
+            return ()
+        if len(clause_ids) != len(set(clause_ids)):
+            raise ValueError("clause_ids must be unique")
+
+        requested = set(clause_ids)
+        found: dict[str, ClauseDescriptor] = {}
+        try:
+            documents = self._documents(document_keys)
+        except FileNotFoundError as exc:
+            raise KeyError("Unknown document key in bounded clause lookup") from exc
+        for document in documents:
+            matches = [clause for clause in document.clauses if clause.id.value in requested]
+            if not matches:
+                continue
+            ancestors = _ancestor_index(document)
+            clause_index = {item.id.value: item for item in document.clauses}
+            for clause in matches:
+                found[clause.id.value] = self._clause_descriptor(
+                    document, clause, ancestors, clause_index
+                )
+
+        missing = [clause_id for clause_id in clause_ids if clause_id not in found]
+        if missing:
+            raise KeyError(f"Unknown clause id: {missing[0]}")
+        return tuple(found[clause_id] for clause_id in clause_ids)
 
     def list_clauses(
         self,
@@ -110,7 +153,11 @@ class EngineeringDocumentClauseProvider:
             return self._balanced_sample(population, count, rng)
         raise ValueError(f"Unsupported sampling strategy: {strategy}")
 
-    def _documents(self) -> tuple[EngineeringDocument, ...]:
+    def _documents(self, document_keys: tuple[str, ...] = ()) -> tuple[EngineeringDocument, ...]:
+        if document_keys:
+            return tuple(
+                self._repository.load(DocumentKey(value=key)) for key in sorted(set(document_keys))
+            )
         return self._repository.list()
 
     def _matching_clauses(self, filters: ClauseFilter) -> Iterable[ClauseDescriptor]:

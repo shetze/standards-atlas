@@ -114,8 +114,13 @@ class _Provider:
             "c-context": _descriptor("c-context", "Development context", heading="Context"),
             "c-hold": _descriptor("c-hold", "Reserved holdout", heading="Holdout"),
         }
+        self.batch_reads = 0
 
     def list_documents(self):
+        raise AssertionError("Development profile must not enumerate hidden documents")
+
+    def get_documents(self, document_keys):
+        assert document_keys == ("DOC",)
         return (
             DocumentDescriptor(
                 key="DOC",
@@ -126,7 +131,12 @@ class _Provider:
         )
 
     def get_clause(self, clause_id):
-        return self.clauses[clause_id]
+        raise AssertionError("Development profile must use the exact batch lookup")
+
+    def get_clauses(self, clause_ids, *, document_keys=()):
+        self.batch_reads += 1
+        assert document_keys == ("DOC",)
+        return tuple(self.clauses[clause_id] for clause_id in clause_ids)
 
     def list_clauses(self, **kwargs):
         raise AssertionError(
@@ -165,7 +175,8 @@ def test_development_scope_rejects_source_overlap(tmp_path: Path) -> None:
 
 def test_direct_list_search_and_context_are_server_scoped(tmp_path: Path) -> None:
     config = _config(tmp_path)
-    service = McpClauseService(_Provider(), config)
+    provider = _Provider()
+    service = McpClauseService(provider, config)
 
     assert [item["id"] for item in service.list_clauses(limit=10)] == ["c-context", "c-dev"]
     assert [item["id"] for item in service.search_clauses("Development", limit=10)] == [
@@ -180,6 +191,7 @@ def test_direct_list_search_and_context_are_server_scoped(tmp_path: Path) -> Non
     assert "reference_mentions" not in exposed
     assert "context_routing" not in exposed
     assert service.list_documents()[0]["clause_count"] == 2
+    assert provider.batch_reads == 1
 
 
 def test_media_paths_are_not_an_indirect_development_bypass(tmp_path: Path) -> None:

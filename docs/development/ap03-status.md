@@ -1,5 +1,40 @@
 # AP03 status — Series E / S01-S10 complete
 
+## Post-Series-E correction 4 — bounded MCP clause batch lookup
+
+A real AP03 Development MCP probe on the user's registered corpus exposed a performance defect in
+S09: the default 10-second probe timed out in `list_standards`, while the identical probe with a
+60-second timeout passed after 17.879 seconds. The server/profile/tool/schema checks were already
+green, so this was an allowed-read execution cost problem rather than a scope or protocol failure.
+
+The cause was `McpDevelopmentScope.allowed_clauses()`: it resolved every allowed source-clause ID by
+calling `ClauseProvider.get_clause()` separately. `EngineeringDocumentClauseProvider.get_clause()`
+scans the persisted EngineeringDocument corpus, producing an N-times-corpus access pattern for one
+Development view. The provider now has exact bounded `get_clauses()` and `get_documents()`
+contracts. Clause lookup resolves all requested IDs in one bounded repository pass over only the
+configured Development document allowlist; document listing loads descriptors only for document keys
+actually present in that resolved visible set. The MCP Development clause view lazily resolves the
+exact allowed clause batch once and reuses only those descriptors for list, search, sample and direct
+clause reads. It still does not delegate broad document/clause list, search or sample operations to
+the underlying corpus provider and does not widen the server-side Development/Holdout authority.
+
+Regression tests explicitly make per-clause `get_clause()` unavailable to the scoped Development
+view and assert that repeated list/search/get/document operations use one exact batch read. A real
+provider test verifies requested-order preservation, targeted loading of the allowed document and
+that neither exact clause nor exact document lookup enumerates the unrelated persisted corpus.
+No prompt, Golden, evaluator, review, experiment, Codex handoff or Series-F behavior changed.
+
+Correction verification in this implementation environment: focused MCP/provider tests **7 passed,
+1 skipped**; MCP/evaluation/CLI/architecture set **210 passed, 4 skipped**; all unit plus architecture
+subsets completed as **2,167 passed, 4 skipped**; selected AP01/AP02/source-bound/contract
+integrations **18 passed**. A broader integration/contract/property aggregate emitted 34 passing
+tests but did not complete before the environment timeout and is not reported as passed.
+`uv run --offline ruff check .` could not resolve `jsonschema` from the local uv cache, so Ruff was
+not executed. No model, Codex client, network or private standards-text run was performed here. The
+user should re-run the original default-timeout MCP probe on the real corpus after applying this
+correction; only that local probe can confirm the observed 17.879-second real-data bottleneck is
+closed in that environment.
+
 ## Post-Series-E correction 3 — English Review Workbench and explicit target fields
 
 A Series-D HITL smoke review showed that the target heading was present but not clearly identifiable as

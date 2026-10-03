@@ -102,8 +102,18 @@ class ClauseProvider(Protocol):
         """Return all available documents in stable order."""
         ...
 
+    def get_documents(self, document_keys: tuple[str, ...]) -> tuple[DocumentDescriptor, ...]:
+        """Return exact document descriptors without enumerating unrelated documents."""
+        ...
+
     def get_clause(self, clause_id: str) -> ClauseDescriptor:
         """Return one clause by stable clause identifier."""
+        ...
+
+    def get_clauses(
+        self, clause_ids: tuple[str, ...], *, document_keys: tuple[str, ...] = ()
+    ) -> tuple[ClauseDescriptor, ...]:
+        """Return exact ordered clauses, optionally bounded to known document keys."""
         ...
 
     def list_clauses(

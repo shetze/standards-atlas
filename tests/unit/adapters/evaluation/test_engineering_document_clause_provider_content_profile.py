@@ -72,3 +72,56 @@ def test_keeps_small_incidental_table_as_text_dominant() -> None:
     )
 
     assert descriptor.content_profile is ClauseContentProfile.TEXT_DOMINANT
+
+
+def test_exact_batch_clause_lookup_preserves_order_and_document_boundary(
+    tmp_path, monkeypatch
+) -> None:
+    from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+
+    def clause(clause_id: str) -> Clause:
+        return Clause(
+            id=ClauseId(value=clause_id),
+            reference=StandardReference(standard="DOC", clause=clause_id.rsplit(":", 1)[-1]),
+            clause_type=ClauseType.CLAUSE,
+            content=(TextBlock(id=f"text-{clause_id}", text=f"Text {clause_id}"),),
+        )
+
+    repository = FileSystemEngineeringDocumentRepository(tmp_path)
+    repository.save(
+        EngineeringDocument(
+            key=DocumentKey(value="DOC"),
+            title="Document",
+            document_type=DocumentType.OTHER,
+            clauses=(clause("DOC:A"), clause("DOC:B"), clause("DOC:C")),
+        )
+    )
+    repository.save(
+        EngineeringDocument(
+            key=DocumentKey(value="HIDDEN"),
+            title="Hidden",
+            document_type=DocumentType.OTHER,
+            clauses=(clause("HIDDEN:X"),),
+        )
+    )
+    provider = EngineeringDocumentClauseProvider(tmp_path)
+    loads: list[str] = []
+    original_load = provider._repository.load
+
+    def counted_load(key):
+        loads.append(key.value)
+        return original_load(key)
+
+    monkeypatch.setattr(provider._repository, "load", counted_load)
+    monkeypatch.setattr(
+        provider._repository,
+        "list",
+        lambda: (_ for _ in ()).throw(AssertionError("bounded lookup must not list the corpus")),
+    )
+
+    descriptors = provider.get_clauses(("DOC:C", "DOC:A"), document_keys=("DOC",))
+    documents = provider.get_documents(("DOC",))
+
+    assert [item.id for item in descriptors] == ["DOC:C", "DOC:A"]
+    assert [item.key for item in documents] == ["DOC"]
+    assert loads == ["DOC", "DOC"]

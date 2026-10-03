@@ -193,15 +193,18 @@ class McpDevelopmentScope:
                 raise ValueError("experiment source package is outside the AP03 Development scope")
 
     def allowed_clauses(self, provider: ClauseProvider) -> tuple[ClauseDescriptor, ...]:
-        clauses: list[ClauseDescriptor] = []
-        for clause_id in sorted(self.allowed_clause_ids):
-            try:
-                clause = provider.get_clause(clause_id)
-            except KeyError as exc:
-                raise ValueError("an AP03 Development source clause is unavailable") from exc
+        clause_ids = tuple(sorted(self.allowed_clause_ids))
+        try:
+            clauses = provider.get_clauses(
+                clause_ids, document_keys=tuple(sorted(self.allowed_document_keys))
+            )
+        except KeyError as exc:
+            raise ValueError("an AP03 Development source clause is unavailable") from exc
+        if tuple(clause.id for clause in clauses) != clause_ids:
+            raise ValueError("AP03 Development clause batch did not preserve exact requested ids")
+        for clause in clauses:
             self.ensure_clause_allowed(clause.id, clause.document_key)
-            clauses.append(clause)
-        return tuple(clauses)
+        return clauses
 
     def safe_clause_payload(
         self, clause: ClauseDescriptor, *, max_characters: int
@@ -248,23 +251,35 @@ class McpDevelopmentClauseView:
         self._provider = provider
         self._scope = scope
         self._limits = scope.config.limits
+        self._allowed_clause_cache: tuple[ClauseDescriptor, ...] | None = None
+        self._allowed_clause_index: dict[str, ClauseDescriptor] | None = None
+
+    def _allowed_clauses(self) -> tuple[ClauseDescriptor, ...]:
+        if self._allowed_clause_cache is None:
+            clauses = self._scope.allowed_clauses(self._provider)
+            self._allowed_clause_cache = clauses
+            self._allowed_clause_index = {clause.id: clause for clause in clauses}
+        return self._allowed_clause_cache
+
+    def _allowed_clause(self, clause_id: str) -> ClauseDescriptor:
+        self._scope.ensure_clause_allowed(clause_id)
+        self._allowed_clauses()
+        assert self._allowed_clause_index is not None
+        return self._allowed_clause_index[clause_id]
 
     def list_documents(self) -> list[dict[str, Any]]:
         counts: dict[str, int] = {}
-        for clause in self._scope.allowed_clauses(self._provider):
+        for clause in self._allowed_clauses():
             counts[clause.document_key] = counts.get(clause.document_key, 0) + 1
         rows = []
-        for item in self._provider.list_documents():
-            if item.key not in counts:
-                continue
+        for item in self._provider.get_documents(tuple(sorted(counts))):
             rows.append(
                 item.model_copy(update={"clause_count": counts[item.key]}).model_dump(mode="json")
             )
         return rows
 
     def get_clause(self, clause_id: str) -> dict[str, Any]:
-        self._scope.ensure_clause_allowed(clause_id)
-        clause = self._provider.get_clause(clause_id)
+        clause = self._allowed_clause(clause_id)
         return self._scope.safe_clause_payload(
             clause, max_characters=self._limits.max_clause_characters
         )
@@ -288,7 +303,7 @@ class McpDevelopmentClauseView:
                 "max_text_length": max_text_length,
             }
         )
-        clauses = [c for c in self._scope.allowed_clauses(self._provider) if _matches(c, filters)]
+        clauses = [c for c in self._allowed_clauses() if _matches(c, filters)]
         return [
             self._scope.safe_clause_payload(c, max_characters=self._limits.max_clause_characters)
             for c in clauses[offset : offset + limit]
@@ -313,7 +328,7 @@ class McpDevelopmentClauseView:
             }
         )
         matches: list[tuple[int, ClauseDescriptor]] = []
-        for clause in self._scope.allowed_clauses(self._provider):
+        for clause in self._allowed_clauses():
             if not _matches(clause, filters):
                 continue
             title = (clause.heading or "").casefold()
@@ -347,9 +362,7 @@ class McpDevelopmentClauseView:
                 "clause_types": tuple(clause_types or ()),
             }
         )
-        population = [
-            c for c in self._scope.allowed_clauses(self._provider) if _matches(c, filters)
-        ]
+        population = [c for c in self._allowed_clauses() if _matches(c, filters)]
         if count > len(population):
             raise ValueError("sample count exceeds the exposed Development population")
         rng = random.Random(seed)
