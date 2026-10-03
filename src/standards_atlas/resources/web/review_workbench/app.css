@@ -9,6 +9,8 @@
 .assertion-guidance{font-size:1rem;font-weight:650;line-height:1.5;color:#173f47;background:#edf7f6;border-left:4px solid var(--brand);border-radius:5px;padding:.7rem .85rem;margin:.55rem 0 .9rem}
 .assertion-target-source{border:2px solid #9fc8cd;border-radius:9px;background:#fbfdfd;padding:16px 18px;margin:4px 0 18px}
 .assertion-target-kicker{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:.82rem;letter-spacing:.045em;text-transform:uppercase;font-weight:750;color:#35636b;margin-bottom:.45rem}
+.assertion-target-field-label{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:.84rem;font-weight:750;color:#2d5962;margin:.35rem 0 .35rem}
+.assertion-target-body-label{margin-top:1rem;padding-top:.85rem;border-top:1px solid #cfe0e3}
 .assertion-target-heading{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1.35rem;line-height:1.35;color:var(--ink);margin:0 0 .9rem}
 .assertion-target-body{font-family:Georgia,"Times New Roman",serif;font-size:1.13rem;line-height:1.8;color:#182c3e;white-space:pre-wrap;overflow-wrap:anywhere}
 .assertion-context-source strong{display:block;font-size:.9rem;color:#365467;margin-bottom:.35rem}

@@ -1,5 +1,20 @@
 # AP03 status — Series E / S01-S10 complete
 
+## Post-Series-E correction 3 — English Review Workbench and explicit target fields
+
+A Series-D HITL smoke review showed that the target heading was present but not clearly identifiable as
+a separate decision-driving field: it appeared as a large title inside the target-source card without an
+explicit `Target heading` label. The Workbench now renders `Target heading` and `Target body` as
+separate labelled fields under the target-clause banner. The target heading remains visually dominant,
+while the body and bound structural context remain distinct source surfaces.
+
+The Review Workbench now uses English as its default UI language across the existing applicability and
+assertion-review surfaces: static HTML, queue/navigation text, review actions, validation messages,
+status/value formatting, typed editors and date formatting (`en-GB`). No language selector or new i18n
+runtime was introduced; this is a deliberately small presentation correction and does not change any
+review, package, source, Human-attestation, MCP/Codex or Golden-publication contract. Source text and
+model-provided content remain byte/content data and are not translated.
+
 ## Post-Series-E correction 2 — S07/S08 hash diagnostics and HITL visual hierarchy
 
 The Series-D smoke test after the first post-Series-E correction exposed two usability/verification

@@ -5,28 +5,28 @@ export function predicateEditor(schema, initial, changed) {
   const root = element("div", null, "value-editor");
   root.addEventListener("change", changed); root.addEventListener("input", changed);
   if (schema.type !== "array") {
-    const input = element("select"); input.append(option("", "Wert ausdrücklich auswählen …"));
+    const input = element("select"); input.append(option("", "Select a value explicitly …"));
     const values = schema.type === "boolean" ? [true, false] : schema.enum || [];
     values.forEach((v, i) => input.append(option(String(i), valueText(v))));
     if (initial && Object.hasOwn(initial, "equals")) {
       const index = values.findIndex(v => v === initial.equals);
       if (index >= 0) input.value = String(index);
     }
-    root.append(labelled("Bestätigter Wert", input));
+    root.append(labelled("Confirmed value", input));
     return {root, read: () => {
-      if (!input.value) throw new Error("Bitte einen Wert auswählen; nicht geprüft ist kein Negativwert.");
+      if (!input.value) throw new Error("Select a value; not reviewed is not a negative value.");
       return {equals: values[Number(input.value)]};
     }};
   }
   const operator = element("select");
-  operator.append(option("equals", "Genau diese Werte"), option("must_include", "Mindestens diese Werte"),
-    option("must_be_empty", "Explizit: muss leer sein"));
+  operator.append(option("equals", "Exactly these values"), option("must_include", "At least these values"),
+    option("must_be_empty", "Explicit: must be empty"));
   if (initial) operator.value = Object.keys(initial)[0];
   const body = element("div");
-  root.append(labelled("Prüfoperator", operator), body);
+  root.append(labelled("Predicate operator", operator), body);
   const values = initial?.equals || initial?.must_include || [];
   const emptyCheck = element("input"); emptyCheck.type = "checkbox";
-  const emptyLabel = labelled("Die leere Liste ist meine ausdrückliche Entscheidung.", emptyCheck);
+  const emptyLabel = labelled("The empty list is my explicit decision.", emptyCheck);
   emptyLabel.className = "inline";
   let readValues;
   if (schema.items?.type === "object") {
@@ -42,19 +42,19 @@ export function predicateEditor(schema, initial, changed) {
         row.append(labelled(field, input));
       });
       const entry = {row, inputs}; rowData.push(entry);
-      const remove = element("button", "Beziehung entfernen"); remove.type = "button";
+      const remove = element("button", "Remove relation"); remove.type = "button";
       remove.addEventListener("click", () => {
         row.remove(); rowData.splice(rowData.indexOf(entry), 1); changed();
       });
       row.append(remove); rows.append(row);
     }
     values.forEach(add);
-    const addButton = element("button", "+ Rollenbeziehung"); addButton.type = "button";
+    const addButton = element("button", "+ Role relation"); addButton.type = "button";
     addButton.addEventListener("click", () => { add(); changed(); });
     body.append(rows, addButton);
     readValues = () => rowData.map(entry => Object.fromEntries(fields.map(field => {
       const value = entry.inputs[field].value.trim();
-      if (!value) throw new Error(`Rollenbeziehung: ${field} darf nicht leer sein.`);
+      if (!value) throw new Error(`Role relation: ${field} must not be empty.`);
       return [field, value];
     })));
   } else {
@@ -75,10 +75,10 @@ export function predicateEditor(schema, initial, changed) {
     if (operator.value === "must_be_empty") return {must_be_empty: true};
     const selected = readValues();
     if (!selected.length && operator.value === "must_include") {
-      throw new Error("‚Mindestens‘ benötigt einen Wert; eine leere Liste wäre kein wirksamer Prüfwert.");
+      throw new Error("“At least” requires a value; an empty list would not be an effective predicate.");
     }
     if (!selected.length && !emptyCheck.checked) {
-      throw new Error("Bitte Werte auswählen oder die leere Liste ausdrücklich bestätigen.");
+      throw new Error("Select values or explicitly confirm the empty list.");
     }
     return {[operator.value]: selected};
   }};

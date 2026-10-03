@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,78 +8,78 @@
   <script type="module" src="/assets/app.js"></script>
 </head>
 <body>
-  <a class="skip-link" href="#caseArea">Zur aktuellen Klausel</a>
+  <a class="skip-link" href="#caseArea">Skip to current clause</a>
   <header class="topbar">
     <div><p class="eyebrow">Standards Atlas · Human in the loop</p><h1>Review Workbench</h1></div>
-    <span class="badge">Lokaler Review · keine Modellaufrufe</span>
+    <span class="badge">Local review · no model calls</span>
   </header>
   <main>
     <form id="setup" class="setup panel">
-      <label>Reviewer <input id="reviewer" required maxlength="200" autocomplete="name" placeholder="Vor- und Nachname / eindeutige Kennung"></label>
-      <label>Reviewpaket <select id="packageSelect" required><option value="">Pakete werden geladen …</option></select></label>
-      <button class="primary" id="openPackage" type="submit">Paket öffnen / fortsetzen</button>
-      <p class="muted full">Die Reviewer-Kennung ist eine Selbstauskunft, keine Anmeldung. Nur ausdrücklich gespeicherte Entscheidungen werden übernommen.</p>
+      <label>Reviewer <input id="reviewer" required maxlength="200" autocomplete="name" placeholder="Name / unique reviewer ID"></label>
+      <label>Review package <select id="packageSelect" required><option value="">Loading packages …</option></select></label>
+      <button class="primary" id="openPackage" type="submit">Open / resume package</button>
+      <p class="muted full">The reviewer ID is self-declared, not authentication. Only explicitly saved decisions are recorded.</p>
     </form>
     <div id="notice" role="status" aria-live="polite"></div>
     <div id="error" class="error" role="alert" hidden></div>
     <section id="overview" hidden>
       <div id="coverage" class="coverage"></div>
-      <details class="panel rules"><summary>Abdeckung, Quellenbindung und eingefrorene Annotationsregeln</summary><div id="report"></div><div id="rules"></div></details>
+      <details class="panel rules"><summary>Coverage, source binding and frozen annotation rules</summary><div id="report"></div><div id="rules"></div></details>
     </section>
     <section id="workbench" class="workbench" hidden>
-      <aside class="panel queue" aria-label="Priorisierte Review-Warteschlange">
-        <div class="section-head"><h2>Warteschlange</h2><span id="queueCount" class="badge"></span></div>
-        <p class="muted">Feste Reihenfolge aus dem Paket. Filter ändern keine Mitgliedschaft.</p>
+      <aside class="panel queue" aria-label="Prioritized review queue">
+        <div class="section-head"><h2>Queue</h2><span id="queueCount" class="badge"></span></div>
+        <p class="muted">Fixed order from the package. Filters do not change membership.</p>
         <form id="filters" class="filters">
-          <label>Bestand <select id="split"><option value="all">Development + Holdout</option><option value="development">Development</option><option value="holdout">Holdout</option></select></label>
-          <label>Bearbeitungsstand <select id="status"><option value="all">Alle Fälle</option><option value="open">Noch nicht vollständig bestätigt</option><option value="complete">Vollständig bestätigt</option><option value="deferred">Mit zurückgestellten Attributen</option><option value="conflict">Mit fachlichen Widersprüchen</option></select></label>
-          <label>Offenes Attribut <select id="attribute"><option value="">Alle Attribute</option></select></label>
-          <label>Dokument <select id="document"><option value="">Alle Dokumente</option></select></label>
-          <label>Suche <input id="query" type="search" maxlength="500" placeholder="Referenz, Kennung oder Originaltext"></label>
-          <label>Fälle pro Seite <select id="pageSize"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option><option value="50">50</option></select></label>
-          <button type="submit">Filter anwenden</button>
+          <label>Partition <select id="split"><option value="all">Development + Holdout</option><option value="development">Development</option><option value="holdout">Holdout</option></select></label>
+          <label>Review status <select id="status"><option value="all">All cases</option><option value="open">Not fully confirmed</option><option value="complete">Fully confirmed</option><option value="deferred">With deferred attributes</option><option value="conflict">With semantic conflicts</option></select></label>
+          <label>Open attribute <select id="attribute"><option value="">All attributes</option></select></label>
+          <label>Document <select id="document"><option value="">All documents</option></select></label>
+          <label>Search <input id="query" type="search" maxlength="500" placeholder="Reference, ID or source text"></label>
+          <label>Cases per page <select id="pageSize"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option><option value="50">50</option></select></label>
+          <button type="submit">Apply filters</button>
         </form>
-        <nav id="caseList" aria-label="Reviewfälle"></nav>
-        <div class="pager"><button id="prevPage" type="button">← Seite</button><span id="pageNumber"></span><button id="nextPage" type="button">Seite →</button></div>
+        <nav id="caseList" aria-label="Review cases"></nav>
+        <div class="pager"><button id="prevPage" type="button">← Page</button><span id="pageNumber"></span><button id="nextPage" type="button">Page →</button></div>
       </aside>
-      <section id="caseArea" class="case-area" aria-label="Aktueller Reviewfall" tabindex="-1">
-        <div id="empty" class="panel empty">Ein Paket öffnen und einen Reviewfall auswählen.</div>
+      <section id="caseArea" class="case-area" aria-label="Current review case" tabindex="-1">
+        <div id="empty" class="panel empty">Open a package and select a review case.</div>
         <div id="caseContent" hidden>
           <header class="panel case-header">
             <div class="section-head"><span id="casePosition" class="eyebrow"></span><span id="splitBadge" class="badge"></span></div>
             <h2 id="reference"></h2><p id="priority" class="muted"></p>
-            <div class="case-tools"><button type="button" id="prevCase">← Vorheriger Fall</button><button type="button" id="nextCase">Nächster Fall →</button><button type="button" id="reloadCase">Aktualisieren</button></div>
+            <div class="case-tools"><button type="button" id="prevCase">← Previous case</button><button type="button" id="nextCase">Next case →</button><button type="button" id="reloadCase">Reload</button></div>
           </header>
           <div id="conflicts" class="error" hidden></div>
           <div class="review-columns">
             <section class="panel source-panel" aria-labelledby="sourceHeading">
-              <div class="section-head"><h3 id="sourceHeading">Originaltext &amp; Struktur</h3><span class="badge verified">Vollständig · quellengebunden</span></div>
-              <label class="inline"><input id="showEvidence" type="checkbox" checked> Evidenz der ausgewählten Vorschläge hervorheben</label>
-              <p class="legend"><span class="support">Stützende Evidenz</span><span class="counterevidence">Gegenindiz</span><span class="context">Kontext</span></p>
+              <div class="section-head"><h3 id="sourceHeading">Source &amp; structure</h3><span class="badge verified">Complete · source-bound</span></div>
+              <label class="inline"><input id="showEvidence" type="checkbox" checked> Highlight evidence for selected proposals</label>
+              <p class="legend"><span class="support">Supporting evidence</span><span class="counterevidence">Counter-evidence</span><span class="context">Context</span></p>
               <div id="sourceText" class="source-text"></div>
-              <details open><summary>Gebundener Strukturkontext</summary><div id="sourceFacts"></div></details>
-              <details><summary>Feste Quellenkennungen und Hashes</summary><dl id="sourceIds" class="key-values"></dl></details>
+              <details open><summary>Bound structural context</summary><div id="sourceFacts"></div></details>
+              <details><summary>Fixed source identifiers and hashes</summary><dl id="sourceIds" class="key-values"></dl></details>
             </section>
-            <section class="annotation-panel" aria-label="Vorschläge und menschliche Entscheidungen">
+            <section class="annotation-panel" aria-label="Proposals and human decisions">
               <div id="blindPanel" class="panel blind" hidden>
-                <h3>Holdout: zunächst ohne Vorannotation</h3>
-                <p>Text und Struktur sind vollständig sichtbar. Codex-Empfehlungen und die aktuell im EngineeringDocument gespeicherten Enrichment-Kandidaten bleiben bis zu deiner eigenen Ersteinschätzung verborgen. Sonstige historische Kandidatenantworten bleiben auch danach ausgeblendet.</p>
-                <label>Eigene Ersteinschätzung <textarea id="assessment" rows="4" maxlength="20000" placeholder="Welche fachliche Einordnung ergibt sich für dich aus Text und Struktur? Wo bleibt eine Frage offen?"></textarea></label>
-                <button type="button" id="reveal">Ersteinschätzung protokollieren &amp; Empfehlungen/Kandidaten einblenden</button>
-                <p class="muted">Dies speichert keine semantische Sollentscheidung. Du kannst auch ohne Empfehlungen direkt annotieren.</p>
+                <h3>Holdout: initially without pre-annotation</h3>
+                <p>Source text and structure are fully visible. Codex recommendations and enrichment candidates currently stored in the EngineeringDocument remain hidden until your own initial assessment. Other historical candidate responses remain hidden afterwards as well.</p>
+                <label>Your initial assessment <textarea id="assessment" rows="4" maxlength="20000" placeholder="What semantic interpretation follows from the source and structure? What remains unclear?"></textarea></label>
+                <button type="button" id="reveal">Record assessment &amp; reveal recommendations/candidates</button>
+                <p class="muted">This does not save a semantic expected decision. You can annotate directly without recommendations.</p>
               </div>
               <div id="exposureHistory"></div>
-              <div class="section-head"><h3>Vorschlag ≠ Bestätigung</h3><button id="selectSuggested" type="button">Offene sichtbare Vorschläge vormerken</button></div>
-              <p class="muted">Vormerken speichert nichts. Bestätigte Attribute bleiben unverändert, solange du keine neue Entscheidung auswählst.</p>
+              <div class="section-head"><h3>Proposal ≠ confirmation</h3><button id="selectSuggested" type="button">Stage visible open proposals</button></div>
+              <p class="muted">Staging does not save anything. Confirmed attributes remain unchanged until you select a new decision.</p>
               <div id="attributes"></div>
-              <details class="panel"><summary>Revisionen der menschlichen Entscheidungen</summary><div id="reviewHistory"></div></details>
+              <details class="panel"><summary>Human decision revisions</summary><div id="reviewHistory"></div></details>
             </section>
           </div>
           <footer class="panel savebar">
-            <label class="attestation"><input id="attested" type="checkbox"> Ich habe den vollständigen Klauseltext und den relevanten Strukturkontext geprüft; die ausgewählten Entscheidungen sind meine fachliche Beurteilung.</label>
-            <p id="dirtyStatus" class="muted">Keine ungespeicherten Entscheidungen.</p>
-            <div class="save-actions"><button id="save" class="primary" type="button">Entscheidungen speichern</button><button id="saveNext" type="button">Speichern &amp; weiter →</button></div>
-            <small>Strg/⌘ + Enter: speichern · Alt + ←/→: Fall wechseln · Keine Suiteveröffentlichung im Web.</small>
+            <label class="attestation"><input id="attested" type="checkbox"> I reviewed the complete clause text and relevant structural context; the selected decisions are my semantic assessment.</label>
+            <p id="dirtyStatus" class="muted">No unsaved decisions.</p>
+            <div class="save-actions"><button id="save" class="primary" type="button">Save decisions</button><button id="saveNext" type="button">Save &amp; next →</button></div>
+            <small>Ctrl/⌘ + Enter: save · Alt + ←/→: change case · No suite publication from the web UI.</small>
           </footer>
         </div>
       </section>

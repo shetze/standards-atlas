@@ -1,26 +1,26 @@
 /* Data-only formatting; clause/model strings are never markup or executable code. */
 export const labels = {
-  applicability_present: "Applicability vorhanden",
+  applicability_present: "Applicability present",
 };
-export const statuses = {confirmed: "Bestätigt", corrected: "Korrigiert / eigenständig bestätigt",
-  deferred: "Zurückgestellt – offen", rejected: "Vorschlag abgelehnt – offen"};
+export const statuses = {confirmed: "Confirmed", corrected: "Corrected / independently confirmed",
+  deferred: "Deferred – open", rejected: "Proposal rejected – open"};
 export function valueText(value) {
-  if (value === null) return "Keine primäre Zuordnung (null)";
-  if (value === true) return "Ja (true)";
-  if (value === false) return "Nein (false)";
-  if (Array.isArray(value)) return value.length ? value.map(valueText).join(" · ") : "Keine Werte (leere Liste)";
+  if (value === null) return "No primary assignment (null)";
+  if (value === true) return "Yes (true)";
+  if (value === false) return "No (false)";
+  if (Array.isArray(value)) return value.length ? value.map(valueText).join(" · ") : "No values (empty list)";
   if (typeof value === "object") return Object.entries(value).map(([k, v]) => `${k}: ${valueText(v)}`).join("; ");
   return String(value);
 }
 export function predicateText(predicate) {
-  if (!predicate) return "Noch keine Sollentscheidung";
-  if (Object.hasOwn(predicate, "equals")) return `Genau: ${valueText(predicate.equals)}`;
-  if (Object.hasOwn(predicate, "must_include")) return `Mindestens: ${valueText(predicate.must_include)}`;
-  if (predicate.must_be_empty === true) return "Muss leer sein (explizite Negativentscheidung)";
-  return "Ungültiger Prüfoperator";
+  if (!predicate) return "No expected decision yet";
+  if (Object.hasOwn(predicate, "equals")) return `Exactly: ${valueText(predicate.equals)}`;
+  if (Object.hasOwn(predicate, "must_include")) return `At least: ${valueText(predicate.must_include)}`;
+  if (predicate.must_be_empty === true) return "Must be empty (explicit negative decision)";
+  return "Invalid predicate operator";
 }
 export function dateText(value) {
-  return new Intl.DateTimeFormat("de-DE", {dateStyle: "medium", timeStyle: "short"}).format(new Date(value));
+  return new Intl.DateTimeFormat("en-GB", {dateStyle: "medium", timeStyle: "short"}).format(new Date(value));
 }
 export function element(tag, text, className) {
   const node = document.createElement(tag);
