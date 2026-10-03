@@ -3,3 +3,13 @@
 @media(min-width:1600px){.workbench{grid-template-columns:290px minmax(0,1fr)}.review-columns{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}}
 @media(max-width:1100px){main{padding:16px}.workbench{grid-template-columns:230px minmax(0,1fr);gap:14px}.review-columns{grid-template-columns:1fr}.source-panel{position:static;max-height:none}.setup{grid-template-columns:1fr 1fr}.setup>button{grid-column:1/-1}.queue{padding:12px}}
 @media(max-width:700px){.topbar{align-items:flex-start;padding:20px;flex-direction:column}.workbench{grid-template-columns:1fr}.queue{position:static;max-height:none}.filters{grid-template-columns:1fr 1fr}.setup{grid-template-columns:1fr}.coverage{grid-template-columns:1fr}.panel{padding:14px}#caseList{grid-template-columns:1fr 1fr}.source-text{font-size:1.05rem}.choices{grid-template-columns:1fr}.key-values{grid-template-columns:1fr}.key-values dd{margin-bottom:8px}.section-head{align-items:flex-start}.topbar h1{font-size:1.6rem}.case-tools button{font-size:.8rem}}
+
+/* Assertion HITL: make the decision-driving context visually dominant. */
+.assertion-key-badge{font-size:.95rem;font-weight:700;padding:.38rem .72rem;background:#dceff1;color:#123e48;border:1px solid #9fc8cd}
+.assertion-guidance{font-size:1rem;font-weight:650;line-height:1.5;color:#173f47;background:#edf7f6;border-left:4px solid var(--brand);border-radius:5px;padding:.7rem .85rem;margin:.55rem 0 .9rem}
+.assertion-target-source{border:2px solid #9fc8cd;border-radius:9px;background:#fbfdfd;padding:16px 18px;margin:4px 0 18px}
+.assertion-target-kicker{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:.82rem;letter-spacing:.045em;text-transform:uppercase;font-weight:750;color:#35636b;margin-bottom:.45rem}
+.assertion-target-heading{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1.35rem;line-height:1.35;color:var(--ink);margin:0 0 .9rem}
+.assertion-target-body{font-family:Georgia,"Times New Roman",serif;font-size:1.13rem;line-height:1.8;color:#182c3e;white-space:pre-wrap;overflow-wrap:anywhere}
+.assertion-context-source strong{display:block;font-size:.9rem;color:#365467;margin-bottom:.35rem}
+.assertion-context-source pre{font-size:.86rem;line-height:1.55;background:#f7f9fa}

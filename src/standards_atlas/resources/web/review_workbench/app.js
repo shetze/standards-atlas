@@ -305,9 +305,25 @@ function renderAssertionCase() {
   const data=S.current; S.cards=[]; $("empty").hidden=true; $("caseContent").hidden=false;
   $("reference").textContent=`${data.source.document_key} · ${data.source.reference}`; $("casePosition").textContent=`Fall ${data.position+1} von ${data.selected_total} · Reviewer: ${S.reviewer}`;
   $("splitBadge").textContent=data.case.split==="holdout"?"Holdout":"Development";
-  $("priority").textContent=data.case.split==="holdout"?"Holdout: Modellvorschläge sind standardmäßig ausgeblendet.":"Quelle zuerst prüfen; Modellvorschlag ist getrennte Vorbereitung und keine Bestätigung.";
+  $("splitBadge").classList.add("assertion-key-badge");
+  $("priority").className="assertion-guidance";
+  $("priority").textContent=data.case.split==="holdout"?"Holdout: Quelle zuerst fachlich beurteilen; Modellvorschläge bleiben standardmäßig ausgeblendet.":"Quelle zuerst fachlich beurteilen. Ein Modellvorschlag ist nur getrennte Vorbereitung und niemals bereits eine Bestätigung.";
   $("conflicts").hidden=true; $("attributes").replaceChildren(); $("sourceText").replaceChildren(); $("sourceFacts").replaceChildren();
-  data.source.surfaces.forEach(surface=>{const block=element("div",null,"fact"); block.append(element("strong",`${surface.label} · ${surface.source_clause_id} · ${surface.source_kind}`),element("pre",surface.text)); $("sourceFacts").append(block);});
+  const targetSurfaces=data.source.surfaces.filter(surface=>surface.source_clause_id===data.source.clause_id);
+  const targetHeading=targetSurfaces.find(surface=>surface.source_kind==="heading");
+  const targetBody=targetSurfaces.find(surface=>surface.source_kind==="body");
+  const target=element("section",null,"assertion-target-source");
+  target.append(
+    element("p","Zielklausel · unmittelbare Reviewgrundlage","assertion-target-kicker"),
+    element("h3",targetHeading?.text||"Keine eigene Heading","assertion-target-heading"),
+    element("div",targetBody?.text||"Kein eigener Textkörper","assertion-target-body")
+  );
+  $("sourceText").append(target);
+  data.source.surfaces.filter(surface=>surface.source_clause_id!==data.source.clause_id).forEach(surface=>{
+    const block=element("div",null,"fact assertion-context-source");
+    block.append(element("strong",`${surface.source_clause_id} · ${surface.source_kind}`),element("pre",surface.text));
+    $("sourceFacts").append(block);
+  });
   const root=element("section",null,"attribute-card"), status=element("select"); status.append(option("","Noch nicht entscheiden"),option("confirmed","Sichtbaren Vorschlag bestätigen"),option("corrected","Gezielt korrigieren / eigenes Ergebnis"),option("deferred","Unklar / Quelle fehlt"),option("rejected","Vorschlag verwerfen"));
   if(!data.proposal){[...status.options].find(o=>o.value==="confirmed").disabled=true;}
   const comment=element("textarea"); comment.rows=2; const explicitEmpty=element("input"); explicitEmpty.type="checkbox";
@@ -328,6 +344,8 @@ function renderCase() {
   $("reference").textContent = `${data.source.document_key} · ${data.source.reference}`;
   $("casePosition").textContent = `Fall ${data.position + 1} von ${data.selected_total} · Reviewer: ${S.reviewer}`;
   $("splitBadge").textContent = data.case.split === "holdout" ? "Holdout" : "Development";
+  $("splitBadge").classList.remove("assertion-key-badge");
+  $("priority").className = "muted";
   $("priority").textContent = data.case.split === "holdout"
     ? "Unabhängig ausgewählter Holdout. Historische Kandidatenantworten und Rankingbegründungen bleiben verborgen."
     : `Reviewpriorität: ${data.priority.priority ?? "Paketreihenfolge"} · ${data.priority.rationale}`;

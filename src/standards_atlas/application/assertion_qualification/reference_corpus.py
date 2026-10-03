@@ -122,6 +122,27 @@ class ReferenceCorpusPlan(BaseModel):
     blockers: tuple[str, ...] = ()
     plan_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
+    @model_validator(mode="before")
+    @classmethod
+    def plan_hash_matches_serialized_content(cls, value):
+        # Verify the hash against the JSON-shaped payload as supplied, before Pydantic
+        # normalizes lists/tuples/enums.  This is the same canonical form written by
+        # the S07 CLI and avoids a verifier that hashes a different representation
+        # from the producer.
+        if isinstance(value, dict) and "plan_sha256" in value:
+            stored = value.get("plan_sha256")
+            body = {key: item for key, item in value.items() if key != "plan_sha256"}
+            expected = _canonical_sha256(body)
+            if stored != expected:
+                raise ValueError(
+                    "reference corpus plan_sha256 does not match plan content; "
+                    f"stored={stored}, expected={expected}. "
+                    "Regenerate partition-and-exposure.json with "
+                    "'standards-atlas evaluation assertion-reference-corpus-plan' "
+                    "from the original corpus request and do not edit the generated plan."
+                )
+        return value
+
     @model_validator(mode="after")
     def partitions_are_disjoint(self):
         dev = {c.source_group for c in self.development}
@@ -130,9 +151,6 @@ class ReferenceCorpusPlan(BaseModel):
             raise ValueError("development and holdout source groups overlap")
         if any(c.expected_status != "pending" for c in (*self.development, *self.holdout)):
             raise ValueError("corpus planning cannot publish expected knowledge")
-        expected_hash = _canonical_sha256(self.model_dump(mode="json", exclude={"plan_sha256"}))
-        if self.plan_sha256 != expected_hash:
-            raise ValueError("reference corpus plan_sha256 does not match plan content")
         return self
 
 

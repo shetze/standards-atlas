@@ -118,3 +118,41 @@ def test_plan_hash_detects_tampering():
         assert "plan_sha256 does not match plan content" in str(exc)
     else:
         raise AssertionError("tampered plan was accepted")
+
+
+def test_plan_hash_verification_uses_serialized_payload_and_reports_recovery() -> None:
+    import json
+
+    from pydantic import ValidationError
+
+    from standards_atlas.application.assertion_qualification.reference_corpus import (
+        ReferenceCorpusPlan,
+    )
+
+    plan = build_reference_corpus_plan(
+        ReferenceCorpusRequest(
+            plan_id="roundtrip",
+            plan_version="1",
+            seed=42,
+            development_limit=1,
+            holdout_limit=1,
+            candidates=(candidate("1", "g1"), candidate("2", "g2")),
+        )
+    )
+    serialized = (
+        json.dumps(plan.model_dump(mode="json"), indent=2, ensure_ascii=False, sort_keys=True)
+        + "\n"
+    )
+    assert ReferenceCorpusPlan.model_validate_json(serialized).plan_sha256 == plan.plan_sha256
+
+    tampered = json.loads(serialized)
+    tampered["blockers"].append("manually changed")
+    try:
+        ReferenceCorpusPlan.model_validate(tampered)
+    except ValidationError as exc:
+        message = str(exc)
+        assert "stored=" in message
+        assert "expected=" in message
+        assert "Regenerate partition-and-exposure.json" in message
+    else:
+        raise AssertionError("tampered serialized plan was accepted")
