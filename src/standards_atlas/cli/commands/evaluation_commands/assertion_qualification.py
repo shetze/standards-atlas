@@ -1439,6 +1439,7 @@ def prepare_assertion_series_f_command(
         SERIES_F_PROMPTS,
         ExperimentBudget,
         build_series_f_plan,
+        build_series_f_smoke_manifest,
         plan_assertion_experiment,
     )
 
@@ -1508,34 +1509,17 @@ def prepare_assertion_series_f_command(
 
         smoke_manifest = None
         if smoke_cases:
-            smoke_suite = golden.model_copy(update={"cases": golden.cases[:smoke_cases]})
             smoke_budget = ExperimentBudget(
                 max_calls=max_calls,
                 max_retries_per_case=max_retries_per_case,
                 max_total_tokens=max_total_tokens,
                 max_runtime_seconds=max_runtime_seconds,
             )
-            smoke_prompt = SERIES_F_PROMPTS["B0-AP02"]
-            smoke_manifest = plan_assertion_experiment(
-                smoke_suite,
-                documents,
+            smoke_manifest = build_series_f_smoke_manifest(
+                manifests[0],
                 experiment_id=f"{campaign_id}-b0-smoke",
-                code_revision=code_revision,
-                variant_id="B0-AP02",
-                prompt_version=smoke_prompt,
-                model_route=model_route,
-                source_packages=source_repo,
+                smoke_cases=smoke_cases,
                 budget=smoke_budget,
-                requested_model=model,
-                runtime_config_sha256=runtime_hash,
-                temperature=temperature,
-                seed=seed,
-                max_output_tokens_per_call=max_output_tokens,
-                reasoning_enabled=reasoning_enabled,
-                repetitions=repetitions,
-                execution_authorized=authorize_execution,
-                authorization_reference=authorization_reference,
-                prompt_repository=_ap03_prompt_repository(project_root, smoke_prompt, None),
             )
             repository.save_manifest(smoke_manifest)
 

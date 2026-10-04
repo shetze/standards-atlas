@@ -390,6 +390,7 @@ __all__ = [
     "SeriesFDevelopmentPlan",
     "SeriesFExperimentRef",
     "build_series_f_plan",
+    "build_series_f_smoke_manifest",
     "same_factor_fingerprint",
 ]
 
@@ -399,5 +400,6 @@ from standards_atlas.application.assertion_qualification.series_f import (
     SeriesFDevelopmentPlan,
     SeriesFExperimentRef,
     build_series_f_plan,
+    build_series_f_smoke_manifest,
     same_factor_fingerprint,
 )
