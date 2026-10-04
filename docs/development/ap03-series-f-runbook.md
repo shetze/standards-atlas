@@ -52,7 +52,7 @@ uv run standards-atlas evaluation assertion-series-f-prepare \
   --model-route <approved-model-route> \
   --model <approved-model-id> \
   --config cfg/llm.yaml \
-  --workspace .atlas \
+  --workspace .atlas/data \
   --smoke-cases 3 \
   --repetitions 1 \
   --max-calls <approved-per-variant-call-budget> \
@@ -84,7 +84,7 @@ uv run standards-atlas evaluation assertion-experiment-run \
   --experiment-id <experiment-id> \
   --suite <development-golden-suite> \
   --config cfg/llm.yaml \
-  --workspace .atlas \
+  --workspace .atlas/data \
   --project-root .
 ```
 
@@ -100,7 +100,7 @@ Generate B0 first:
 uv run standards-atlas evaluation assertion-experiment-report \
   --experiment-id <b0-full-experiment-id> \
   --suite <development-golden-suite> \
-  --workspace .atlas \
+  --workspace .atlas/data \
   --project-root .
 ```
 
@@ -110,7 +110,7 @@ Then report P1/P2 against the B0 qualification report produced by that campaign:
 uv run standards-atlas evaluation assertion-experiment-report \
   --experiment-id <p1-or-p2-experiment-id> \
   --suite <development-golden-suite> \
-  --workspace .atlas \
+  --workspace .atlas/data \
   --project-root . \
   --baseline-report <b0-qualification-report>
 ```

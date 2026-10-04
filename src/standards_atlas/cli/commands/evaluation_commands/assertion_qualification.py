@@ -505,16 +505,6 @@ def run_assertion_qualification_cascade(
         list[str] | None,
         typer.Option("--clause-id", help="Limit the cascade to selected clause ids."),
     ] = None,
-    verify_escalation: Annotated[
-        bool,
-        typer.Option(
-            "--verify-escalation/--leave-escalation-unverified",
-            help=(
-                "Run one bounded second verifier pass on escalation output. "
-                "Without it escalated output remains needs_review."
-            ),
-        ),
-    ] = False,
 ) -> None:
     """Run the threshold-free Efficient → Verify → Escalate assertion cascade."""
     from standards_atlas.adapters.llm import (
@@ -557,15 +547,6 @@ def run_assertion_qualification_cascade(
                 model=escalation_model,
                 provider=gateway.provider,
             ),
-            escalation_verifier=(
-                OntologyGuidedAssertionProposalVerifier(
-                    gateway,
-                    model=verifier_model,
-                    provider=gateway.provider,
-                )
-                if verify_escalation
-                else None
-            ),
         )
         document = FileSystemEngineeringDocumentRepository(workspace).load(
             DocumentKey(value=document_key)
@@ -607,9 +588,6 @@ def run_assertion_qualification_cascade(
     typer.echo(f"Document                : {result.report.source_document_key}")
     typer.echo(f"Efficient accepted      : {result.report.efficient_accepted_clauses}")
     typer.echo(f"Escalated               : {result.report.escalated_clauses}")
-    typer.echo(f"Technically verified    : {result.report.technically_verified_clauses}")
-    typer.echo(f"Needs review            : {result.report.needs_review_clauses}")
-    typer.echo(f"Failed                  : {result.report.failed_clauses}")
     typer.echo(f"Source packages         : {len(result.source_packages)}")
     typer.echo(f"Report                  : {report_path}")
 
@@ -1439,6 +1417,7 @@ def prepare_assertion_series_f_command(
         SERIES_F_PROMPTS,
         ExperimentBudget,
         build_series_f_plan,
+        build_series_f_smoke_manifest,
         plan_assertion_experiment,
     )
 
@@ -1508,34 +1487,17 @@ def prepare_assertion_series_f_command(
 
         smoke_manifest = None
         if smoke_cases:
-            smoke_suite = golden.model_copy(update={"cases": golden.cases[:smoke_cases]})
             smoke_budget = ExperimentBudget(
                 max_calls=max_calls,
                 max_retries_per_case=max_retries_per_case,
                 max_total_tokens=max_total_tokens,
                 max_runtime_seconds=max_runtime_seconds,
             )
-            smoke_prompt = SERIES_F_PROMPTS["B0-AP02"]
-            smoke_manifest = plan_assertion_experiment(
-                smoke_suite,
-                documents,
+            smoke_manifest = build_series_f_smoke_manifest(
+                manifests[0],
                 experiment_id=f"{campaign_id}-b0-smoke",
-                code_revision=code_revision,
-                variant_id="B0-AP02",
-                prompt_version=smoke_prompt,
-                model_route=model_route,
-                source_packages=source_repo,
+                smoke_cases=smoke_cases,
                 budget=smoke_budget,
-                requested_model=model,
-                runtime_config_sha256=runtime_hash,
-                temperature=temperature,
-                seed=seed,
-                max_output_tokens_per_call=max_output_tokens,
-                reasoning_enabled=reasoning_enabled,
-                repetitions=repetitions,
-                execution_authorized=authorize_execution,
-                authorization_reference=authorization_reference,
-                prompt_repository=_ap03_prompt_repository(project_root, smoke_prompt, None),
             )
             repository.save_manifest(smoke_manifest)
 
@@ -1570,81 +1532,3 @@ def prepare_assertion_series_f_command(
     typer.echo(f"Plan              : {target}")
     typer.echo("Model calls       : 0 (preparation only)")
     typer.echo("Holdout access    : forbidden")
-
-
-@evaluation_app.command("assertion-series-g-verifier-evaluate")
-def evaluate_assertion_series_g_verifier_command(
-    observations: Annotated[
-        Path, typer.Option("--observations", exists=True, dir_okay=False, readable=True)
-    ],
-    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
-) -> None:
-    """Measure verifier errors against explicitly annotated Development truth."""
-    from pydantic import TypeAdapter
-
-    from standards_atlas.application.assertion_qualification import (
-        VerifierCaseObservation,
-        evaluate_verifier_quality,
-    )
-
-    try:
-        adapter = TypeAdapter(tuple[VerifierCaseObservation, ...])
-        cases = adapter.validate_json(observations.read_text(encoding="utf-8"))
-        metrics = evaluate_verifier_quality(cases)
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(metrics.model_dump_json(indent=2) + "\n", encoding="utf-8")
-    except (OSError, ValueError) as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    typer.echo(f"Annotated cases          : {metrics.annotated_cases}")
-    typer.echo(f"Real annotated cases     : {metrics.real_annotated_cases}")
-    typer.echo(f"Synthetic cases          : {metrics.synthetic_cases}")
-    typer.echo(f"Candidate support        : {metrics.candidate_support}")
-    typer.echo(f"Metrics                  : {output}")
-
-
-@evaluation_app.command("assertion-series-g-readiness")
-def evaluate_assertion_series_g_readiness_command(
-    metrics: Annotated[Path, typer.Option("--metrics", exists=True, dir_okay=False, readable=True)],
-    repetitions: Annotated[
-        Path, typer.Option("--repetitions", exists=True, dir_okay=False, readable=True)
-    ],
-    gate_profile: Annotated[
-        Path, typer.Option("--gate-profile", exists=True, dir_okay=False, readable=True)
-    ],
-    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
-    freeze: Annotated[
-        Path | None, typer.Option("--freeze", exists=True, dir_okay=False, readable=True)
-    ] = None,
-) -> None:
-    """Assess pre-Holdout readiness without claiming qualification or canonical adoption."""
-    from standards_atlas.application.assertion_qualification import (
-        RepetitionEvidence,
-        SeriesGFreeze,
-        SeriesGGateProfile,
-        VerifierQualityMetrics,
-        assess_series_g_readiness,
-    )
-
-    try:
-        measured = VerifierQualityMetrics.model_validate_json(metrics.read_text(encoding="utf-8"))
-        repeat = RepetitionEvidence.model_validate_json(repetitions.read_text(encoding="utf-8"))
-        gates = SeriesGGateProfile.model_validate_json(gate_profile.read_text(encoding="utf-8"))
-        frozen = (
-            SeriesGFreeze.model_validate_json(freeze.read_text(encoding="utf-8"))
-            if freeze is not None
-            else None
-        )
-        readiness = assess_series_g_readiness(
-            metrics=measured,
-            repetitions=repeat,
-            gate_profile=gates,
-            freeze=frozen,
-        )
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(readiness.model_dump_json(indent=2) + "\n", encoding="utf-8")
-    except (OSError, ValueError) as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    typer.echo(f"Ready for Holdout        : {readiness.ready_for_holdout}")
-    typer.echo("Qualification claim      : forbidden in Series G")
-    typer.echo(f"Blockers                 : {', '.join(readiness.blockers) or 'none'}")
-    typer.echo(f"Readiness                : {output}")

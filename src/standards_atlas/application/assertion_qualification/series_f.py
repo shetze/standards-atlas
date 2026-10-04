@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.application.assertion_qualification.experiment import (
     AssertionExperimentManifest,
+    ExperimentBudget,
     manifest_sha256,
 )
 from standards_atlas.application.assertion_qualification.models import AssertionGoldenPartition
@@ -119,6 +120,38 @@ def same_factor_fingerprint(manifest: AssertionExperimentManifest) -> str:
         payload, sort_keys=True, ensure_ascii=False, separators=(",", ":")
     ).encode()
     return hashlib.sha256(encoded).hexdigest()
+
+
+def build_series_f_smoke_manifest(
+    full_b0_manifest: AssertionExperimentManifest,
+    *,
+    experiment_id: str,
+    smoke_cases: int,
+    budget: ExperimentBudget,
+) -> AssertionExperimentManifest:
+    """Create a B0 smoke subset while retaining the full Development-suite binding."""
+
+    if full_b0_manifest.partition != AssertionGoldenPartition.DEVELOPMENT.value:
+        raise ValueError("Series-F smoke accepts only a Development manifest")
+    if full_b0_manifest.variant_id != "B0-AP02":
+        raise ValueError("Series-F smoke must be derived from the full B0 manifest")
+    if smoke_cases < 1 or smoke_cases >= len(full_b0_manifest.cases):
+        raise ValueError("Series-F smoke must be a strict non-empty subset of full B0")
+
+    payload = full_b0_manifest.model_dump(mode="json")
+    payload.update(
+        {
+            "experiment_id": experiment_id,
+            "cases": [
+                case.model_dump(mode="json") for case in full_b0_manifest.cases[:smoke_cases]
+            ],
+            "conservative_call_upper_bound": (
+                smoke_cases * full_b0_manifest.repetitions * (1 + budget.max_retries_per_case)
+            ),
+            "budget": budget.model_dump(mode="json"),
+        }
+    )
+    return AssertionExperimentManifest.model_validate(payload)
 
 
 def build_series_f_plan(

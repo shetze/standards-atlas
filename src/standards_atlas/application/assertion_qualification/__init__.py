@@ -19,7 +19,6 @@ from .cascade_models import (
     ASSERTION_QUALIFICATION_CASCADE_REPORT_SCHEMA_VERSION,
     AssertionCandidateVerification,
     AssertionCascadeClauseReport,
-    AssertionCascadeFinalState,
     AssertionCascadeProposalSource,
     AssertionCascadeReason,
     AssertionCascadeRoute,
@@ -159,39 +158,8 @@ from .review_pilot_models import (
     AssertionReviewStatus,
     AssertionReviewTargetSuite,
 )
-from .series_g import (
-    AP03_SERIES_G_CONTRACT,
-    ExpectedCandidateDisposition,
-    RepetitionEvidence,
-    SeriesGFreeze,
-    SeriesGGateProfile,
-    SeriesGReadiness,
-    VerifierCandidateTruth,
-    VerifierCaseKind,
-    VerifierCaseObservation,
-    VerifierCaseTruth,
-    VerifierQualityMetrics,
-    assess_series_g_readiness,
-    evaluate_verifier_quality,
-    freeze_sha256,
-)
 
 __all__ = [
-    "AP03_SERIES_G_CONTRACT",
-    "ExpectedCandidateDisposition",
-    "RepetitionEvidence",
-    "SeriesGFreeze",
-    "SeriesGGateProfile",
-    "SeriesGReadiness",
-    "VerifierCandidateTruth",
-    "VerifierCaseKind",
-    "VerifierCaseObservation",
-    "VerifierCaseTruth",
-    "VerifierQualityMetrics",
-    "assess_series_g_readiness",
-    "evaluate_verifier_quality",
-    "freeze_sha256",
-    "AssertionCascadeFinalState",
     "AP03_EXPERIMENT_CONTRACT",
     "AP03_EXPERIMENT_REPORT_CONTRACT",
     "AssertionExperimentManifest",
@@ -334,6 +302,7 @@ __all__ = [
     "SeriesFDevelopmentPlan",
     "SeriesFExperimentRef",
     "build_series_f_plan",
+    "build_series_f_smoke_manifest",
     "same_factor_fingerprint",
 ]
 
@@ -343,5 +312,6 @@ from standards_atlas.application.assertion_qualification.series_f import (
     SeriesFDevelopmentPlan,
     SeriesFExperimentRef,
     build_series_f_plan,
+    build_series_f_smoke_manifest,
     same_factor_fingerprint,
 )

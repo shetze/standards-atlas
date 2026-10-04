@@ -6,6 +6,7 @@ from standards_atlas.application.assertion_qualification import (
     ExperimentBudget,
     ExperimentCaseBinding,
     build_series_f_plan,
+    build_series_f_smoke_manifest,
 )
 from standards_atlas.domain.model import ContextInputFingerprints, ContextSourcePackageBinding
 
@@ -84,3 +85,20 @@ def test_build_series_f_plan_rejects_non_prompt_factor_change() -> None:
         assert "non-prompt factors" in str(exc)
     else:
         raise AssertionError("expected non-prompt factor mismatch to be rejected")
+
+
+def test_build_series_f_smoke_retains_full_golden_suite_binding() -> None:
+    full = _manifest("B0-AP02", SERIES_F_PROMPTS["B0-AP02"], cases=3)
+    smoke = build_series_f_smoke_manifest(
+        full,
+        experiment_id="campaign-b0-smoke",
+        smoke_cases=1,
+        budget=ExperimentBudget(max_calls=3),
+    )
+
+    assert len(smoke.cases) == 1
+    assert smoke.golden_suite_sha256 == full.golden_suite_sha256
+    assert smoke.golden_suite_id == full.golden_suite_id
+    assert smoke.golden_suite_version == full.golden_suite_version
+    assert smoke.ontology_versions == full.ontology_versions
+    assert smoke.conservative_call_upper_bound == 1
