@@ -92,6 +92,20 @@ Use `assertion-experiment-resume` only for an interrupted experiment. The B0 smo
 technical/semantic smoke observation and is not added to the full B0 statistics; the full B0 run has
 its own manifest and attempts.
 
+### Truncation and token-budget re-planning
+
+A gateway response rejected after a real provider call still consumes the provider-reported tokens.
+The experiment ledger records that usage from `LlmResponseError.raw_response.usage` and charges it
+to `max_total_tokens`; response errors must not create unaccounted model calls. If the provider
+reports `finish_reason=length` at exactly the configured output cap, preserve that campaign as an
+audit result and prepare a new campaign instead of resuming or silently changing its manifest.
+
+For the bounded Granite continuation diagnosed on 4 October 2026, the 4096-token output limit
+truncated two B0 responses and the earlier token budget was insufficient. The explicitly approved
+next Development campaign uses the same model/data/prompt factors with only these technical
+limits changed: `--max-output-tokens 8192` and `--max-total-tokens 600000`. A different model,
+prompt, source set, retry policy or gate requires a separately identified plan change.
+
 ## 5. Report B0 and variants
 
 Generate B0 first:
@@ -104,7 +118,8 @@ uv run standards-atlas evaluation assertion-experiment-report \
   --project-root .
 ```
 
-Then report P1/P2 against the B0 qualification report produced by that campaign:
+Then report P1/P2 against the B0 qualification report embedded in the B0 comparison envelope.
+The CLI accepts that generated `comparison.json` directly; no manual JSON extraction is required:
 
 ```bash
 uv run standards-atlas evaluation assertion-experiment-report \
@@ -112,7 +127,7 @@ uv run standards-atlas evaluation assertion-experiment-report \
   --suite <development-golden-suite> \
   --workspace .atlas/data \
   --project-root . \
-  --baseline-report <b0-qualification-report>
+  --baseline-report local/evaluation/assertions/ap03/<b0-full-experiment-id>/comparison.json
 ```
 
 The report keeps fixed coverage, technical failures, usage/runtime observations and the existing

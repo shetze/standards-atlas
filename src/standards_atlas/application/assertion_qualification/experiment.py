@@ -417,6 +417,11 @@ class _BudgetLedger:
     def after_duration(self, duration_ms: int) -> None:
         self.duration_ms += duration_ms
 
+    def after_error(self, duration_ms: int, usage: ExperimentUsage | None) -> None:
+        self.duration_ms += duration_ms
+        if usage and usage.total_tokens is not None:
+            self.tokens += usage.total_tokens
+
     def after_call(self, result: StructuredGenerationResult) -> None:
         self.duration_ms += result.duration_ms
         if result.usage and result.usage.total_tokens is not None:
@@ -520,7 +525,8 @@ class _AttemptGateway:
             result = self._delegate.generate_structured(request)
         except LlmGatewayError as error:
             duration_ms = round((time.monotonic() - started) * 1000)
-            self._budget.after_duration(duration_ms)
+            error_usage = _gateway_error_usage(error)
+            self._budget.after_error(duration_ms, error_usage)
             private = self._repository.save_private_attempt(
                 self._attempt_id,
                 {"request": request_payload, "error": _error_raw_payload(error)},
@@ -530,6 +536,7 @@ class _AttemptGateway:
                 _gateway_error_status(error),
                 error=error,
                 duration_ms=duration_ms,
+                reported_usage=error_usage,
                 private_raw_artifact=private,
                 failure_stage=_gateway_failure_stage(error),
             )
@@ -568,10 +575,11 @@ class _AttemptGateway:
         error_type: str | None = None,
         message: str | None = None,
         duration_ms: int | None = None,
+        reported_usage: ExperimentUsage | None = None,
         private_raw_artifact: str | None = None,
         failure_stage: str | None = None,
     ) -> ExperimentAttemptRecord:
-        usage = None
+        usage = reported_usage
         if result and result.usage:
             usage = ExperimentUsage(
                 prompt_tokens=result.usage.prompt_tokens,
@@ -1048,6 +1056,36 @@ def _request_payload(request: StructuredGenerationRequest) -> dict[str, object]:
         "reasoning_enabled": request.reasoning_enabled,
         "metadata": dict(request.metadata),
     }
+
+
+def _gateway_error_usage(error: LlmGatewayError) -> ExperimentUsage | None:
+    raw_response = getattr(error, "raw_response", None)
+    if not isinstance(raw_response, Mapping):
+        return None
+    raw_usage = raw_response.get("usage")
+    if not isinstance(raw_usage, Mapping):
+        return None
+
+    prompt_tokens = _usage_int(raw_usage, "prompt_tokens", "input_tokens")
+    completion_tokens = _usage_int(raw_usage, "completion_tokens", "output_tokens")
+    total_tokens = _usage_int(raw_usage, "total_tokens")
+    if total_tokens is None and prompt_tokens is not None and completion_tokens is not None:
+        total_tokens = prompt_tokens + completion_tokens
+    if prompt_tokens is None and completion_tokens is None and total_tokens is None:
+        return None
+    return ExperimentUsage(
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=total_tokens,
+    )
+
+
+def _usage_int(raw_usage: Mapping[object, object], *names: str) -> int | None:
+    for name in names:
+        value = raw_usage.get(name)
+        if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+            return value
+    return None
 
 
 def _error_raw_payload(error: LlmGatewayError) -> dict[str, object | None]:

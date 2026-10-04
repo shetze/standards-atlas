@@ -98,6 +98,26 @@ def load_assertion_qualification_report(path: Path) -> AssertionQualificationRep
     return AssertionQualificationReport.model_validate(payload)
 
 
+def load_assertion_experiment_baseline_report(path: Path) -> AssertionQualificationReport:
+    """Load a baseline from either a qualification report or experiment comparison envelope."""
+    payload = _load_mapping(path)
+    qualification_payload = payload.get("qualification_report")
+    if qualification_payload is None:
+        require_supported_schema("assertion-qualification-report", payload.get("schema_version"))
+        return AssertionQualificationReport.model_validate(payload)
+    if not isinstance(qualification_payload, dict):
+        raise ValueError("experiment comparison qualification_report must be a mapping")
+
+    # Import lazily to keep the experiment model dependent on the I/O layer only at load time.
+    from standards_atlas.application.assertion_qualification.experiment import (
+        AssertionExperimentReport,
+    )
+
+    require_supported_schema("assertion-experiment-report", payload.get("schema_version"))
+    comparison = AssertionExperimentReport.model_validate(payload)
+    return comparison.qualification_report
+
+
 def load_assertion_auto_adoption_policy(path: Path) -> AssertionAutoAdoptionPolicy:
     payload = _load_mapping(path)
     require_supported_schema("assertion-auto-adoption-policy", payload.get("schema_version"))

@@ -11,6 +11,9 @@ from standards_atlas.adapters.filesystem.assertion_experiment_repository import 
 from standards_atlas.adapters.filesystem.context_source_package_repository import (
     FileSystemContextSourcePackageRepository,
 )
+from standards_atlas.application.assertion_qualification import (
+    load_assertion_experiment_baseline_report,
+)
 from standards_atlas.application.assertion_qualification.experiment import (
     AssertionExperimentService,
     ExperimentAttemptStatus,
@@ -27,6 +30,7 @@ from standards_atlas.application.assertion_qualification.models import (
 )
 from standards_atlas.application.ports.llm_gateway import (
     LlmHealth,
+    LlmResponseError,
     LlmTimeoutError,
     StructuredGenerationResult,
     TokenUsage,
@@ -97,6 +101,20 @@ class _Gateway:
         outcome = self.outcomes.pop(0)
         if outcome == "timeout":
             raise LlmTimeoutError("synthetic timeout")
+        if outcome == "response_error_with_usage":
+            raise LlmResponseError(
+                "synthetic truncated response",
+                raw_content="{",
+                raw_response={
+                    "model": "fake-effective",
+                    "usage": {
+                        "prompt_tokens": 6,
+                        "completion_tokens": 4,
+                        "total_tokens": 10,
+                    },
+                },
+                finish_reason="length",
+            )
         if outcome == "interrupt":
             raise KeyboardInterrupt("synthetic interruption")
         cached = outcome == "cached"
@@ -128,6 +146,51 @@ def _extractor_factory(gateway, manifest):
         max_tokens=manifest.max_output_tokens_per_call,
         reasoning_enabled=manifest.reasoning_enabled,
     )
+
+
+def _two_case_document_and_suite() -> tuple[EngineeringDocument, AssertionGoldenSuite]:
+    clauses = (
+        Clause(
+            id=ClauseId(value="c1"),
+            reference=StandardReference(standard="TEST", clause="1"),
+            clause_type=ClauseType.CLAUSE,
+            content=(TextBlock(id="t1", text=TEXT),),
+        ),
+        Clause(
+            id=ClauseId(value="c2"),
+            reference=StandardReference(standard="TEST", clause="2"),
+            clause_type=ClauseType.CLAUSE,
+            content=(TextBlock(id="t2", text=TEXT),),
+        ),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="TEST"),
+        title="Test",
+        document_type=DocumentType.STANDARD,
+        clauses=clauses,
+    )
+    cases = tuple(
+        AssertionGoldenCase(
+            source_document_key="TEST",
+            clause_id=clause.id,
+            reference=f"TEST:{index}",
+            canonical_reference=f"TEST {index}",
+            text_sha256=hashlib.sha256(TEXT.encode()).hexdigest(),
+            source_sha256=("b" if index == 1 else "d") * 64,
+            entities=(),
+            assertions=(),
+        )
+        for index, clause in enumerate(clauses, start=1)
+    )
+    suite = AssertionGoldenSuite(
+        id="dev-two",
+        version="1.0.0",
+        partition=AssertionGoldenPartition.DEVELOPMENT,
+        audit=AssertionAuditBinding(review_id="r", review_version="1", audit_sha256="a" * 64),
+        ontology_versions=("standards-atlas-core@2.0.0",),
+        cases=cases,
+    )
+    return document, suite
 
 
 def _planned(tmp_path: Path, *, gateway=None, max_calls=1, retries=0, repetitions=1):
@@ -225,6 +288,50 @@ def test_budget_is_checked_before_call_and_blocked_cell_is_not_silently_complete
     assert state.blocked_reason
 
 
+def test_response_error_usage_is_recorded_and_counts_toward_next_call_budget(
+    tmp_path: Path,
+) -> None:
+    document, suite = _two_case_document_and_suite()
+    workspace = tmp_path / ".atlas" / "data"
+    source_repo = FileSystemContextSourcePackageRepository(workspace)
+    manifest = plan_assertion_experiment(
+        suite,
+        {"TEST": document},
+        experiment_id="exp-error-usage",
+        code_revision="sha256:" + "c" * 64,
+        variant_id="B0",
+        prompt_version="ontology-guided-assertions-source-bound-v1",
+        model_route="fake",
+        source_packages=source_repo,
+        requested_model="fake",
+        execution_authorized=True,
+        authorization_reference="synthetic-test-authorization",
+        budget=ExperimentBudget(max_calls=2, max_total_tokens=9),
+    )
+    repo = FileSystemAssertionExperimentRepository(tmp_path, workspace)
+    repo.save_manifest(manifest)
+    gateway = _Gateway(["response_error_with_usage", "ok"])
+    service = AssertionExperimentService(
+        repository=repo,
+        source_packages=source_repo,
+        gateway=gateway,
+        extractor_factory=_extractor_factory,
+    )
+
+    state = service.run(manifest, suite, {"TEST": document})
+
+    assert gateway.calls == 1
+    assert [attempt.status for attempt in state.attempts] == [
+        ExperimentAttemptStatus.RESPONSE_ERROR,
+        ExperimentAttemptStatus.BUDGET_BLOCKED,
+    ]
+    assert state.attempts[0].usage is not None
+    assert state.attempts[0].usage.prompt_tokens == 6
+    assert state.attempts[0].usage.completion_tokens == 4
+    assert state.attempts[0].usage.total_tokens == 10
+    assert state.blocked_reason == "max_total_tokens exhausted before inference"
+
+
 def test_changed_manifest_prevents_resume_reuse(tmp_path: Path) -> None:
     suite, document, manifest, _, _, service = _planned(tmp_path)
     service.run(manifest, suite, {"TEST": document})
@@ -256,6 +363,27 @@ def test_report_uses_existing_evaluator_and_keeps_failed_coverage_separate(tmp_p
     assert report.effort.calls == 1
     assert report.effort.total_tokens == 5
     assert report.effort.monetary_cost is None
+
+
+def test_baseline_loader_accepts_experiment_comparison_envelope(tmp_path: Path) -> None:
+    gateway = _Gateway()
+    suite, document, manifest, repo, source_repo, service = _planned(tmp_path, gateway=gateway)
+    state = service.run(manifest, suite, {"TEST": document})
+    proposal = repo.load_proposal(state.attempts[0].proposal_run_id, "TEST")
+    package = source_repo.load(manifest.cases[0].source_package_binding)
+    comparison = evaluate_assertion_experiment(
+        manifest,
+        state,
+        suite,
+        proposals=(proposal,),
+        source_packages=(package,),
+    )
+    path = tmp_path / "comparison.json"
+    path.write_text(comparison.model_dump_json(indent=2), encoding="utf-8")
+
+    baseline = load_assertion_experiment_baseline_report(path)
+
+    assert baseline == comparison.qualification_report
 
 
 def test_cached_result_cannot_satisfy_fresh_repetition(tmp_path: Path) -> None:
