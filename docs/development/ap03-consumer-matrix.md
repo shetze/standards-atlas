@@ -103,3 +103,18 @@ items without changing later-slice ownership:
 | Codex client probe | New opt-in probe uses only `get_server_info`, requires explicit model for a real call. | Missing client/approval is `not_executed`; no standards text is used. |
 | `CodexCliLlmGateway` | Kept separate from optimizer; direct inference disabled by default. Unsupported decoder controls are rejected and removed from request identity. | Not a controlled AP03 qualification arm; S11/S12 should use the approved experiment model route instead. |
 | Golden/evaluator/Holdout | No content or semantic matcher changed. | S11/S12 own real Development measurement; Holdout remains reserved for S15. |
+
+
+## Series-H S15/S16 consumer update
+
+| Consumer / boundary | Series-H change | Guard / resulting owner |
+|---|---|---|
+| Series-G readiness/freeze | Becomes the mandatory authorization input for Holdout, including the exact Series-H campaign hash and current code revision. | Non-ready/mismatched freeze blocks before inference; Series H cannot manufacture H3. |
+| Reference corpus / exposure register | Reused as the authoritative Holdout membership and exposure boundary. | Exact suite/plan match and exposure-clear cases/groups required; no optimizer access is added. |
+| Existing experiment manifests/runner | Frozen Finalist and optional baseline manifests are referenced, not copied into a new runner. | Holdout partition, manifest hash, authorization, repetitions, code revision and cache policy are checked; execution order is immutable. |
+| `AssertionQualificationEvaluator` | Reused unchanged for every planned Holdout repetition. | Series-H gates consume its metrics/supports; no second matcher, LLM judge or best-of-N score path. |
+| Schema governance | Adds schema-1 families for Series-H gate profile, Holdout campaign and completion report. | Architecture inventory/bindings make version drift explicit. |
+| CLI | Adds campaign-prepare, preflight, frozen run and finalize operations. | Prepare/preflight make zero model calls; run has no optimizer/adaptive selection; finalize cannot activate canonical adoption. |
+| Release decision | Separates technical implementation, experimental evaluation and bounded-pilot qualification. | A passed Holdout still needs explicit human approval plus scope; failed Holdout is non-release. |
+| AP04 | Receives a text-safe handover of bound proposal/source-package identities, hashes, scope and blockers. | AP03 starts no AP04 workflow and grants no `DocumentKnowledge` adoption authority. |
+| Current private evidence | Start snapshot lacks the Series-G real evidence/H3 required by H. | Actual Series-H semantic status remains `blocked_by_missing_evidence`; no Holdout run is claimed. |

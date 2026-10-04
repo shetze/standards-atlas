@@ -505,6 +505,16 @@ def run_assertion_qualification_cascade(
         list[str] | None,
         typer.Option("--clause-id", help="Limit the cascade to selected clause ids."),
     ] = None,
+    verify_escalation: Annotated[
+        bool,
+        typer.Option(
+            "--verify-escalation/--leave-escalation-unverified",
+            help=(
+                "Run one bounded second verifier pass on escalation output. "
+                "Without it escalated output remains needs_review."
+            ),
+        ),
+    ] = False,
 ) -> None:
     """Run the threshold-free Efficient → Verify → Escalate assertion cascade."""
     from standards_atlas.adapters.llm import (
@@ -547,6 +557,15 @@ def run_assertion_qualification_cascade(
                 model=escalation_model,
                 provider=gateway.provider,
             ),
+            escalation_verifier=(
+                OntologyGuidedAssertionProposalVerifier(
+                    gateway,
+                    model=verifier_model,
+                    provider=gateway.provider,
+                )
+                if verify_escalation
+                else None
+            ),
         )
         document = FileSystemEngineeringDocumentRepository(workspace).load(
             DocumentKey(value=document_key)
@@ -588,6 +607,9 @@ def run_assertion_qualification_cascade(
     typer.echo(f"Document                : {result.report.source_document_key}")
     typer.echo(f"Efficient accepted      : {result.report.efficient_accepted_clauses}")
     typer.echo(f"Escalated               : {result.report.escalated_clauses}")
+    typer.echo(f"Technically verified    : {result.report.technically_verified_clauses}")
+    typer.echo(f"Needs review            : {result.report.needs_review_clauses}")
+    typer.echo(f"Failed                  : {result.report.failed_clauses}")
     typer.echo(f"Source packages         : {len(result.source_packages)}")
     typer.echo(f"Report                  : {report_path}")
 
@@ -1417,7 +1439,6 @@ def prepare_assertion_series_f_command(
         SERIES_F_PROMPTS,
         ExperimentBudget,
         build_series_f_plan,
-        build_series_f_smoke_manifest,
         plan_assertion_experiment,
     )
 
@@ -1487,17 +1508,34 @@ def prepare_assertion_series_f_command(
 
         smoke_manifest = None
         if smoke_cases:
+            smoke_suite = golden.model_copy(update={"cases": golden.cases[:smoke_cases]})
             smoke_budget = ExperimentBudget(
                 max_calls=max_calls,
                 max_retries_per_case=max_retries_per_case,
                 max_total_tokens=max_total_tokens,
                 max_runtime_seconds=max_runtime_seconds,
             )
-            smoke_manifest = build_series_f_smoke_manifest(
-                manifests[0],
+            smoke_prompt = SERIES_F_PROMPTS["B0-AP02"]
+            smoke_manifest = plan_assertion_experiment(
+                smoke_suite,
+                documents,
                 experiment_id=f"{campaign_id}-b0-smoke",
-                smoke_cases=smoke_cases,
+                code_revision=code_revision,
+                variant_id="B0-AP02",
+                prompt_version=smoke_prompt,
+                model_route=model_route,
+                source_packages=source_repo,
                 budget=smoke_budget,
+                requested_model=model,
+                runtime_config_sha256=runtime_hash,
+                temperature=temperature,
+                seed=seed,
+                max_output_tokens_per_call=max_output_tokens,
+                reasoning_enabled=reasoning_enabled,
+                repetitions=repetitions,
+                execution_authorized=authorize_execution,
+                authorization_reference=authorization_reference,
+                prompt_repository=_ap03_prompt_repository(project_root, smoke_prompt, None),
             )
             repository.save_manifest(smoke_manifest)
 
@@ -1532,3 +1570,454 @@ def prepare_assertion_series_f_command(
     typer.echo(f"Plan              : {target}")
     typer.echo("Model calls       : 0 (preparation only)")
     typer.echo("Holdout access    : forbidden")
+
+
+@evaluation_app.command("assertion-series-g-verifier-evaluate")
+def evaluate_assertion_series_g_verifier_command(
+    observations: Annotated[
+        Path, typer.Option("--observations", exists=True, dir_okay=False, readable=True)
+    ],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+) -> None:
+    """Measure verifier errors against explicitly annotated Development truth."""
+    from pydantic import TypeAdapter
+
+    from standards_atlas.application.assertion_qualification import (
+        VerifierCaseObservation,
+        evaluate_verifier_quality,
+    )
+
+    try:
+        adapter = TypeAdapter(tuple[VerifierCaseObservation, ...])
+        cases = adapter.validate_json(observations.read_text(encoding="utf-8"))
+        metrics = evaluate_verifier_quality(cases)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(metrics.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"Annotated cases          : {metrics.annotated_cases}")
+    typer.echo(f"Real annotated cases     : {metrics.real_annotated_cases}")
+    typer.echo(f"Synthetic cases          : {metrics.synthetic_cases}")
+    typer.echo(f"Candidate support        : {metrics.candidate_support}")
+    typer.echo(f"Metrics                  : {output}")
+
+
+@evaluation_app.command("assertion-series-g-readiness")
+def evaluate_assertion_series_g_readiness_command(
+    metrics: Annotated[Path, typer.Option("--metrics", exists=True, dir_okay=False, readable=True)],
+    repetitions: Annotated[
+        Path, typer.Option("--repetitions", exists=True, dir_okay=False, readable=True)
+    ],
+    gate_profile: Annotated[
+        Path, typer.Option("--gate-profile", exists=True, dir_okay=False, readable=True)
+    ],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+    freeze: Annotated[
+        Path | None, typer.Option("--freeze", exists=True, dir_okay=False, readable=True)
+    ] = None,
+) -> None:
+    """Assess pre-Holdout readiness without claiming qualification or canonical adoption."""
+    from standards_atlas.application.assertion_qualification import (
+        RepetitionEvidence,
+        SeriesGFreeze,
+        SeriesGGateProfile,
+        VerifierQualityMetrics,
+        assess_series_g_readiness,
+    )
+
+    try:
+        measured = VerifierQualityMetrics.model_validate_json(metrics.read_text(encoding="utf-8"))
+        repeat = RepetitionEvidence.model_validate_json(repetitions.read_text(encoding="utf-8"))
+        gates = SeriesGGateProfile.model_validate_json(gate_profile.read_text(encoding="utf-8"))
+        frozen = (
+            SeriesGFreeze.model_validate_json(freeze.read_text(encoding="utf-8"))
+            if freeze is not None
+            else None
+        )
+        readiness = assess_series_g_readiness(
+            metrics=measured,
+            repetitions=repeat,
+            gate_profile=gates,
+            freeze=frozen,
+        )
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(readiness.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"Ready for Holdout        : {readiness.ready_for_holdout}")
+    typer.echo("Qualification claim      : forbidden in Series G")
+    typer.echo(f"Blockers                 : {', '.join(readiness.blockers) or 'none'}")
+    typer.echo(f"Readiness                : {output}")
+
+
+@evaluation_app.command("assertion-series-h-campaign-prepare")
+def prepare_assertion_series_h_campaign_command(
+    suite: Annotated[Path, typer.Option("--suite", exists=True, dir_okay=False, readable=True)],
+    partition_plan: Annotated[
+        Path, typer.Option("--partition-plan", exists=True, dir_okay=False, readable=True)
+    ],
+    gate_profile: Annotated[
+        Path, typer.Option("--gate-profile", exists=True, dir_okay=False, readable=True)
+    ],
+    campaign_id: Annotated[str, typer.Option("--campaign-id")],
+    finalist_experiment: Annotated[str, typer.Option("--finalist-experiment")],
+    baseline_experiment: Annotated[list[str] | None, typer.Option("--baseline-experiment")] = None,
+    campaign_version: Annotated[str, typer.Option("--campaign-version")] = "1.0.0",
+    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = (
+        cli_defaults.DEFAULT_WORKSPACE
+    ),
+    project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
+    output: Annotated[Path | None, typer.Option("--output", dir_okay=False)] = None,
+) -> None:
+    """Freeze the exact Holdout run order before Series-G readiness/freeze confirmation."""
+    from standards_atlas.adapters.filesystem import FileSystemAssertionExperimentRepository
+    from standards_atlas.application.assertion_qualification import (
+        SeriesHExperimentRole,
+        SeriesHGateProfile,
+        build_series_h_campaign,
+        series_h_campaign_sha256,
+    )
+    from standards_atlas.application.assertion_qualification.reference_corpus import (
+        ReferenceCorpusPlan,
+    )
+
+    try:
+        golden = load_assertion_golden_suite(suite)
+        partition = ReferenceCorpusPlan.model_validate_json(partition_plan.read_bytes())
+        gates = SeriesHGateProfile.model_validate_json(gate_profile.read_bytes())
+        repository = FileSystemAssertionExperimentRepository(project_root, workspace)
+        experiments = [
+            (SeriesHExperimentRole.BASELINE, repository.load_manifest(experiment_id))
+            for experiment_id in (baseline_experiment or [])
+        ]
+        experiments.append(
+            (SeriesHExperimentRole.FINALIST, repository.load_manifest(finalist_experiment))
+        )
+        campaign = build_series_h_campaign(
+            campaign_id=campaign_id,
+            campaign_version=campaign_version,
+            suite=golden,
+            reference_plan=partition,
+            gate_profile=gates,
+            experiments=tuple(experiments),
+        )
+        target = output or (
+            project_root
+            / "local"
+            / "evaluation"
+            / "assertions"
+            / "ap03"
+            / campaign_id
+            / "series-h-campaign.json"
+        )
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(
+            json.dumps(
+                campaign.model_dump(mode="json"),
+                indent=2,
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"Series-H campaign        : {target}")
+    typer.echo(f"Campaign SHA-256         : {series_h_campaign_sha256(campaign)}")
+    typer.echo(f"Frozen experiments       : {len(campaign.experiments)}")
+    typer.echo("Model calls              : 0 (campaign preparation only)")
+    typer.echo("Optimizer access         : forbidden")
+
+
+def _series_h_preflight_from_paths(
+    *,
+    readiness_path: Path,
+    campaign_path: Path,
+    gate_profile_path: Path,
+    suite_path: Path,
+    partition_plan_path: Path,
+    workspace: Path,
+    project_root: Path,
+):
+    from standards_atlas.adapters.filesystem import FileSystemAssertionExperimentRepository
+    from standards_atlas.application.assertion_qualification import (
+        SeriesGReadiness,
+        SeriesHGateProfile,
+        SeriesHHoldoutCampaign,
+        validate_series_h_campaign,
+    )
+    from standards_atlas.application.assertion_qualification.reference_corpus import (
+        ReferenceCorpusPlan,
+    )
+
+    readiness = SeriesGReadiness.model_validate_json(readiness_path.read_bytes())
+    campaign = SeriesHHoldoutCampaign.model_validate_json(campaign_path.read_bytes())
+    gates = SeriesHGateProfile.model_validate_json(gate_profile_path.read_bytes())
+    suite = load_assertion_golden_suite(suite_path)
+    partition = ReferenceCorpusPlan.model_validate_json(partition_plan_path.read_bytes())
+    repository = FileSystemAssertionExperimentRepository(project_root, workspace)
+    manifests = tuple(repository.load_manifest(item.experiment_id) for item in campaign.experiments)
+    preflight = validate_series_h_campaign(
+        readiness=readiness,
+        campaign=campaign,
+        gate_profile=gates,
+        suite=suite,
+        reference_plan=partition,
+        manifests=manifests,
+    )
+    return preflight, campaign, gates, suite, partition, manifests
+
+
+@evaluation_app.command("assertion-series-h-preflight")
+def assertion_series_h_preflight_command(
+    readiness: Annotated[
+        Path, typer.Option("--readiness", exists=True, dir_okay=False, readable=True)
+    ],
+    campaign: Annotated[
+        Path, typer.Option("--campaign", exists=True, dir_okay=False, readable=True)
+    ],
+    gate_profile: Annotated[
+        Path, typer.Option("--gate-profile", exists=True, dir_okay=False, readable=True)
+    ],
+    suite: Annotated[Path, typer.Option("--suite", exists=True, dir_okay=False, readable=True)],
+    partition_plan: Annotated[
+        Path, typer.Option("--partition-plan", exists=True, dir_okay=False, readable=True)
+    ],
+    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = (
+        cli_defaults.DEFAULT_WORKSPACE
+    ),
+    project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
+    output: Annotated[Path | None, typer.Option("--output", dir_okay=False)] = None,
+) -> None:
+    """Check freeze, exposure and exact Holdout bindings without inference."""
+    try:
+        preflight, frozen, _, _, _, _ = _series_h_preflight_from_paths(
+            readiness_path=readiness,
+            campaign_path=campaign,
+            gate_profile_path=gate_profile,
+            suite_path=suite,
+            partition_plan_path=partition_plan,
+            workspace=workspace,
+            project_root=project_root,
+        )
+        target = output or (
+            project_root
+            / "local"
+            / "evaluation"
+            / "assertions"
+            / "ap03"
+            / frozen.campaign_id
+            / "series-h-preflight.json"
+        )
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(preflight.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"Ready to execute         : {preflight.ready_to_execute}")
+    typer.echo(f"Independent groups       : {preflight.independent_source_groups}")
+    typer.echo(f"Blockers                 : {', '.join(preflight.blockers) or 'none'}")
+    typer.echo(f"Preflight                : {target}")
+    typer.echo("Model calls              : 0")
+
+
+@evaluation_app.command("assertion-series-h-run")
+def run_assertion_series_h_campaign_command(
+    readiness: Annotated[
+        Path, typer.Option("--readiness", exists=True, dir_okay=False, readable=True)
+    ],
+    campaign: Annotated[
+        Path, typer.Option("--campaign", exists=True, dir_okay=False, readable=True)
+    ],
+    gate_profile: Annotated[
+        Path, typer.Option("--gate-profile", exists=True, dir_okay=False, readable=True)
+    ],
+    suite: Annotated[Path, typer.Option("--suite", exists=True, dir_okay=False, readable=True)],
+    partition_plan: Annotated[
+        Path, typer.Option("--partition-plan", exists=True, dir_okay=False, readable=True)
+    ],
+    config: Annotated[
+        Path, typer.Option("--config", exists=True, dir_okay=False, readable=True)
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
+    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = (
+        cli_defaults.DEFAULT_WORKSPACE
+    ),
+    project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
+    prompt_staging_root: Annotated[
+        Path | None, typer.Option("--prompt-staging-root", file_okay=False)
+    ] = None,
+) -> None:
+    """Execute only the already frozen Holdout experiment sequence, with no adaptive selection."""
+    try:
+        preflight, frozen, _, _, _, _ = _series_h_preflight_from_paths(
+            readiness_path=readiness,
+            campaign_path=campaign,
+            gate_profile_path=gate_profile,
+            suite_path=suite,
+            partition_plan_path=partition_plan,
+            workspace=workspace,
+            project_root=project_root,
+        )
+        if not preflight.ready_to_execute:
+            raise ValueError("Series-H Holdout execution blocked: " + ", ".join(preflight.blockers))
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Frozen Holdout campaign  : {frozen.campaign_id}")
+    typer.echo("Adaptive variant choice  : forbidden")
+    typer.echo("Optimizer client          : not invoked")
+    for experiment_id in frozen.execution_order:
+        _run_assertion_experiment_cli(
+            experiment_id=experiment_id,
+            suite=suite,
+            config=config,
+            workspace=workspace,
+            project_root=project_root,
+            resume=False,
+            prompt_staging_root=prompt_staging_root,
+        )
+
+
+@evaluation_app.command("assertion-series-h-finalize")
+def finalize_assertion_series_h_command(
+    readiness: Annotated[
+        Path, typer.Option("--readiness", exists=True, dir_okay=False, readable=True)
+    ],
+    campaign: Annotated[
+        Path, typer.Option("--campaign", exists=True, dir_okay=False, readable=True)
+    ],
+    gate_profile: Annotated[
+        Path, typer.Option("--gate-profile", exists=True, dir_okay=False, readable=True)
+    ],
+    suite: Annotated[Path, typer.Option("--suite", exists=True, dir_okay=False, readable=True)],
+    partition_plan: Annotated[
+        Path, typer.Option("--partition-plan", exists=True, dir_okay=False, readable=True)
+    ],
+    release_decision: Annotated[
+        str | None,
+        typer.Option(
+            "--release-decision",
+            help="Human decision: approve_bounded_pilot or do_not_approve.",
+        ),
+    ] = None,
+    release_reference: Annotated[str | None, typer.Option("--release-reference")] = None,
+    qualification_scope: Annotated[str | None, typer.Option("--qualification-scope")] = None,
+    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = (
+        cli_defaults.DEFAULT_WORKSPACE
+    ),
+    project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
+    output_root: Annotated[Path | None, typer.Option("--output-root", file_okay=False)] = None,
+) -> None:
+    """Evaluate every frozen Holdout repetition and emit the AP03 decision plus AP04 handover."""
+    from standards_atlas.adapters.filesystem import FileSystemAssertionExperimentRepository
+    from standards_atlas.application.assertion_qualification import (
+        SeriesHReleaseAttestation,
+        SeriesHReleaseDecision,
+        assess_series_h_holdout,
+        evaluate_assertion_experiment,
+        finalize_series_h,
+        materialize_experiment_inputs,
+        render_ap04_handover,
+        render_series_h_quality_report,
+    )
+
+    try:
+        preflight, frozen, gates, golden, partition, manifests = _series_h_preflight_from_paths(
+            readiness_path=readiness,
+            campaign_path=campaign,
+            gate_profile_path=gate_profile,
+            suite_path=suite,
+            partition_plan_path=partition_plan,
+            workspace=workspace,
+            project_root=project_root,
+        )
+        repository = FileSystemAssertionExperimentRepository(project_root, workspace)
+        source_repo = FileSystemContextSourcePackageRepository(workspace)
+        reports = []
+        root = output_root or (
+            project_root / "local" / "evaluation" / "assertions" / "ap03" / frozen.campaign_id
+        )
+        report_root = root / "holdout-reports"
+        if preflight.ready_to_execute:
+            for manifest in manifests:
+                state = repository.load_state(manifest.experiment_id)
+                if state is None or not state.attempts:
+                    continue
+                for repetition in range(1, manifest.repetitions + 1):
+                    proposals, packages = materialize_experiment_inputs(
+                        repository,
+                        source_repo,
+                        manifest,
+                        state,
+                        repetition=repetition,
+                    )
+                    report = evaluate_assertion_experiment(
+                        manifest,
+                        state,
+                        golden,
+                        proposals=proposals,
+                        source_packages=packages,
+                        evaluation_repetition=repetition,
+                    )
+                    reports.append(report)
+                    report_root.mkdir(parents=True, exist_ok=True)
+                    path = report_root / f"{manifest.experiment_id}-r{repetition}.json"
+                    path.write_text(
+                        json.dumps(
+                            report.model_dump(mode="json"),
+                            indent=2,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                        )
+                        + "\n",
+                        encoding="utf-8",
+                    )
+        assessment = assess_series_h_holdout(
+            preflight=preflight,
+            campaign=frozen,
+            gate_profile=gates,
+            reports=tuple(reports),
+        )
+        attestation = None
+        if release_decision is not None or release_reference is not None:
+            if release_decision is None or release_reference is None:
+                raise ValueError(
+                    "--release-decision and --release-reference must be supplied together"
+                )
+            attestation = SeriesHReleaseAttestation(
+                decision=SeriesHReleaseDecision(release_decision),
+                reference=release_reference,
+            )
+        completion = finalize_series_h(
+            assessment=assessment,
+            release_attestation=attestation,
+            qualification_scope=qualification_scope,
+        )
+        root.mkdir(parents=True, exist_ok=True)
+        completion_path = root / "series-h-completion.json"
+        quality_path = root / "series-h-quality-report.md"
+        handover_path = root / "ap04-handover.md"
+        completion_path.write_text(completion.model_dump_json(indent=2) + "\n", encoding="utf-8")
+        quality_path.write_text(
+            render_series_h_quality_report(
+                completion,
+                campaign=frozen,
+                experiment_reports=tuple(reports),
+                reference_plan=partition,
+            ),
+            encoding="utf-8",
+        )
+        handover_path.write_text(
+            render_ap04_handover(completion=completion, reports=tuple(reports)),
+            encoding="utf-8",
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"AP03 completion state     : {completion.state.value}")
+    typer.echo(f"Experimentally evaluated : {completion.experimentally_evaluated}")
+    typer.echo(f"Bounded pilot qualified  : {completion.qualified_for_bounded_pilot}")
+    typer.echo(f"Completion report        : {completion_path}")
+    typer.echo(f"Quality report           : {quality_path}")
+    typer.echo(f"AP04 handover            : {handover_path}")
+    typer.echo("Canonical adoption       : disabled")

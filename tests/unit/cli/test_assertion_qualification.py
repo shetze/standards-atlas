@@ -277,3 +277,28 @@ def test_ap03_preflight_cli_is_model_free_and_text_free(tmp_path: Path) -> None:
     assert payload["network_access"] is False
     assert payload["golden_or_knowledge_write"] is False
     assert payload["release_state"] == "not_ready_for_release"
+
+
+def test_assertion_series_h_cli_surface_is_registered() -> None:
+    prepare = runner.invoke(app, ["evaluation", "assertion-series-h-campaign-prepare", "--help"])
+    assert prepare.exit_code == 0, prepare.output
+    assert "--finalist-experiment" in prepare.stdout
+    assert "--baseline-experiment" in prepare.stdout
+    assert "--partition-plan" in prepare.stdout
+
+    preflight = runner.invoke(app, ["evaluation", "assertion-series-h-preflight", "--help"])
+    assert preflight.exit_code == 0, preflight.output
+    assert "--readiness" in preflight.stdout
+    assert "--campaign" in preflight.stdout
+    assert "--gate-profile" in preflight.stdout
+
+    run = runner.invoke(app, ["evaluation", "assertion-series-h-run", "--help"])
+    assert run.exit_code == 0, run.output
+    assert "--config" in run.stdout
+    assert "--prompt-staging-root" in run.stdout
+
+    finalize = runner.invoke(app, ["evaluation", "assertion-series-h-finalize", "--help"])
+    assert finalize.exit_code == 0, finalize.output
+    assert "--release-decision" in finalize.stdout
+    assert "--release-reference" in finalize.stdout
+    assert "--qualification-scope" in finalize.stdout

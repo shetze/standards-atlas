@@ -140,6 +140,24 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         (1,),
         "local/evaluation/assertions/ap03/**/series-f-plan.json",
     ),
+    "ap03-series-h-gate-profile": SchemaPolicy(
+        "ap03-series-h-gate-profile",
+        1,
+        (1,),
+        "local/evaluation/assertions/ap03/**/series-h-gate-profile.json",
+    ),
+    "ap03-series-h-holdout-campaign": SchemaPolicy(
+        "ap03-series-h-holdout-campaign",
+        1,
+        (1,),
+        "local/evaluation/assertions/ap03/**/series-h-campaign.json",
+    ),
+    "ap03-series-h-completion-report": SchemaPolicy(
+        "ap03-series-h-completion-report",
+        1,
+        (1,),
+        "local/evaluation/assertions/ap03/**/series-h-completion.json",
+    ),
     "assertion-qualification-cascade-report": SchemaPolicy(
         "assertion-qualification-cascade-report",
         1,

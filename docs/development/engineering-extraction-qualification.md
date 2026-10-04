@@ -1,9 +1,11 @@
 # Engineering extraction qualification contract — AP03
 
-Status: Series-C technical contract, 2026-10-03. Series C implements the bounded experiment
-manifest, attempt ledger, plan/run/resume operations and stage-aware comparison wrapper described
-below. It does **not** execute a real model experiment, choose quality thresholds, qualify a model or
-create a second semantic evaluator.
+Status: AP03 technical contract through Series H, 2026-10-04. Series C introduced the bounded
+experiment runner described below; later series bind review, optimization access, measured Development
+preparation, verifier/freeze readiness and the isolated Holdout completion path to that same runner and
+evaluator. The supplied post-Series-G snapshot still lacks the real evidence/H3 confirmation required
+to execute Holdout, so AP03 is technically implemented through S16 but is **not** experimentally
+completed or qualified for a bounded pilot in this delivery.
 
 ## 1. Purpose and fixed baselines
 
@@ -124,3 +126,30 @@ semantic result.
   prompt content.
 - No real model or Codex client is invoked by Series C.
 - No new Golden, `DocumentKnowledge`, adoption, RAG/GraphRAG or release-write path is introduced.
+
+
+## 8. Series-H isolated Holdout and release boundary (S15/S16)
+
+Series H adds no second semantic evaluator or optimizer loop. A `SeriesHHoldoutCampaign` fixes the
+exact Holdout suite, partition/exposure state, G0-G6 gate profile, pre-authorized Finalist/baseline
+experiment manifests, repetition counts and execution order before the final Series-G freeze. The
+freeze binds the campaign hash. The model-free preflight rejects changed campaign/gates/partition,
+exposed Holdout cases, manifest drift, non-Holdout manifests, missing execution authorization or a
+code revision different from the freeze.
+
+Execution delegates only to the existing bounded experiment runner; the optimizer client is not
+invoked and no adaptive variant selection exists. Finalization materializes the existing native
+proposals/source packages and calls the unchanged `AssertionQualificationEvaluator` for every planned
+repetition. The release view adds pre-fixed technical, semantic/support and critical-finding gates
+without recalculating friendlier semantic scores. Missing or failed cells remain evidence, and a
+failed Holdout yields `evaluated_not_qualified` rather than a retuning request.
+
+A passed Holdout is still not a release by itself. `qualified_for_bounded_pilot` additionally requires
+an explicit human release reference and non-empty bounded scope. Canonical adoption is always disabled
+by AP03; AP04 receives only bound identities and blockers from the generated handover and owns any
+later knowledge-adoption decision.
+
+For the 2026-10-04 supplied snapshot, the real Holdout is blocked before execution because the
+Series-G handover reports missing real Development/verifier/repetition evidence and H3 confirmation.
+The public Series-H E2E is therefore a synthetic software proof only. See
+`ap03-series-h-quality-report.md` and `ap03-series-h-runbook.md` for the actual status and operation.

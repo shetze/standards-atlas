@@ -474,6 +474,21 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         "ap03-series-f-development-plan",
     ),
     SchemaMarkerDecision(
+        "standards_atlas.application.assertion_qualification.series_h:SeriesHGateProfile",
+        SchemaMarkerDisposition.CENTRAL,
+        "ap03-series-h-gate-profile",
+    ),
+    SchemaMarkerDecision(
+        "standards_atlas.application.assertion_qualification.series_h:SeriesHHoldoutCampaign",
+        SchemaMarkerDisposition.CENTRAL,
+        "ap03-series-h-holdout-campaign",
+    ),
+    SchemaMarkerDecision(
+        "standards_atlas.application.assertion_qualification.series_h:SeriesHCompletionReport",
+        SchemaMarkerDisposition.CENTRAL,
+        "ap03-series-h-completion-report",
+    ),
+    SchemaMarkerDecision(
         "standards_atlas.application.assertion_qualification.cascade_models:"
         "AssertionQualificationCascadeReport",
         SchemaMarkerDisposition.CENTRAL,
@@ -1065,6 +1080,30 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         (VersionAxis.SCHEMA,),
         "ap03-series-f-development-plan",
         "Development-only B0/P1/P2 run order with one-factor comparison binding.",
+    ),
+    VersionedInterface(
+        "ap03-series-h-gate-profile",
+        "local/evaluation/assertions/ap03/**/series-h-gate-profile.json",
+        LifecycleBoundary.PUBLIC_CONTRACT,
+        (VersionAxis.SCHEMA,),
+        "ap03-series-h-gate-profile",
+        "Pre-Holdout G0-G6 thresholds and supports; no post-result gate changes.",
+    ),
+    VersionedInterface(
+        "ap03-series-h-holdout-campaign",
+        "local/evaluation/assertions/ap03/**/series-h-campaign.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "ap03-series-h-holdout-campaign",
+        "Frozen isolated Holdout experiment order without expected semantic content.",
+    ),
+    VersionedInterface(
+        "ap03-series-h-completion-report",
+        "local/evaluation/assertions/ap03/**/series-h-completion.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "ap03-series-h-completion-report",
+        "Bound AP03 implementation/evaluation/pilot-qualification decision and blockers.",
     ),
     VersionedInterface(
         "assertion-qualification-cascade-report",

@@ -1,20 +1,160 @@
+# AP03 status — Series H / S15-S16 technically implemented; Holdout execution blocked by missing pre-Holdout evidence
+
+## Series H — isolated Holdout and AP03 completion
+
+Date: 2026-10-04. This delivery implements only AP03-S15 and AP03-S16 on the supplied
+post-Series-G snapshot. AP04 is not started. The start snapshot does **not** contain the private
+Development reports, actually annotated verifier benchmark, fresh Finalist/B0 repetition evidence or
+human H3 confirmation that Series G requires. Its own Series-G handover therefore says that Holdout
+must remain untouched until those prerequisites are registered and `assertion-series-g-readiness` is
+blocker-free. No real Holdout/model/Codex run and no qualification decision are manufactured here.
+
+S15 adds a versioned, isolated Holdout campaign contract. The campaign is prepared before the final
+freeze from the exact Holdout Golden suite, partition/exposure plan, explicit G0-G6 gate profile and
+already authorized experiment manifests. It fixes the Finalist, optional preplanned baseline cells,
+repetition counts and execution order. Optimizer access, expected-content delivery to the extractor,
+adaptive variant choice, post-insight gate changes and canonical adoption are fixed off by schema.
+Gate values have no qualifying numeric defaults.
+
+`assertion-series-h-preflight` is model-free. It requires a blocker-free Series-G readiness decision
+and verifies the freeze hash, campaign hash, gate-profile hash, partition/exposure hash, exact Holdout
+suite, exposure-clear source groups, manifest hashes, Holdout partition, execution authorization,
+repetition counts and code revision. A changed campaign/gate/partition/manifest after freeze blocks
+execution instead of silently creating a new test protocol.
+
+`assertion-series-h-run` performs only the frozen execution order and delegates every cell to the
+existing bounded assertion experiment runner. It does not invoke the optimization client and has no
+adaptive selection path. `assertion-series-h-finalize` revalidates the same preflight, materializes
+only the existing native proposals/source packages, evaluates them with the existing
+`AssertionQualificationEvaluator`, preserves every planned repetition and produces the Holdout
+assessment. Technical failures, missing repetitions, cached calls, low support and critical semantic
+findings remain visible blockers. A failed Holdout becomes `evaluated_not_qualified`; there is no
+retune/retry path against the same Holdout.
+
+S16 adds the explicit AP03 completion states `implemented_not_evaluated`,
+`blocked_by_missing_evidence`, `evaluated_not_qualified` and `qualified_for_bounded_pilot`. A passed
+Holdout still cannot qualify a pilot without a separate human release decision and a non-empty bounded
+scope. The resulting quality report keeps technical implementation, experimental evaluation and
+bounded-pilot qualification separate. Canonical adoption remains disabled in every state.
+
+The finalizer also emits an AP04 handover containing only bound proposal/source-package identities,
+freeze/campaign/gate/partition identities, the bounded scope and open blockers. It starts no AP04
+operation and grants no knowledge-adoption authority. The static handover in
+`docs/development/ap03-ap04-handover.md` records the actual status of this delivery: there are no real
+Holdout proposal references yet because Series G evidence is still missing.
+
+The public synthetic Series-H end-to-end test exercises campaign build → freeze/readiness → preflight
+→ existing bounded runner with a fake gateway → native source-bound proposal materialization →
+existing evaluator → Holdout gate decision → explicit synthetic bounded release. It is only a software
+integration proof, not semantic model-quality evidence. Existing AP01 offline and AP02 T01-T34
+reference paths and MCP access guards remain separate regressions.
+
+Implementation verification in this environment: the final focused Series-H/schema set completed as
+**102 passed**; the broader assertion-qualification plus AP01 offline, AP02 reference/source-bound and
+MCP security regression completed as **232 passed, 4 skipped**; the full assertion CLI plus architecture
+suite completed as **148 passed**; and all assertion-qualification integration tests completed as
+**3 passed**. These suites overlap and their counts must not be added as unique tests. The four MCP
+skips require the optional `mcp` Python package, which is absent here. `uv run --offline ruff check .`
+was attempted, but uv could not resolve `jsonschema` from its offline cache, so Ruff never started. A
+full `python -m pytest -q` was also attempted and exceeded the 300-second execution limit before
+completion; no full-suite success is claimed. No real model, Codex, private Holdout or human-attestation
+run was executed.
+
+### Actual evidence / release status in this delivery
+
+- **Technically implemented:** yes for S15/S16 contracts, CLI, schemas, reports, runbook and public
+  synthetic tests.
+- **Experimentally evaluated:** no. The supplied snapshot has no blocker-free Series-G readiness/freeze
+  evidence and no real Holdout attempts were executed here.
+- **Qualified for bounded pilot:** no. There is no real Holdout assessment and no post-Holdout human
+  release decision. Canonical adoption remains disabled.
+
+### Exact continuation point
+
+1. Apply this delta and run local `uv run ruff check .` and full `uv run pytest`.
+2. Restore/register the missing Series-F Development reports, actually annotated verifier set and
+   fresh Finalist/B0 repetitions; set the project-owned G4/G5 and Series-H G0-G6 gates before any
+   Holdout result is visible.
+3. Prepare the exact authorized Holdout experiment manifests, then create
+   `assertion-series-h-campaign-prepare` from the confirmed Holdout suite and partition/exposure plan.
+4. Produce a fresh Series-G freeze/readiness binding against the **post-Series-H code revision** and
+   the exact campaign hash. This delivery changes qualification code, so an earlier code freeze cannot
+   authorize its execution. Obtain genuine H3 confirmation; do not synthesize it.
+5. Run `assertion-series-h-preflight`. Proceed only if it is blocker-free. Then run exactly one
+   predeclared `assertion-series-h-run` campaign; do not inspect intermediate results to choose a new
+   variant, threshold or campaign member.
+6. Run `assertion-series-h-finalize`. If gates fail, preserve `evaluated_not_qualified`; any future
+   optimized version needs a new freeze and a genuinely unexposed evaluation basis. If gates pass,
+   record the explicit human release decision and bounded pilot scope separately.
+7. AP04 may consume the generated handover only after the AP03 completion state is understood. AP03
+   itself never adopts canonical knowledge.
+
+---
+# AP03 status — Series G / S13-S14 technically implemented; real evidence and freeze confirmation open
+
+## Series G — Verifier, cascade and stability
+
+Date: 2026-10-04. This delivery implements only AP03-S13 and AP03-S14 on the supplied
+post-Series-F snapshot. Series H is not started. The supplied snapshot still contains no registered
+private Development experiment reports, annotated verifier benchmark, fresh repetition results or
+human H3 freeze confirmation. Consequently no real verifier-quality measurement, new model inference,
+Finalist selection, Holdout execution or qualification claim is made in this environment.
+
+S13 now distinguishes cascade routing from final technical state. Efficient outputs that pass the
+first verifier are `technically_verified`. Escalation without another check is explicitly
+`needs_review`; an escalation with extraction failures/violations is `failed`. A single bounded second
+verification is opt-in (`assertion-cascade --verify-escalation`) and can produce
+`technically_verified` only when it completely reviews the escalation candidates and detects no missing
+items. There is no generate/critique/repair loop and no automatic canonical adoption.
+
+Series G adds an annotation-bound verifier measurement contract for false acceptance, false rejection,
+abstention, verification coverage and missing-item detection. Real annotated Development cases and
+synthetic mutations are counted separately. Synthetic-only evidence cannot satisfy readiness. The CLI
+`assertion-series-g-verifier-evaluate` consumes explicit annotated observations; it does not create or
+modify Golden truth.
+
+S14 adds fresh-repetition evidence, an explicit G4/G5 gate profile, complete pre-Holdout freeze
+identity and a readiness decision. Gate thresholds and support minima have no qualifying defaults.
+Missing real annotated support, incomplete fresh inference repetitions, cached repetitions beyond the
+approved limit, missing freeze material or absent human confirmation remain blockers. Series G never
+sets `qualification_claim_permitted=true`; qualification still requires the later isolated Holdout and
+release decision. `assertion-series-g-readiness` materializes this blocker-preserving decision.
+
+The existing bounded experiment runner remains the mechanism for approved new inference repetitions.
+Repetitions must use cache bypass and every fresh run must remain bound by report hash; Series G does
+not implement Best-of-N. The freeze binds code, prompt/schema, ontologies, context/source policy,
+model/backend, cascade and retry/budget policy, Development Golden, partition/exposure state, evaluator
+and the concrete future Holdout campaign. A functional change after freeze requires a new freeze.
+
+Implementation verification in this environment: assertion-qualification plus assertion CLI and
+architecture tests completed as **304 passed** before the final documentation-only changes. The focused
+S13/S14 tests completed as **12 passed** and the complete assertion-qualification unit set as
+**160 passed**. A direct `ruff` invocation was attempted but Ruff is not installed in this environment;
+therefore no Ruff success is claimed. No real model, Codex client, private standards-text, Holdout or
+human-attestation run was executed.
+
+### Exact continuation point
+
+1. Apply this delta and run local `uv run ruff check .` plus full `uv run pytest`.
+2. Restore/register the completed Series-F Development reports and an actually annotated verifier
+   check set. Evaluate it with `assertion-series-g-verifier-evaluate`; synthetic mutations may augment
+   but not replace real annotations.
+3. If the bounded second-verifier factor is to be compared, run the same Development cascade once
+   without and once with `--verify-escalation`; account for the extra verifier calls explicitly.
+4. Prepare the approved Finalist/B0 repetition experiments with the existing bounded experiment
+   runner, using new inference attempts and cache bypass. Execute all pre-authorized repetitions; do
+   not choose a best run.
+5. Record the pre-Holdout G4/G5 thresholds/support minima and complete freeze bindings. The project
+   owner must explicitly confirm H3; do not manufacture that confirmation.
+6. Run `assertion-series-g-readiness`. Only a blocker-free result permits starting Series H; it is
+   still not a qualification result.
+7. Do not access Holdout or begin S15/S16 until that bound pre-Holdout state exists.
+
+---
+
 # AP03 status — Series F / S01-S12 technically complete; private measurements open
 
 ## Series F — S11/S12 Development baseline and prompt comparison
-
-## Post-Series-F correction — smoke retains full Golden-suite binding
-
-Local execution of the prepared B0 smoke exposed a binding defect: preparation created an in-memory
-three-case Golden-suite subset and stored that subset hash in the smoke manifest, while the documented
-runner correctly receives the full published Development suite. The runner therefore rejected the smoke
-before any model call with `experiment manifest golden suite hash does not match supplied suite`.
-
-The smoke manifest is now derived from the already prepared full B0 manifest. It retains the full
-Development suite ID, version, canonical hash, ontology versions and all other experiment factors; only
-the selected `cases`, conservative call upper bound and smoke experiment ID differ. No Golden file is
-rewritten or subset-published. The runbook also uses the actual default workspace `.atlas/data` rather
-than `.atlas`. This correction changes no prompt, model, evaluator, Golden expectation, Holdout scope or
-measured result.
 
 Date: 2026-10-03. Series F implements only AP03-S11 and AP03-S12 on the supplied post-Series-E
 snapshot `standards-atlas-current-202610031442.zip` (SHA-256

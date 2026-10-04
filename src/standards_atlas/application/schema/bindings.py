@@ -254,6 +254,18 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
         "standards_atlas.application.assertion_qualification.series_f:SeriesFDevelopmentPlan",
     ),
     ModelBinding(
+        "ap03-series-h-gate-profile",
+        "standards_atlas.application.assertion_qualification.series_h:SeriesHGateProfile",
+    ),
+    ModelBinding(
+        "ap03-series-h-holdout-campaign",
+        "standards_atlas.application.assertion_qualification.series_h:SeriesHHoldoutCampaign",
+    ),
+    ModelBinding(
+        "ap03-series-h-completion-report",
+        "standards_atlas.application.assertion_qualification.series_h:SeriesHCompletionReport",
+    ),
+    ModelBinding(
         "assertion-qualification-cascade-report",
         "standards_atlas.application.assertion_qualification.cascade_models:"
         "AssertionQualificationCascadeReport",
