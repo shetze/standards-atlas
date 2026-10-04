@@ -379,6 +379,7 @@ def _production_inputs():
                 verifier_source_package_sha256=c1_package,
                 efficient_entities=1,
                 efficient_assertions=1,
+                final_state="technically_verified",
             ),
             AssertionCascadeClauseReport(
                 clause_id=ClauseId(value="c2"),
@@ -407,10 +408,13 @@ def _production_inputs():
                 efficient_assertions=1,
                 escalation_entities=1,
                 escalation_assertions=1,
+                final_state="needs_review",
             ),
         ),
         efficient_accepted_clauses=1,
         escalated_clauses=1,
+        technically_verified_clauses=1,
+        needs_review_clauses=1,
     )
     return report, efficient, escalation
 

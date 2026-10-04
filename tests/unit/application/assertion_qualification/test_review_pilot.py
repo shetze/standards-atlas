@@ -430,10 +430,12 @@ def test_attach_uses_exact_cascade_selection_and_final_route_proposal() -> None:
                 verification=verification,
                 efficient_entities=1,
                 efficient_assertions=0,
+                final_state="technically_verified",
             ),
         ),
         efficient_accepted_clauses=1,
         escalated_clauses=0,
+        technically_verified_clauses=1,
     )
 
     updated = attach_cascade_to_assertion_review_pilot(

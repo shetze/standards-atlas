@@ -375,3 +375,50 @@ def test_cascade_records_explicitly_changed_escalation_source_basis() -> None:
     assert clause_report.escalation_source_package_sha256 == escalation_binding.package_sha256
     assert clause_report.source_basis_changed is True
     assert len(result.source_packages) == 2
+
+
+def test_escalation_without_second_verification_remains_needs_review() -> None:
+    from standards_atlas.application.assertion_qualification import AssertionCascadeFinalState
+
+    result = AssertionQualificationCascadeService(
+        efficient_extractor=_Extractor("efficient"),
+        verifier=_Verifier(missing_clause="c1"),
+        escalation_extractor=_Extractor("escalation"),
+    ).run_document(
+        _document(),
+        cascade_run_id="cascade-unverified",
+        efficient_proposal_run_id="efficient-unverified",
+        escalation_proposal_run_id="escalation-unverified",
+        ontology_versions=ONTOLOGIES,
+        clause_ids=frozenset({"c1"}),
+    )
+
+    clause = result.report.clauses[0]
+    assert clause.route is AssertionCascadeRoute.ESCALATED
+    assert clause.final_state is AssertionCascadeFinalState.NEEDS_REVIEW
+    assert clause.escalation_verification is None
+    assert result.report.needs_review_clauses == 1
+    assert result.report.technically_verified_clauses == 0
+
+
+def test_bounded_second_verification_can_verify_escalation() -> None:
+    from standards_atlas.application.assertion_qualification import AssertionCascadeFinalState
+
+    result = AssertionQualificationCascadeService(
+        efficient_extractor=_Extractor("efficient"),
+        verifier=_Verifier(missing_clause="c1"),
+        escalation_extractor=_Extractor("escalation"),
+        escalation_verifier=_Verifier(),
+    ).run_document(
+        _document(),
+        cascade_run_id="cascade-second-check",
+        efficient_proposal_run_id="efficient-second-check",
+        escalation_proposal_run_id="escalation-second-check",
+        ontology_versions=ONTOLOGIES,
+        clause_ids=frozenset({"c1"}),
+    )
+
+    clause = result.report.clauses[0]
+    assert clause.final_state is AssertionCascadeFinalState.TECHNICALLY_VERIFIED
+    assert clause.escalation_verification is not None
+    assert result.report.technically_verified_clauses == 1

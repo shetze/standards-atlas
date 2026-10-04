@@ -21,6 +21,14 @@ class AssertionVerificationDisposition(StrEnum):
     UNCERTAIN = "uncertain"
 
 
+class AssertionCascadeFinalState(StrEnum):
+    """Final technical state; routing alone is not verification."""
+
+    TECHNICALLY_VERIFIED = "technically_verified"
+    NEEDS_REVIEW = "needs_review"
+    FAILED = "failed"
+
+
 class AssertionCascadeRoute(StrEnum):
     """Deterministic route selected for one source clause."""
 
@@ -123,6 +131,10 @@ class AssertionCascadeClauseReport(BaseModel):
     verification: AssertionClauseVerification | None = None
     verification_error_type: str | None = None
     verification_error_message: str | None = None
+    escalation_verification: AssertionClauseVerification | None = None
+    escalation_verification_error_type: str | None = None
+    escalation_verification_error_message: str | None = None
+    final_state: AssertionCascadeFinalState = AssertionCascadeFinalState.NEEDS_REVIEW
     efficient_source_package_sha256: str | None = Field(
         default=None, pattern=r"^sha256:[0-9a-f]{64}$"
     )
@@ -181,6 +193,24 @@ class AssertionCascadeClauseReport(BaseModel):
             AssertionCascadeReason.VERIFICATION_ERROR not in self.reasons
         ):
             raise ValueError("verification errors require verification_error escalation reason")
+        if (self.escalation_verification_error_type is None) != (
+            self.escalation_verification_error_message is None
+        ):
+            raise ValueError(
+                "escalation verification error type and message must be supplied together"
+            )
+        if self.escalation_verification is not None:
+            if self.route is not AssertionCascadeRoute.ESCALATED:
+                raise ValueError("only escalated clauses may carry escalation verification")
+            if self.escalation_verification.clause_id != self.clause_id:
+                raise ValueError("escalation verification must belong to the source clause")
+            if (
+                self.escalation_source_package_sha256
+                != self.escalation_verification.source_package_sha256
+            ):
+                raise ValueError(
+                    "escalation verifier package binding differs from escalation proposal"
+                )
         if self.verification is not None and (
             self.verifier_source_package_sha256 != self.verification.source_package_sha256
         ):
@@ -195,6 +225,18 @@ class AssertionCascadeClauseReport(BaseModel):
         )
         if self.source_basis_changed is not expected_changed:
             raise ValueError("cascade source_basis_changed does not match bound package identities")
+        if self.route is AssertionCascadeRoute.EFFICIENT_ACCEPTED:
+            if self.final_state is not AssertionCascadeFinalState.TECHNICALLY_VERIFIED:
+                raise ValueError("efficient accepted clauses are technically verified")
+        elif self.final_state is AssertionCascadeFinalState.TECHNICALLY_VERIFIED:
+            if self.escalation_verification is None:
+                raise ValueError(
+                    "escalated clauses require a second verification for technically_verified"
+                )
+            if _verification_requires_escalation(self.escalation_verification):
+                raise ValueError("technically verified escalation must be fully supported")
+            if self.escalation_violations or self.escalation_failures:
+                raise ValueError("failed escalation output cannot be technically verified")
         return self
 
 
@@ -213,6 +255,9 @@ class AssertionQualificationCascadeReport(SchemaBoundModel):
     clauses: tuple[AssertionCascadeClauseReport, ...] = ()
     efficient_accepted_clauses: int = Field(ge=0)
     escalated_clauses: int = Field(ge=0)
+    technically_verified_clauses: int = Field(default=0, ge=0)
+    needs_review_clauses: int = Field(default=0, ge=0)
+    failed_clauses: int = Field(default=0, ge=0)
 
     @field_validator("cascade_run_id", "source_document_key")
     @classmethod
@@ -255,6 +300,19 @@ class AssertionQualificationCascadeReport(SchemaBoundModel):
             raise ValueError("efficient accepted count does not match clause routes")
         if self.escalated_clauses != escalated:
             raise ValueError("escalated count does not match clause routes")
+        state_counts = {
+            state: sum(item.final_state is state for item in self.clauses)
+            for state in AssertionCascadeFinalState
+        }
+        if (
+            self.technically_verified_clauses
+            != state_counts[AssertionCascadeFinalState.TECHNICALLY_VERIFIED]
+        ):
+            raise ValueError("technically verified count does not match clause states")
+        if self.needs_review_clauses != state_counts[AssertionCascadeFinalState.NEEDS_REVIEW]:
+            raise ValueError("needs-review count does not match clause states")
+        if self.failed_clauses != state_counts[AssertionCascadeFinalState.FAILED]:
+            raise ValueError("failed count does not match clause states")
         has_escalation_source = "escalation" in stages
         if bool(escalated) != has_escalation_source:
             raise ValueError(

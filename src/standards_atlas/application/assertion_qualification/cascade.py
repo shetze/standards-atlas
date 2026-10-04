@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from standards_atlas.application.assertion_qualification.cascade_models import (
     AssertionCascadeClauseReport,
+    AssertionCascadeFinalState,
     AssertionCascadeProposalSource,
     AssertionCascadeReason,
     AssertionCascadeRoute,
@@ -63,10 +64,12 @@ class AssertionQualificationCascadeService:
         efficient_extractor: KnowledgeProposalExtractor,
         verifier: AssertionProposalVerifier,
         escalation_extractor: KnowledgeProposalExtractor,
+        escalation_verifier: AssertionProposalVerifier | None = None,
     ) -> None:
         self._efficient_extractor = efficient_extractor
         self._verifier = verifier
         self._escalation_extractor = escalation_extractor
+        self._escalation_verifier = escalation_verifier
 
     def run_document(
         self,
@@ -166,6 +169,11 @@ class AssertionQualificationCascadeService:
                     efficient_assertions=len(candidates.assertions),
                     efficient_violations=_clause_violation_count(efficient, clause),
                     efficient_failures=_clause_failure_count(efficient, clause),
+                    final_state=(
+                        AssertionCascadeFinalState.NEEDS_REVIEW
+                        if route is AssertionCascadeRoute.ESCALATED
+                        else AssertionCascadeFinalState.TECHNICALLY_VERIFIED
+                    ),
                 )
             )
 
@@ -192,21 +200,62 @@ class AssertionQualificationCascadeService:
                 if report.route is AssertionCascadeRoute.ESCALATED:
                     source_clause = _clause_by_id(document, report.clause_id.value)
                     escalation_candidates = _clause_candidates(escalation, source_clause)
+                    escalation_hash = _proposal_binding_hash(escalation, source_clause.id.value)
+                    escalation_violations = _clause_violation_count(escalation, source_clause)
+                    escalation_failures = _clause_failure_count(escalation, source_clause)
+                    second_verification = None
+                    second_error_type = None
+                    second_error_message = None
+                    final_state = AssertionCascadeFinalState.NEEDS_REVIEW
+                    if escalation_failures or escalation_violations:
+                        final_state = AssertionCascadeFinalState.FAILED
+                    elif self._escalation_verifier is not None:
+                        try:
+                            second_verification = self._escalation_verifier.verify(
+                                source_clause,
+                                document_key=document.key.value,
+                                ontology_versions=ontology_versions,
+                                evidence_anchors=escalation_candidates.anchors,
+                                entity_proposals=escalation_candidates.entities,
+                                assertion_proposals=escalation_candidates.assertions,
+                                source_package=bound_escalation_contexts[
+                                    source_clause.id.value
+                                ].source_package,
+                                interpretation_context=assertion_interpretation_context(
+                                    document,
+                                    source_clause,
+                                    applicability=bound_escalation_contexts[
+                                        source_clause.id.value
+                                    ].applicability,
+                                ),
+                            )
+                            _validate_verification_completeness(
+                                second_verification,
+                                source_clause,
+                                escalation_candidates,
+                                source_package=bound_escalation_contexts[
+                                    source_clause.id.value
+                                ].source_package,
+                            )
+                            if not _verification_escalation_reasons(second_verification):
+                                final_state = AssertionCascadeFinalState.TECHNICALLY_VERIFIED
+                        except (LlmGatewayError, ValueError) as error:
+                            second_error_type = type(error).__name__
+                            second_error_message = str(error)
                     report = report.model_copy(
                         update={
                             "escalation_entities": len(escalation_candidates.entities),
                             "escalation_assertions": len(escalation_candidates.assertions),
-                            "escalation_violations": _clause_violation_count(
-                                escalation, source_clause
-                            ),
-                            "escalation_failures": _clause_failure_count(escalation, source_clause),
-                            "escalation_source_package_sha256": _proposal_binding_hash(
-                                escalation, source_clause.id.value
-                            ),
+                            "escalation_violations": escalation_violations,
+                            "escalation_failures": escalation_failures,
+                            "escalation_source_package_sha256": escalation_hash,
                             "source_basis_changed": (
-                                report.efficient_source_package_sha256
-                                != _proposal_binding_hash(escalation, source_clause.id.value)
+                                report.efficient_source_package_sha256 != escalation_hash
                             ),
+                            "escalation_verification": second_verification,
+                            "escalation_verification_error_type": second_error_type,
+                            "escalation_verification_error_message": second_error_message,
+                            "final_state": final_state,
                         }
                     )
                 updated_reports.append(report)
@@ -226,6 +275,16 @@ class AssertionQualificationCascadeService:
                 item.route is AssertionCascadeRoute.EFFICIENT_ACCEPTED for item in reports
             ),
             escalated_clauses=len(escalated_clause_ids),
+            technically_verified_clauses=sum(
+                item.final_state is AssertionCascadeFinalState.TECHNICALLY_VERIFIED
+                for item in reports
+            ),
+            needs_review_clauses=sum(
+                item.final_state is AssertionCascadeFinalState.NEEDS_REVIEW for item in reports
+            ),
+            failed_clauses=sum(
+                item.final_state is AssertionCascadeFinalState.FAILED for item in reports
+            ),
         )
         return AssertionQualificationCascadeResult(
             efficient_proposal=efficient,
