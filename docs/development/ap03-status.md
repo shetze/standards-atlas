@@ -133,6 +133,34 @@ authorized call, preventing a known-unavailable endpoint from consuming a whole 
 connection errors. No Golden, evaluator, source policy or semantic verifier rule is changed by this
 correction.
 
+Post-r3 verifier-retry/metrics correction (2026-10-05): the v2 candidate-identity contract was confirmed
+by the real r3 Development verifier run on 15 of 16 cases; the remaining case failed only with a bounded
+300-second `LlmTimeoutError`. Series G therefore now supports `assertion-series-g-verifier-run
+--retry-errors-from <parent-verifier-run.json>`. A retry requires a new campaign ID and the same bound
+experiment, verifier provenance, runtime configuration, source-package hashes and candidate identities.
+It calls the model only for parent cases with technical verifier errors, inherits every valid parent
+verification unchanged, and writes a complete merged run with parent SHA-256, retried case IDs,
+inherited-case count and the actual number of new model calls. This is not semantic resampling and cannot
+replace a valid verifier decision with a luckier later one.
+
+The verifier evaluator no longer maps a transport/response error to `missing_*_detected=false`. Error
+cases reduce explicit case/candidate/missing-item coverage but do not enter false-acceptance,
+false-rejection or missing-item false-negative numerators/denominators. Metrics now expose reviewed
+supported/rejected candidate support and distinguish all annotated missing-item positives from the
+positive support that was actually assessed. Overall `coverage` is the conservative minimum of case,
+candidate and missing-item coverage. G4/G5 profiles additionally require explicit minima for reviewed
+supported candidates, reviewed rejected candidates and assessed missing-item positives, preventing a
+large aggregate candidate count from hiding an unusably small rate denominator. Golden truth, v2 prompt
+semantics and source policy remain unchanged.
+
+Correction verification in this environment: the complete assertion-qualification unit area plus
+assertion CLI and architecture tests completed as **332 passed**; the assertion-qualification integration
+set completed as **3 passed**. The focused changed Series-G/Series-H tests completed as **27 passed**, and
+`python -m compileall` succeeded. A full `pytest` run was started and showed no failure before the
+120-second environment limit interrupted it. Ruff is not installed in the execution environment;
+`python -m ruff` therefore could not run. No real verifier retry, Holdout access or new human decision was
+executed while implementing this correction.
+
 S14 adds fresh-repetition evidence, an explicit G4/G5 gate profile, complete pre-Holdout freeze
 identity and a readiness decision. Gate thresholds and support minima have no qualifying defaults.
 Missing real annotated support, incomplete fresh inference repetitions, cached repetitions beyond the
@@ -180,12 +208,13 @@ human-attestation run was executed.
 ### Exact continuation point
 
 1. Apply this delta and run local `uv run ruff check .` plus full `uv run pytest`.
-2. Start/check the approved LLM endpoint, rerun `assertion-series-g-verifier-run` with a new campaign
-   ID and confirm that the v2 candidate-identity contract no longer produces systematic response errors.
-   If source-package hashes and candidate IDs are unchanged, the already completed human candidate truth
-   may be rebound to the new blind CSV; do not redo or alter Golden decisions. Then build observations and
-   run `assertion-series-g-verifier-evaluate`. Synthetic mutations may augment but not replace real
-   annotations.
+2. For the existing r3 verifier run, retry only its technical error with a new campaign ID using
+   `assertion-series-g-verifier-run --retry-errors-from <r3/verifier-run.json>` and an authorization whose
+   `max_calls` covers only the failed cases. Do not rerun the 15 valid r3 verifier outcomes. If the merged
+   retry run still has an error, it remains a coverage limitation rather than a semantic false negative.
+   If source-package hashes and candidate IDs are unchanged, rebind the already completed human candidate
+   truth to the new blind CSV; do not redo or alter Golden decisions. Then build observations and run
+   `assertion-series-g-verifier-evaluate`. Synthetic mutations may augment but not replace real annotations.
 3. If the bounded second-verifier factor is to be compared, run the same Development cascade once
    without and once with `--verify-escalation`; account for the extra verifier calls explicitly.
 4. Prepare the approved Finalist/B0 repetition experiments with the existing bounded experiment

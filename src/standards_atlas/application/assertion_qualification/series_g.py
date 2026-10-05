@@ -18,7 +18,7 @@ from standards_atlas.application.assertion_qualification.cascade_models import (
 )
 
 AP03_SERIES_G_CONTRACT = "ap03-series-g-verifier-freeze-v1"
-AP03_SERIES_G_VERIFIER_RUN_CONTRACT = "ap03-series-g-verifier-run-v1"
+AP03_SERIES_G_VERIFIER_RUN_CONTRACT = "ap03-series-g-verifier-run-v2"
 SERIES_G_VERIFIER_PROMPT_VERSION = "ontology-guided-assertion-verifier-source-bound-v2"
 SERIES_G_VERIFIER_VERSION = "2.1.0"
 VERIFIER_REVIEW_COLUMNS = (
@@ -120,13 +120,19 @@ class VerifierQualityMetrics(BaseModel):
     verifier_error_cases: int = Field(default=0, ge=0)
     candidate_support: int = Field(ge=0)
     candidate_reviewed: int = Field(ge=0)
+    supported_candidate_support: int = Field(default=0, ge=0)
+    rejected_candidate_support: int = Field(default=0, ge=0)
     false_acceptances: int = Field(ge=0)
     false_rejections: int = Field(ge=0)
     abstentions: int = Field(ge=0)
+    missing_item_annotated_positive_support: int = Field(default=0, ge=0)
     missing_item_positive_support: int = Field(ge=0)
     missing_item_true_positives: int = Field(ge=0)
     missing_item_false_negatives: int = Field(ge=0)
     missing_item_false_positives: int = Field(ge=0)
+    case_coverage: float | None = Field(default=None, ge=0.0, le=1.0)
+    candidate_coverage: float | None = Field(default=None, ge=0.0, le=1.0)
+    missing_item_coverage: float | None = Field(default=None, ge=0.0, le=1.0)
     coverage: float | None = Field(default=None, ge=0.0, le=1.0)
     false_acceptance_rate: float | None = Field(default=None, ge=0.0, le=1.0)
     false_rejection_rate: float | None = Field(default=None, ge=0.0, le=1.0)
@@ -196,19 +202,40 @@ class SeriesGVerifierRun(BaseModel):
     authorized_max_calls: int = Field(ge=1)
     actual_calls: int = Field(ge=0)
     authorization_reference: str = Field(min_length=1)
+    retry_of_verifier_run_sha256: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+    retried_case_ids: tuple[str, ...] = ()
+    inherited_case_count: int = Field(default=0, ge=0)
     cases: tuple[VerifierRunCase, ...] = ()
 
     @model_validator(mode="after")
     def run_is_bounded(self) -> SeriesGVerifierRun:
         if not self.cache_bypassed:
             raise ValueError("Series-G verifier benchmark must bypass result cache")
-        if self.actual_calls != len(self.cases):
-            raise ValueError("verifier run actual call count must match persisted cases")
         if self.actual_calls > self.authorized_max_calls:
             raise ValueError("verifier run exceeds its authorized max_calls")
         ids = [item.case_id for item in self.cases]
         if len(ids) != len(set(ids)):
             raise ValueError("verifier run case ids must be unique")
+        retried = self.retried_case_ids
+        if len(retried) != len(set(retried)):
+            raise ValueError("verifier retry case ids must be unique")
+        if self.retry_of_verifier_run_sha256 is None:
+            if retried or self.inherited_case_count:
+                raise ValueError("non-retry verifier run cannot declare inherited or retried cases")
+            if self.actual_calls != len(self.cases):
+                raise ValueError("verifier run actual call count must match persisted cases")
+        else:
+            if not retried:
+                raise ValueError("verifier retry run requires at least one retried case")
+            if not set(retried).issubset(ids):
+                raise ValueError("verifier retry references a case outside the merged run")
+            if self.actual_calls != len(retried):
+                raise ValueError("verifier retry actual_calls must match retried case count")
+            if self.inherited_case_count != len(self.cases) - self.actual_calls:
+                raise ValueError("verifier retry inherited case count is inconsistent")
         return self
 
 
@@ -249,6 +276,9 @@ class SeriesGGateProfile(BaseModel):
     min_verifier_coverage: float | None = Field(default=None, ge=0.0, le=1.0)
     min_real_annotated_cases: int | None = Field(default=None, ge=1)
     min_candidate_support: int | None = Field(default=None, ge=1)
+    min_supported_candidate_support: int | None = Field(default=None, ge=1)
+    min_rejected_candidate_support: int | None = Field(default=None, ge=1)
+    min_missing_item_positive_support: int | None = Field(default=None, ge=1)
     required_fresh_repetitions: int | None = Field(default=None, ge=1)
     max_cached_repetitions: int = Field(default=0, ge=0)
     human_confirmed: bool = False
@@ -451,10 +481,16 @@ def evaluate_verifier_quality(
     observations: tuple[VerifierCaseObservation, ...],
 ) -> VerifierQualityMetrics:
     false_acceptances = false_rejections = abstentions = reviewed = support = 0
+    supported_reviewed = rejected_reviewed = 0
     missing_support = missing_tp = missing_fn = missing_fp = 0
     real = sum(item.truth.kind is VerifierCaseKind.REAL_ANNOTATED for item in observations)
     synthetic = len(observations) - real
     verifier_errors = sum(item.verification is None for item in observations)
+    annotated_missing_positive = sum(
+        int(observation.truth.missing_entity_expected)
+        + int(observation.truth.missing_assertion_expected)
+        for observation in observations
+    )
     for observation in observations:
         verification = observation.verification
         actual = (
@@ -474,6 +510,10 @@ def evaluate_verifier_quality(
             if disposition is None:
                 continue
             reviewed += 1
+            if truth.expected is ExpectedCandidateDisposition.SUPPORTED:
+                supported_reviewed += 1
+            else:
+                rejected_reviewed += 1
             if disposition is AssertionVerificationDisposition.UNCERTAIN:
                 abstentions += 1
             elif (
@@ -486,14 +526,16 @@ def evaluate_verifier_quality(
                 and disposition is AssertionVerificationDisposition.REJECTED
             ):
                 false_rejections += 1
+        if verification is None:
+            continue
         for expected, detected in (
             (
                 observation.truth.missing_entity_expected,
-                verification.missing_entity_detected if verification is not None else False,
+                verification.missing_entity_detected,
             ),
             (
                 observation.truth.missing_assertion_expected,
-                verification.missing_assertion_detected if verification is not None else False,
+                verification.missing_assertion_detected,
             ),
         ):
             if expected:
@@ -504,12 +546,18 @@ def evaluate_verifier_quality(
                     missing_fn += 1
             elif detected:
                 missing_fp += 1
-    supported_expected = sum(
-        item.expected is ExpectedCandidateDisposition.SUPPORTED
-        for observation in observations
-        for item in (*observation.truth.entity_candidates, *observation.truth.assertion_candidates)
+    case_coverage = _ratio(len(observations) - verifier_errors, len(observations))
+    candidate_coverage = _ratio(reviewed, support)
+    missing_item_coverage = _ratio(
+        2 * (len(observations) - verifier_errors),
+        2 * len(observations),
     )
-    rejected_expected = support - supported_expected
+    coverage_values = tuple(
+        item
+        for item in (case_coverage, candidate_coverage, missing_item_coverage)
+        if item is not None
+    )
+    conservative_coverage = min(coverage_values) if coverage_values else None
     return VerifierQualityMetrics(
         annotated_cases=len(observations),
         real_annotated_cases=real,
@@ -517,16 +565,22 @@ def evaluate_verifier_quality(
         verifier_error_cases=verifier_errors,
         candidate_support=support,
         candidate_reviewed=reviewed,
+        supported_candidate_support=supported_reviewed,
+        rejected_candidate_support=rejected_reviewed,
         false_acceptances=false_acceptances,
         false_rejections=false_rejections,
         abstentions=abstentions,
+        missing_item_annotated_positive_support=annotated_missing_positive,
         missing_item_positive_support=missing_support,
         missing_item_true_positives=missing_tp,
         missing_item_false_negatives=missing_fn,
         missing_item_false_positives=missing_fp,
-        coverage=_ratio(reviewed, support),
-        false_acceptance_rate=_ratio(false_acceptances, rejected_expected),
-        false_rejection_rate=_ratio(false_rejections, supported_expected),
+        case_coverage=case_coverage,
+        candidate_coverage=candidate_coverage,
+        missing_item_coverage=missing_item_coverage,
+        coverage=conservative_coverage,
+        false_acceptance_rate=_ratio(false_acceptances, rejected_reviewed),
+        false_rejection_rate=_ratio(false_rejections, supported_reviewed),
         missing_item_recall=_ratio(missing_tp, missing_support),
     )
 
@@ -582,6 +636,9 @@ def assess_series_g_readiness(
         gate_profile.min_verifier_coverage,
         gate_profile.min_real_annotated_cases,
         gate_profile.min_candidate_support,
+        gate_profile.min_supported_candidate_support,
+        gate_profile.min_rejected_candidate_support,
+        gate_profile.min_missing_item_positive_support,
         gate_profile.required_fresh_repetitions,
     )
     gates_defined = all(item is not None for item in required)
@@ -601,6 +658,9 @@ def assess_series_g_readiness(
             metrics.coverage is not None and metrics.coverage >= gate_profile.min_verifier_coverage,
             metrics.real_annotated_cases >= gate_profile.min_real_annotated_cases,
             metrics.candidate_support >= gate_profile.min_candidate_support,
+            metrics.supported_candidate_support >= gate_profile.min_supported_candidate_support,
+            metrics.rejected_candidate_support >= gate_profile.min_rejected_candidate_support,
+            metrics.missing_item_positive_support >= gate_profile.min_missing_item_positive_support,
         )
     )
     if not verifier_ok:

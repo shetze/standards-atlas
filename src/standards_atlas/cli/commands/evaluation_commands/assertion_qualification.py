@@ -1592,8 +1592,12 @@ def run_assertion_series_g_verifier_command(
     project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
     output: Annotated[Path | None, typer.Option("--output", dir_okay=False)] = None,
     review_csv: Annotated[Path | None, typer.Option("--review-csv", dir_okay=False)] = None,
+    retry_errors_from: Annotated[
+        Path | None,
+        typer.Option("--retry-errors-from", exists=True, dir_okay=False, readable=True),
+    ] = None,
 ) -> None:
-    """Verify persisted Development candidates once and prepare a blind human review sheet."""
+    """Verify Development candidates once, or retry only technical errors from a bound run."""
     from dataclasses import replace
 
     from standards_atlas.adapters.filesystem import FileSystemAssertionExperimentRepository
@@ -1630,6 +1634,7 @@ def run_assertion_series_g_verifier_command(
             raise ValueError("Series-G verifier benchmark accepts Development suites only")
         repository = FileSystemAssertionExperimentRepository(project_root, workspace)
         manifest = repository.load_manifest(experiment_id)
+        manifest_digest = manifest_sha256(manifest)
         state = repository.load_state(experiment_id)
         if state is None:
             raise ValueError("Series-G verifier benchmark requires a completed experiment state")
@@ -1643,11 +1648,6 @@ def run_assertion_series_g_verifier_command(
         )
         if not packages:
             raise ValueError("Series-G verifier benchmark has no successful native candidates")
-        if len(packages) > max_calls:
-            raise ValueError(
-                "Series-G verifier benchmark requires "
-                f"{len(packages)} calls, above max_calls={max_calls}"
-            )
         proposals_by_document = {item.source_document_key: item for item in proposals}
         documents_repo = FileSystemEngineeringDocumentRepository(workspace)
         documents = {
@@ -1658,10 +1658,6 @@ def run_assertion_series_g_verifier_command(
         base_config = LlmConfig.load(config)
         benchmark_config = replace(base_config, cache_directory=None)
         gateway = OpenAICompatibleLlmGateway(benchmark_config)
-        health = gateway.health()
-        if not health.available:
-            detail = f": {health.detail}" if health.detail else ""
-            raise ValueError(f"Series-G verifier endpoint preflight failed{detail}")
         verifier = OntologyGuidedAssertionProposalVerifier(
             gateway,
             model=verifier_model,
@@ -1669,7 +1665,17 @@ def run_assertion_series_g_verifier_command(
             prompt_version=SERIES_G_VERIFIER_PROMPT_VERSION,
             verifier_version=SERIES_G_VERIFIER_VERSION,
         )
-        cases = []
+        verifier_provenance = verifier.provenance()
+        runtime_config_sha256 = _series_g_identity_sha256(
+            {
+                "base_url": benchmark_config.base_url,
+                "configured_model": benchmark_config.model,
+                "verifier_model": verifier_model,
+                "timeout_seconds": benchmark_config.timeout_seconds,
+                "cache_directory": None,
+            }
+        )
+        prepared_cases = []
         for package in packages:
             document = documents[package.document_key]
             clause = next(
@@ -1707,6 +1713,97 @@ def run_assertion_series_g_verifier_command(
                 )
                 for item in assertions
             )
+            prepared_cases.append(
+                (
+                    package,
+                    document,
+                    clause,
+                    proposal,
+                    entities,
+                    assertions,
+                    candidates,
+                    context_source_package_binding(package).package_sha256,
+                )
+            )
+
+        parent_run = None
+        parent_by_key = {}
+        retry_keys = set()
+        if retry_errors_from is not None:
+            parent_run = SeriesGVerifierRun.model_validate_json(retry_errors_from.read_bytes())
+            if parent_run.campaign_id == campaign_id:
+                raise ValueError("Series-G verifier retry requires a new campaign_id")
+            if parent_run.experiment_id != experiment_id:
+                raise ValueError("Series-G verifier retry experiment differs from parent run")
+            if parent_run.experiment_manifest_sha256 != manifest_digest:
+                raise ValueError("Series-G verifier retry manifest differs from parent run")
+            if parent_run.variant_id != manifest.variant_id:
+                raise ValueError("Series-G verifier retry variant differs from parent run")
+            if parent_run.verifier_provenance != verifier_provenance:
+                raise ValueError(
+                    "Series-G verifier retry verifier identity differs from parent run"
+                )
+            if parent_run.runtime_config_sha256 != runtime_config_sha256:
+                raise ValueError("Series-G verifier retry runtime config differs from parent run")
+            parent_by_key = {(item.document_key, item.clause_id): item for item in parent_run.cases}
+            current_keys = {
+                (package.document_key, package.target_clause_id) for package, *_ in prepared_cases
+            }
+            if set(parent_by_key) != current_keys:
+                raise ValueError("Series-G verifier retry case set differs from current experiment")
+            for (
+                package,
+                _document,
+                _clause,
+                _proposal,
+                _entities,
+                _assertions,
+                candidates,
+                source_package_sha256,
+            ) in prepared_cases:
+                key = (package.document_key, package.target_clause_id)
+                parent_case = parent_by_key[key]
+                if parent_case.source_package_sha256 != source_package_sha256:
+                    raise ValueError(
+                        "Series-G verifier retry source package changed for "
+                        f"{package.target_clause_id}"
+                    )
+                if parent_case.candidates != candidates:
+                    raise ValueError(
+                        f"Series-G verifier retry candidates changed for {package.target_clause_id}"
+                    )
+                if parent_case.verification is None:
+                    retry_keys.add(key)
+            if not retry_keys:
+                raise ValueError("Series-G verifier retry parent has no technical verifier errors")
+
+        required_calls = len(retry_keys) if parent_run is not None else len(prepared_cases)
+        if required_calls > max_calls:
+            raise ValueError(
+                "Series-G verifier benchmark requires "
+                f"{required_calls} calls, above max_calls={max_calls}"
+            )
+        health = gateway.health()
+        if not health.available:
+            detail = f": {health.detail}" if health.detail else ""
+            raise ValueError(f"Series-G verifier endpoint preflight failed{detail}")
+
+        cases = []
+        retried_case_ids = []
+        for (
+            package,
+            document,
+            clause,
+            proposal,
+            entities,
+            assertions,
+            candidates,
+            source_package_sha256,
+        ) in prepared_cases:
+            key = (package.document_key, package.target_clause_id)
+            if parent_run is not None and key not in retry_keys:
+                cases.append(parent_by_key[key])
+                continue
             verification = None
             error_type = None
             error_message = None
@@ -1724,18 +1821,23 @@ def run_assertion_series_g_verifier_command(
             except (LlmGatewayError, ValueError) as exc:
                 error_type = type(exc).__name__
                 error_message = str(exc)
-            case_digest = hashlib.sha256(
-                (
-                    f"{campaign_id}\0{experiment_id}\0{package.document_key}\0"
-                    f"{package.target_clause_id}"
-                ).encode()
-            ).hexdigest()[:24]
+            if parent_run is not None:
+                case_id = parent_by_key[key].case_id
+                retried_case_ids.append(case_id)
+            else:
+                case_digest = hashlib.sha256(
+                    (
+                        f"{campaign_id}\0{experiment_id}\0{package.document_key}\0"
+                        f"{package.target_clause_id}"
+                    ).encode()
+                ).hexdigest()[:24]
+                case_id = f"verifier-{case_digest}"
             cases.append(
                 VerifierRunCase(
-                    case_id=f"verifier-{case_digest}",
+                    case_id=case_id,
                     document_key=package.document_key,
                     clause_id=package.target_clause_id,
-                    source_package_sha256=context_source_package_binding(package).package_sha256,
+                    source_package_sha256=source_package_sha256,
                     candidates=candidates,
                     verification=verification,
                     verification_error_type=error_type,
@@ -1745,22 +1847,19 @@ def run_assertion_series_g_verifier_command(
         run = SeriesGVerifierRun(
             campaign_id=campaign_id,
             experiment_id=experiment_id,
-            experiment_manifest_sha256=manifest_sha256(manifest),
+            experiment_manifest_sha256=manifest_digest,
             variant_id=manifest.variant_id,
-            verifier_provenance=verifier.provenance(),
-            runtime_config_sha256=_series_g_identity_sha256(
-                {
-                    "base_url": benchmark_config.base_url,
-                    "configured_model": benchmark_config.model,
-                    "verifier_model": verifier_model,
-                    "timeout_seconds": benchmark_config.timeout_seconds,
-                    "cache_directory": None,
-                }
-            ),
+            verifier_provenance=verifier_provenance,
+            runtime_config_sha256=runtime_config_sha256,
             cache_bypassed=True,
             authorized_max_calls=max_calls,
-            actual_calls=len(cases),
+            actual_calls=required_calls,
             authorization_reference=authorization_reference,
+            retry_of_verifier_run_sha256=(
+                verifier_run_sha256(parent_run) if parent_run is not None else None
+            ),
+            retried_case_ids=tuple(retried_case_ids),
+            inherited_case_count=len(cases) - required_calls if parent_run is not None else 0,
             cases=tuple(cases),
         )
         root = project_root / "local" / "evaluation" / "assertions" / "ap03" / campaign_id
@@ -1776,6 +1875,11 @@ def run_assertion_series_g_verifier_command(
     typer.echo(f"Verifier campaign        : {campaign_id}")
     typer.echo(f"Candidate experiment     : {experiment_id}")
     typer.echo(f"Verifier calls           : {run.actual_calls}/{run.authorized_max_calls}")
+    typer.echo(f"Represented cases        : {len(run.cases)}")
+    if run.retry_of_verifier_run_sha256 is not None:
+        typer.echo(f"Inherited valid cases    : {run.inherited_case_count}")
+        typer.echo(f"Retried technical errors : {len(run.retried_case_ids)}")
+        typer.echo(f"Retry parent SHA-256     : {run.retry_of_verifier_run_sha256}")
     typer.echo(f"Verifier prompt          : {run.verifier_provenance.prompt_version}")
     typer.echo(f"Verifier errors          : {errors}")
     typer.echo(f"Verifier run SHA-256     : {verifier_run_sha256(run)}")
@@ -1876,6 +1980,15 @@ def build_assertion_series_g_gate_profile_command(
     ],
     min_real_annotated_cases: Annotated[int, typer.Option("--min-real-annotated-cases", min=1)],
     min_candidate_support: Annotated[int, typer.Option("--min-candidate-support", min=1)],
+    min_supported_candidate_support: Annotated[
+        int, typer.Option("--min-supported-candidate-support", min=1)
+    ],
+    min_rejected_candidate_support: Annotated[
+        int, typer.Option("--min-rejected-candidate-support", min=1)
+    ],
+    min_missing_item_positive_support: Annotated[
+        int, typer.Option("--min-missing-item-positive-support", min=1)
+    ],
     required_fresh_repetitions: Annotated[int, typer.Option("--required-fresh-repetitions", min=1)],
     output: Annotated[Path, typer.Option("--output", dir_okay=False)],
     max_cached_repetitions: Annotated[int, typer.Option("--max-cached-repetitions", min=0)] = 0,
@@ -1894,6 +2007,9 @@ def build_assertion_series_g_gate_profile_command(
             min_verifier_coverage=min_verifier_coverage,
             min_real_annotated_cases=min_real_annotated_cases,
             min_candidate_support=min_candidate_support,
+            min_supported_candidate_support=min_supported_candidate_support,
+            min_rejected_candidate_support=min_rejected_candidate_support,
+            min_missing_item_positive_support=min_missing_item_positive_support,
             required_fresh_repetitions=required_fresh_repetitions,
             max_cached_repetitions=max_cached_repetitions,
             human_confirmed=human_confirmation_reference is not None,
@@ -2056,6 +2172,11 @@ def evaluate_assertion_series_g_verifier_command(
     typer.echo(f"Synthetic cases          : {metrics.synthetic_cases}")
     typer.echo(f"Verifier errors          : {metrics.verifier_error_cases}")
     typer.echo(f"Candidate support        : {metrics.candidate_support}")
+    typer.echo(f"Candidate reviewed       : {metrics.candidate_reviewed}")
+    typer.echo(f"Supported support        : {metrics.supported_candidate_support}")
+    typer.echo(f"Rejected support         : {metrics.rejected_candidate_support}")
+    typer.echo(f"Missing positive support : {metrics.missing_item_positive_support}")
+    typer.echo(f"Verifier coverage        : {metrics.coverage}")
     typer.echo(f"Metrics                  : {output}")
 
 

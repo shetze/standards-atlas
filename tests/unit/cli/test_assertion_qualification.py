@@ -319,10 +319,20 @@ def test_assertion_series_h_cli_surface_is_registered() -> None:
 
 def test_assertion_series_g_preparation_commands_are_registered() -> None:
     commands = {
-        "assertion-series-g-verifier-run": ("--experiment-id", "--max-calls"),
+        "assertion-series-g-verifier-run": (
+            "--experiment-id",
+            "--max-calls",
+            "--retry-errors-",
+        ),
         "assertion-series-g-verifier-observations-build": ("--verifier-run", "--output"),
         "assertion-series-g-repetitions-build": ("--variant-id", "--report"),
-        "assertion-series-g-gate-profile-build": ("--output", "--max-false-acceptan"),
+        "assertion-series-g-gate-profile-build": (
+            "--output",
+            "--max-false-acceptan",
+            "--min-supported-",
+            "--min-rejected-",
+            "--min-missing-item-",
+        ),
         "assertion-series-g-freeze-build": ("--partition-plan", "--holdout-campaign"),
     }
     for command, options in commands.items():

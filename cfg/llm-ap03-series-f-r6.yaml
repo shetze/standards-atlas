@@ -1,0 +1,16 @@
+llm:
+  base_url: http://127.0.0.1:8080/v1
+  model: hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M
+  timeout_seconds: 300
+  cache_directory: .atlas/cache/llm
+  server:
+    enabled: true
+    name: standards-atlas-llm
+    model: hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M
+    runtime: llama.cpp
+    backend: auto
+    selinux: false
+    ownership_file: .atlas/work/llm/active-runtime.json
+    state_directory: .atlas/work/llm/runtime
+    startup_timeout_seconds: 120
+    shutdown_timeout_seconds: 30

@@ -59,13 +59,18 @@ def test_verifier_quality_counts_false_decisions_and_missing_detection() -> None
 
     assert metrics.real_annotated_cases == 1
     assert metrics.candidate_support == 2
+    assert metrics.candidate_reviewed == 2
+    assert metrics.supported_candidate_support == 1
+    assert metrics.rejected_candidate_support == 1
     assert metrics.false_acceptances == 1
     assert metrics.false_rejections == 1
     assert metrics.false_acceptance_rate == 1.0
     assert metrics.false_rejection_rate == 1.0
     assert metrics.missing_item_positive_support == 1
+    assert metrics.missing_item_annotated_positive_support == 1
     assert metrics.missing_item_false_negatives == 1
     assert metrics.missing_item_recall == 0.0
+    assert metrics.coverage == 1.0
 
 
 def test_series_g_never_qualifies_from_synthetic_only_or_missing_human_freeze() -> None:
@@ -77,6 +82,9 @@ def test_series_g_never_qualifies_from_synthetic_only_or_missing_human_freeze() 
         min_verifier_coverage=1.0,
         min_real_annotated_cases=1,
         min_candidate_support=1,
+        min_supported_candidate_support=1,
+        min_rejected_candidate_support=1,
+        min_missing_item_positive_support=1,
         required_fresh_repetitions=3,
     )
     repetitions = RepetitionEvidence(
@@ -129,6 +137,9 @@ def test_series_g_readiness_requires_complete_bound_evidence() -> None:
         min_verifier_coverage=1.0,
         min_real_annotated_cases=1,
         min_candidate_support=2,
+        min_supported_candidate_support=1,
+        min_rejected_candidate_support=1,
+        min_missing_item_positive_support=1,
         required_fresh_repetitions=3,
         human_confirmed=True,
         human_confirmation_reference="H3-20261004",
@@ -172,6 +183,71 @@ def test_series_g_readiness_requires_complete_bound_evidence() -> None:
     assert readiness.ready_for_holdout is True
     assert readiness.qualification_claim_permitted is False
     assert readiness.blockers == ()
+
+
+def test_series_g_readiness_requires_separate_reviewed_candidate_supports() -> None:
+    truth = VerifierCaseTruth(
+        case_id="case-positive-only",
+        clause_id="c1",
+        kind=VerifierCaseKind.REAL_ANNOTATED,
+        entity_candidates=(
+            VerifierCandidateTruth(
+                candidate_id="good",
+                expected=ExpectedCandidateDisposition.SUPPORTED,
+            ),
+        ),
+        missing_entity_expected=True,
+        annotation_reference="H2:positive-only",
+    )
+    verification = AssertionClauseVerification(
+        clause_id=ClauseId(value="c1"),
+        entity_reviews=(
+            AssertionCandidateVerification(
+                candidate_id="good",
+                disposition=AssertionVerificationDisposition.SUPPORTED,
+            ),
+        ),
+        missing_entity_detected=True,
+        missing_rationale="expected omission detected",
+        source_package_sha256="sha256:" + "a" * 64,
+    )
+    metrics = evaluate_verifier_quality(
+        (VerifierCaseObservation(truth=truth, verification=verification),)
+    )
+    profile = SeriesGGateProfile(
+        max_false_acceptance_rate=0.0,
+        max_false_rejection_rate=0.0,
+        min_missing_item_recall=1.0,
+        min_verifier_coverage=1.0,
+        min_real_annotated_cases=1,
+        min_candidate_support=1,
+        min_supported_candidate_support=1,
+        min_rejected_candidate_support=1,
+        min_missing_item_positive_support=1,
+        required_fresh_repetitions=1,
+        human_confirmed=True,
+        human_confirmation_reference="H3-test",
+    )
+    repetitions = RepetitionEvidence(
+        variant_id="P1",
+        planned_repetitions=1,
+        completed_repetitions=1,
+        fresh_inference_repetitions=1,
+        report_hashes=("1" * 64,),
+    )
+
+    readiness = assess_series_g_readiness(
+        metrics=metrics,
+        repetitions=repetitions,
+        gate_profile=profile,
+        freeze=None,
+    )
+
+    assert metrics.candidate_support == 1
+    assert metrics.supported_candidate_support == 1
+    assert metrics.rejected_candidate_support == 0
+    assert readiness.verifier_evidence_sufficient is False
+    assert "verifier_gate_not_met" in readiness.blockers
 
 
 def test_series_g_review_csv_builds_observations_without_exposing_verifier_decision() -> None:
@@ -253,6 +329,61 @@ def test_series_g_review_csv_builds_observations_without_exposing_verifier_decis
     assert observations[0].verification == verification
 
 
+def test_series_g_retry_run_counts_only_retried_calls_and_preserves_full_case_set() -> None:
+    from standards_atlas.application.assertion_qualification import (
+        SeriesGVerifierRun,
+        VerifierRunCase,
+    )
+    from standards_atlas.application.assertion_qualification.cascade_models import (
+        AssertionVerifierProvenance,
+    )
+
+    verification = AssertionClauseVerification(
+        clause_id=ClauseId(value="c1"),
+        source_package_sha256="sha256:" + "a" * 64,
+    )
+    valid = VerifierRunCase(
+        case_id="case-valid",
+        document_key="DOC",
+        clause_id="c1",
+        source_package_sha256="sha256:" + "a" * 64,
+        verification=verification,
+    )
+    retried = VerifierRunCase(
+        case_id="case-retry",
+        document_key="DOC",
+        clause_id="c2",
+        source_package_sha256="sha256:" + "b" * 64,
+        verification=AssertionClauseVerification(
+            clause_id=ClauseId(value="c2"),
+            source_package_sha256="sha256:" + "b" * 64,
+        ),
+    )
+
+    run = SeriesGVerifierRun(
+        campaign_id="g-retry",
+        experiment_id="f-finalist",
+        experiment_manifest_sha256="1" * 64,
+        variant_id="B0-AP02",
+        verifier_provenance=AssertionVerifierProvenance(
+            verifier="test-verifier",
+            verifier_version="2.1.0",
+        ),
+        runtime_config_sha256="2" * 64,
+        authorized_max_calls=1,
+        actual_calls=1,
+        authorization_reference="H1-retry",
+        retry_of_verifier_run_sha256="3" * 64,
+        retried_case_ids=("case-retry",),
+        inherited_case_count=1,
+        cases=(valid, retried),
+    )
+
+    assert run.actual_calls == 1
+    assert len(run.cases) == 2
+    assert run.inherited_case_count == 1
+
+
 def test_verifier_error_case_reduces_coverage_instead_of_disappearing() -> None:
     truth = VerifierCaseTruth(
         case_id="case-error",
@@ -278,9 +409,57 @@ def test_verifier_error_case_reduces_coverage_instead_of_disappearing() -> None:
     assert metrics.verifier_error_cases == 1
     assert metrics.candidate_support == 1
     assert metrics.candidate_reviewed == 0
+    assert metrics.supported_candidate_support == 0
+    assert metrics.rejected_candidate_support == 0
     assert metrics.coverage == 0.0
+    assert metrics.case_coverage == 0.0
+    assert metrics.candidate_coverage == 0.0
+    assert metrics.missing_item_coverage == 0.0
+    assert metrics.missing_item_annotated_positive_support == 1
+    assert metrics.missing_item_positive_support == 0
+    assert metrics.missing_item_false_negatives == 0
+    assert metrics.missing_item_recall is None
+
+
+def test_verifier_error_does_not_enter_semantic_rate_denominators() -> None:
+    valid = _observation()
+    error_truth = VerifierCaseTruth(
+        case_id="case-error",
+        clause_id="c2",
+        kind=VerifierCaseKind.REAL_ANNOTATED,
+        entity_candidates=(
+            VerifierCandidateTruth(
+                candidate_id="unreviewed-supported",
+                expected=ExpectedCandidateDisposition.SUPPORTED,
+            ),
+            VerifierCandidateTruth(
+                candidate_id="unreviewed-rejected",
+                expected=ExpectedCandidateDisposition.REJECTED,
+            ),
+        ),
+        missing_entity_expected=True,
+        missing_assertion_expected=True,
+        annotation_reference="H2:case-error",
+    )
+    error = VerifierCaseObservation(
+        truth=error_truth,
+        verification_error_type="LlmTimeoutError",
+        verification_error_message="timeout",
+    )
+
+    metrics = evaluate_verifier_quality((valid, error))
+
+    assert metrics.candidate_support == 4
+    assert metrics.candidate_reviewed == 2
+    assert metrics.supported_candidate_support == 1
+    assert metrics.rejected_candidate_support == 1
+    assert metrics.false_acceptance_rate == 1.0
+    assert metrics.false_rejection_rate == 1.0
+    assert metrics.missing_item_annotated_positive_support == 3
+    assert metrics.missing_item_positive_support == 1
     assert metrics.missing_item_false_negatives == 1
     assert metrics.missing_item_recall == 0.0
+    assert metrics.coverage == 0.5
 
 
 def test_build_repetition_evidence_counts_fresh_and_detects_unstable_cases() -> None:

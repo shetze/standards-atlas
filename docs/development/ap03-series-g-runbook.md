@@ -61,6 +61,37 @@ A verifier transport/response failure is retained in `verifier-run.json`; it is 
 from later coverage. Candidate-ID contract failures likewise remain explicit verifier errors rather than
 being coerced into reviews.
 
+If a completed verifier run contains only technical verifier errors for a subset of cases, do not rerun
+the successful cases. Retry only those errors with a **new campaign ID** and the same bound experiment,
+verifier identity and runtime configuration:
+
+```bash
+uv run standards-atlas evaluation assertion-series-g-verifier-run \
+  --campaign-id <new-retry-campaign> \
+  --experiment-id <same-series-f-finalist-experiment-id> \
+  --suite <same-development-golden-suite.yaml> \
+  --verifier-model <same-verifier-model-id> \
+  --max-calls <authorized-retry-call-limit> \
+  --authorization-reference <approved-retry-reference> \
+  --authorize-execution \
+  --retry-errors-from local/evaluation/assertions/ap03/<parent-campaign>/verifier-run.json \
+  --config <same-approved-llm-config.yaml> \
+  --workspace .atlas/data \
+  --project-root .
+```
+
+The retry command verifies that the parent manifest, variant, verifier provenance, runtime identity,
+source-package hashes and candidate IDs/summaries still match. It then performs model calls **only** for
+parent cases whose `verification` is absent and a verifier error is present. Existing valid verifications
+are inherited unchanged. The merged retry artifact contains the complete case set, records its parent run
+SHA-256, the retried case IDs and the inherited-case count, while `actual_calls` counts only the newly
+executed retry calls. A parent with no technical verifier errors is rejected. This is a transport/response
+retry, not semantic resampling or Best-of-N.
+
+The retry produces a new blind CSV bound to the merged run hash. If source packages and candidate
+identities are unchanged, previously completed human truth may be deterministically rebound to that CSV;
+the Golden decisions themselves are not repeated or changed.
+
 ## 2. Human candidate truth and `verifier-observations.json`
 
 Open only the blind `verifier-review.csv` for the H2-style verifier truth review. It contains one
@@ -88,7 +119,11 @@ uv run standards-atlas evaluation assertion-series-g-verifier-observations-build
 
 The importer rejects modified candidate identities, incomplete decisions and a CSV from another
 verifier run. Verifier-call failures become observation errors and reduce measured coverage instead of
-disappearing.
+disappearing. They do **not** become semantic false acceptance, false rejection or missing-item false
+negative observations. Candidate error cases are excluded from the corresponding rate denominators;
+the metrics retain total annotated support, actually reviewed positive/negative candidate support,
+annotated versus assessed missing-item-positive support, case/candidate/missing-item coverage and the
+conservative overall coverage separately.
 
 Now measure S13:
 
@@ -159,6 +194,9 @@ uv run standards-atlas evaluation assertion-series-g-gate-profile-build \
   --min-verifier-coverage <value> \
   --min-real-annotated-cases <count> \
   --min-candidate-support <count> \
+  --min-supported-candidate-support <count> \
+  --min-rejected-candidate-support <count> \
+  --min-missing-item-positive-support <count> \
   --required-fresh-repetitions <count> \
   --max-cached-repetitions 0 \
   --output local/evaluation/assertions/ap03/<series-g-campaign>/gate-profile.json
@@ -173,6 +211,11 @@ reference:
 ```
 
 This records the decision; it does not authenticate or fabricate the human confirmation.
+
+The three separate support minima refer to **actually assessed** semantic denominators. They prevent a
+large aggregate candidate count from hiding, for example, a false-rejection rate based on only one or
+two supported candidates. Technical verifier errors therefore remain visible through coverage and error
+counts and cannot inflate or poison those semantic denominators.
 
 ## 6. Plan the future Holdout campaign without executing it
 
