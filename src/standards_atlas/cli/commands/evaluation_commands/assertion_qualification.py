@@ -768,6 +768,9 @@ def plan_assertion_experiment_command(
     max_calls: Annotated[int, typer.Option("--max-calls", min=0)] = 1,
     max_retries_per_case: Annotated[int, typer.Option("--max-retries-per-case", min=0)] = 0,
     max_total_tokens: Annotated[int | None, typer.Option("--max-total-tokens", min=1)] = None,
+    max_total_tokens_per_call: Annotated[
+        int | None, typer.Option("--max-total-tokens-per-call", min=1)
+    ] = None,
     max_runtime_seconds: Annotated[
         float | None, typer.Option("--max-runtime-seconds", min=0.001)
     ] = None,
@@ -824,6 +827,7 @@ def plan_assertion_experiment_command(
                 max_calls=max_calls,
                 max_retries_per_case=max_retries_per_case,
                 max_total_tokens=max_total_tokens,
+                max_total_tokens_per_call=max_total_tokens_per_call,
                 max_runtime_seconds=max_runtime_seconds,
             ),
             requested_model=model,
@@ -849,6 +853,8 @@ def plan_assertion_experiment_command(
     typer.echo(f"Repetitions             : {manifest.repetitions}")
     typer.echo(f"Conservative call bound : {manifest.conservative_call_upper_bound}")
     typer.echo(f"Budget max calls        : {manifest.budget.max_calls}")
+    typer.echo(f"Budget max tokens       : {manifest.budget.max_total_tokens}")
+    typer.echo(f"Budget token reservation : {manifest.budget.max_total_tokens_per_call}")
     typer.echo(f"Execution authorized   : {manifest.execution_authorized}")
     typer.echo(f"Manifest SHA-256        : {digest}")
     typer.echo("Model calls             : 0 (plan only)")
@@ -1126,6 +1132,8 @@ def _render_assertion_experiment_summary(report) -> str:
                 if report.effort.total_tokens is not None
                 else "unknown"
             ),
+            f"- Budget-charged tokens: {report.effort.budget_charged_tokens}",
+            f"- Calls with unknown token usage: {report.effort.unknown_usage_calls}",
             "- Duration ms: "
             + (
                 str(report.effort.duration_ms)
@@ -1417,6 +1425,9 @@ def prepare_assertion_series_f_command(
     max_calls: Annotated[int, typer.Option("--max-calls", min=1)] = 1,
     max_retries_per_case: Annotated[int, typer.Option("--max-retries-per-case", min=0)] = 0,
     max_total_tokens: Annotated[int | None, typer.Option("--max-total-tokens", min=1)] = None,
+    max_total_tokens_per_call: Annotated[
+        int | None, typer.Option("--max-total-tokens-per-call", min=1)
+    ] = None,
     max_runtime_seconds: Annotated[
         float | None, typer.Option("--max-runtime-seconds", min=0.001)
     ] = None,
@@ -1476,6 +1487,7 @@ def prepare_assertion_series_f_command(
             max_calls=max_calls,
             max_retries_per_case=max_retries_per_case,
             max_total_tokens=max_total_tokens,
+            max_total_tokens_per_call=max_total_tokens_per_call,
             max_runtime_seconds=max_runtime_seconds,
         )
 
@@ -1514,6 +1526,7 @@ def prepare_assertion_series_f_command(
                 max_calls=max_calls,
                 max_retries_per_case=max_retries_per_case,
                 max_total_tokens=max_total_tokens,
+                max_total_tokens_per_call=max_total_tokens_per_call,
                 max_runtime_seconds=max_runtime_seconds,
             )
             smoke_manifest = build_series_f_smoke_manifest(
@@ -1552,6 +1565,8 @@ def prepare_assertion_series_f_command(
     typer.echo(f"Development cases : {len(golden.cases)}")
     typer.echo(f"Experiments       : {len(plan.experiments)}")
     typer.echo(f"Execution allowed : {authorize_execution}")
+    typer.echo(f"Token budget      : {max_total_tokens}")
+    typer.echo(f"Per-call reserve  : {max_total_tokens_per_call}")
     typer.echo(f"Plan              : {target}")
     typer.echo("Model calls       : 0 (preparation only)")
     typer.echo("Holdout access    : forbidden")

@@ -74,6 +74,7 @@ class ExperimentAttemptStatus(StrEnum):
     UNAVAILABLE = "unavailable"
     VALIDATION_ERROR = "validation_error"
     BUDGET_BLOCKED = "budget_blocked"
+    BUDGET_VIOLATION = "budget_violation"
     OUTCOME_UNKNOWN = "outcome_unknown"
     CACHE_REPLAY_REJECTED = "cache_replay_rejected"
 
@@ -84,7 +85,20 @@ class ExperimentBudget(BaseModel):
     max_calls: int = Field(ge=0)
     max_retries_per_case: int = Field(default=0, ge=0)
     max_total_tokens: int | None = Field(default=None, ge=1)
+    max_total_tokens_per_call: int | None = Field(default=None, ge=1)
     max_runtime_seconds: float | None = Field(default=None, gt=0)
+
+    @model_validator(mode="after")
+    def token_reservation_is_consistent(self) -> ExperimentBudget:
+        if self.max_total_tokens_per_call is not None and self.max_total_tokens is None:
+            raise ValueError("max_total_tokens_per_call requires max_total_tokens")
+        if (
+            self.max_total_tokens_per_call is not None
+            and self.max_total_tokens is not None
+            and self.max_total_tokens_per_call > self.max_total_tokens
+        ):
+            raise ValueError("max_total_tokens_per_call cannot exceed max_total_tokens")
+        return self
 
 
 class ExperimentCaseBinding(BaseModel):
@@ -194,6 +208,7 @@ class ExperimentAttemptRecord(BaseModel):
     raw_response_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     duration_ms: int | None = Field(default=None, ge=0)
     usage: ExperimentUsage | None = None
+    budget_charged_tokens: int = Field(default=0, ge=0)
     cached: bool | None = None
     error_type: str | None = None
     message: str | None = None
@@ -234,6 +249,8 @@ class ExperimentEffort(BaseModel):
     prompt_tokens: int | None
     completion_tokens: int | None
     total_tokens: int | None
+    budget_charged_tokens: int = 0
+    unknown_usage_calls: int = 0
     duration_ms: int | None
     monetary_cost: None = None
 
@@ -280,12 +297,21 @@ class BudgetExceeded(LlmGatewayError):
     pass
 
 
+class BudgetReservationExceeded(LlmGatewayError):
+    pass
+
+
 class ExperimentBindingError(LlmGatewayError):
     pass
 
 
 def manifest_sha256(manifest: AssertionExperimentManifest) -> str:
     payload = manifest.model_dump(mode="json")
+    budget_payload = payload.get("budget")
+    if isinstance(budget_payload, dict) and budget_payload.get("max_total_tokens_per_call") is None:
+        # Preserve the hash of pre-reservation manifests so historical states/reports remain
+        # verifiable. New executable token-bounded manifests always bind a concrete value.
+        budget_payload.pop("max_total_tokens_per_call", None)
     data = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()
     return hashlib.sha256(data).hexdigest()
 
@@ -313,6 +339,18 @@ def plan_assertion_experiment(
     authorization_reference: str | None = None,
     prompt_repository: PromptRepository | None = None,
 ) -> AssertionExperimentManifest:
+    if (
+        execution_authorized
+        and budget.max_total_tokens is not None
+        and budget.max_total_tokens_per_call is None
+    ):
+        raise ValueError("authorized token-bounded experiments require max_total_tokens_per_call")
+    if (
+        budget.max_total_tokens_per_call is not None
+        and max_output_tokens_per_call is not None
+        and budget.max_total_tokens_per_call < max_output_tokens_per_call
+    ):
+        raise ValueError("max_total_tokens_per_call must be at least max_output_tokens_per_call")
     bindings: list[ExperimentCaseBinding] = []
     for case in suite.cases:
         document = documents.get(case.source_document_key)
@@ -392,11 +430,17 @@ class _BudgetLedger:
             a.status is not ExperimentAttemptStatus.BUDGET_BLOCKED for a in state.attempts
         )
         self.tokens = sum(
-            a.usage.total_tokens for a in state.attempts if a.usage and a.usage.total_tokens
+            (
+                a.budget_charged_tokens
+                if a.budget_charged_tokens > 0
+                else (a.usage.total_tokens if a.usage and a.usage.total_tokens else 0)
+            )
+            for a in state.attempts
+            if a.status is not ExperimentAttemptStatus.BUDGET_BLOCKED
         )
         self.duration_ms = sum(a.duration_ms or 0 for a in state.attempts)
 
-    def before_call(self, request: StructuredGenerationRequest) -> None:
+    def before_call(self, request: StructuredGenerationRequest) -> int:
         if self.calls >= self.manifest.budget.max_calls:
             raise BudgetExceeded("max_calls exhausted before inference")
         if (
@@ -404,28 +448,67 @@ class _BudgetLedger:
             and self.duration_ms >= self.manifest.budget.max_runtime_seconds * 1000
         ):
             raise BudgetExceeded("max_runtime_seconds exhausted before inference")
+        reservation = 0
         if self.manifest.budget.max_total_tokens is not None:
-            if self.tokens >= self.manifest.budget.max_total_tokens:
-                raise BudgetExceeded("max_total_tokens exhausted before inference")
-            if (
-                request.max_tokens is not None
-                and self.tokens + request.max_tokens > self.manifest.budget.max_total_tokens
-            ):
-                raise BudgetExceeded("remaining token budget is below requested max_tokens")
+            reservation = self.manifest.budget.max_total_tokens_per_call or 0
+            if reservation <= 0:
+                raise BudgetExceeded(
+                    "token-bounded experiment lacks max_total_tokens_per_call reservation"
+                )
+            remaining = self.manifest.budget.max_total_tokens - self.tokens
+            if remaining < reservation:
+                raise BudgetExceeded(
+                    "remaining token budget is below max_total_tokens_per_call reservation"
+                )
         self.calls += 1
+        return reservation
 
     def after_duration(self, duration_ms: int) -> None:
         self.duration_ms += duration_ms
 
-    def after_error(self, duration_ms: int, usage: ExperimentUsage | None) -> None:
+    def after_error(
+        self,
+        duration_ms: int,
+        usage: ExperimentUsage | None,
+        reservation: int,
+    ) -> tuple[int, bool]:
         self.duration_ms += duration_ms
-        if usage and usage.total_tokens is not None:
-            self.tokens += usage.total_tokens
+        charged = self._charge(usage.total_tokens if usage else None, reservation)
+        return charged, self._reservation_exceeded(usage, reservation)
 
-    def after_call(self, result: StructuredGenerationResult) -> None:
+    def after_call(self, result: StructuredGenerationResult, reservation: int) -> tuple[int, bool]:
         self.duration_ms += result.duration_ms
-        if result.usage and result.usage.total_tokens is not None:
-            self.tokens += result.usage.total_tokens
+        total_tokens = result.usage.total_tokens if result.usage else None
+        charged = self._charge(total_tokens, reservation)
+        usage = (
+            ExperimentUsage(
+                prompt_tokens=result.usage.prompt_tokens,
+                completion_tokens=result.usage.completion_tokens,
+                total_tokens=result.usage.total_tokens,
+            )
+            if result.usage
+            else None
+        )
+        return charged, self._reservation_exceeded(usage, reservation)
+
+    def _charge(self, observed_total_tokens: int | None, reservation: int) -> int:
+        if observed_total_tokens is not None:
+            charged = observed_total_tokens
+        elif self.manifest.budget.max_total_tokens is not None:
+            charged = reservation
+        else:
+            charged = 0
+        self.tokens += charged
+        return charged
+
+    @staticmethod
+    def _reservation_exceeded(usage: ExperimentUsage | None, reservation: int) -> bool:
+        return bool(
+            reservation
+            and usage is not None
+            and usage.total_tokens is not None
+            and usage.total_tokens > reservation
+        )
 
 
 def _persist_started_record(
@@ -501,7 +584,7 @@ class _AttemptGateway:
             )
             raise error
         try:
-            self._budget.before_call(request)
+            token_reservation = self._budget.before_call(request)
         except BudgetExceeded as error:
             self._emit(
                 request,
@@ -517,6 +600,7 @@ class _AttemptGateway:
                     ExperimentAttemptStatus.OUTCOME_UNKNOWN,
                     error_type="InferenceInProgress",
                     message="inference outcome is unknown until the gateway call completes",
+                    budget_charged_tokens=token_reservation,
                     failure_stage="inference",
                 )
             )
@@ -526,26 +610,58 @@ class _AttemptGateway:
         except LlmGatewayError as error:
             duration_ms = round((time.monotonic() - started) * 1000)
             error_usage = _gateway_error_usage(error)
-            self._budget.after_error(duration_ms, error_usage)
+            charged_tokens, reservation_exceeded = self._budget.after_error(
+                duration_ms, error_usage, token_reservation
+            )
             private = self._repository.save_private_attempt(
                 self._attempt_id,
                 {"request": request_payload, "error": _error_raw_payload(error)},
             )
+            if reservation_exceeded:
+                budget_error = BudgetReservationExceeded(
+                    "provider-reported total_tokens exceeded max_total_tokens_per_call reservation"
+                )
+                self._emit(
+                    request,
+                    ExperimentAttemptStatus.BUDGET_VIOLATION,
+                    error=budget_error,
+                    duration_ms=duration_ms,
+                    reported_usage=error_usage,
+                    budget_charged_tokens=charged_tokens,
+                    private_raw_artifact=private,
+                    failure_stage="budget",
+                )
+                raise budget_error from error
             self._emit(
                 request,
                 _gateway_error_status(error),
                 error=error,
                 duration_ms=duration_ms,
                 reported_usage=error_usage,
+                budget_charged_tokens=charged_tokens,
                 private_raw_artifact=private,
                 failure_stage=_gateway_failure_stage(error),
             )
             raise
-        self._budget.after_call(result)
+        charged_tokens, reservation_exceeded = self._budget.after_call(result, token_reservation)
         private = self._repository.save_private_attempt(
             self._attempt_id,
             {"request": request_payload, "raw_response": result.raw_response},
         )
+        if reservation_exceeded:
+            error = BudgetReservationExceeded(
+                "provider-reported total_tokens exceeded max_total_tokens_per_call reservation"
+            )
+            self._emit(
+                request,
+                ExperimentAttemptStatus.BUDGET_VIOLATION,
+                result=result,
+                error=error,
+                budget_charged_tokens=charged_tokens,
+                private_raw_artifact=private,
+                failure_stage="budget",
+            )
+            raise error
         if result.cached and self._reject_cached:
             error = LlmResponseError("cached result cannot satisfy a fresh AP03 inference attempt")
             self._emit(
@@ -553,6 +669,7 @@ class _AttemptGateway:
                 ExperimentAttemptStatus.CACHE_REPLAY_REJECTED,
                 result=result,
                 error=error,
+                budget_charged_tokens=charged_tokens,
                 private_raw_artifact=private,
                 failure_stage="cache",
             )
@@ -561,6 +678,7 @@ class _AttemptGateway:
             request,
             ExperimentAttemptStatus.OK,
             result=result,
+            budget_charged_tokens=charged_tokens,
             private_raw_artifact=private,
         )
         return result
@@ -576,6 +694,7 @@ class _AttemptGateway:
         message: str | None = None,
         duration_ms: int | None = None,
         reported_usage: ExperimentUsage | None = None,
+        budget_charged_tokens: int = 0,
         private_raw_artifact: str | None = None,
         failure_stage: str | None = None,
     ) -> ExperimentAttemptRecord:
@@ -603,6 +722,7 @@ class _AttemptGateway:
             raw_response_hash=result.raw_response_hash if result else None,
             duration_ms=result.duration_ms if result else duration_ms,
             usage=usage,
+            budget_charged_tokens=budget_charged_tokens,
             cached=result.cached if result else None,
             error_type=error_type or (type(error).__name__ if error else None),
             message=(
@@ -653,6 +773,14 @@ class AssertionExperimentService:
         if not manifest.execution_authorized:
             raise ExperimentBindingError(
                 "experiment execution is not authorized; bind an explicitly authorized plan"
+            )
+        if (
+            manifest.budget.max_total_tokens is not None
+            and manifest.budget.max_total_tokens_per_call is None
+        ):
+            raise ExperimentBindingError(
+                "token-bounded experiment manifest lacks max_total_tokens_per_call; "
+                "prepare a new manifest before inference"
             )
         _validate_manifest_suite(manifest, suite)
         digest = manifest_sha256(manifest)
@@ -796,7 +924,10 @@ class AssertionExperimentService:
                         completed.add(cell)
                         self._persist_intermediate(manifest, digest, records, completed)
                         break
-                    if record.status is ExperimentAttemptStatus.BUDGET_BLOCKED:
+                    if record.status in {
+                        ExperimentAttemptStatus.BUDGET_BLOCKED,
+                        ExperimentAttemptStatus.BUDGET_VIOLATION,
+                    }:
                         return self._blocked(manifest, digest, records, completed, record.message)
                     if (
                         not _retryable(record.status)
@@ -880,6 +1011,18 @@ def evaluate_assertion_experiment(
         a.usage.completion_tokens if a.usage else None for a in state.attempts
     )
     total_tokens = _sum_known(a.usage.total_tokens if a.usage else None for a in state.attempts)
+    budget_charged_tokens = sum(
+        a.budget_charged_tokens
+        if a.budget_charged_tokens > 0
+        else (a.usage.total_tokens if a.usage and a.usage.total_tokens else 0)
+        for a in state.attempts
+        if a.status is not ExperimentAttemptStatus.BUDGET_BLOCKED
+    )
+    unknown_usage_calls = sum(
+        a.status is not ExperimentAttemptStatus.BUDGET_BLOCKED
+        and (a.usage is None or a.usage.total_tokens is None)
+        for a in state.attempts
+    )
     duration_ms = _sum_known(a.duration_ms for a in state.attempts)
     diagnostics = []
     if state.blocked_reason:
@@ -911,6 +1054,8 @@ def evaluate_assertion_experiment(
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
             total_tokens=total_tokens,
+            budget_charged_tokens=budget_charged_tokens,
+            unknown_usage_calls=unknown_usage_calls,
             duration_ms=duration_ms,
         ),
         qualification_report=report,
@@ -1113,7 +1258,7 @@ def _gateway_error_status(error: LlmGatewayError) -> ExperimentAttemptStatus:
 def _public_error_message(error: Exception | None) -> str | None:
     if error is None:
         return None
-    if isinstance(error, BudgetExceeded):
+    if isinstance(error, (BudgetExceeded, BudgetReservationExceeded)):
         return str(error)
     if isinstance(error, ExperimentBindingError):
         return "experiment request binding changed"
@@ -1129,6 +1274,8 @@ def _public_error_message(error: Exception | None) -> str | None:
 
 
 def _gateway_failure_stage(error: LlmGatewayError) -> str:
+    if isinstance(error, BudgetReservationExceeded):
+        return "budget"
     if isinstance(error, ExperimentBindingError):
         return "binding"
     if isinstance(error, (LlmTimeoutError, LlmUnavailableError)):

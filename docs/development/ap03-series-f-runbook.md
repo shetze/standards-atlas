@@ -58,6 +58,7 @@ uv run standards-atlas evaluation assertion-series-f-prepare \
   --max-calls <approved-per-variant-call-budget> \
   --max-retries-per-case <approved-retry-budget> \
   --max-total-tokens <approved-token-budget> \
+  --max-total-tokens-per-call <approved-total-token-reservation-per-call> \
   --max-runtime-seconds <approved-runtime-budget> \
   --max-output-tokens <approved-output-limit> \
   --authorization-reference <approved-plan-reference> \
@@ -96,9 +97,22 @@ its own manifest and attempts.
 
 A gateway response rejected after a real provider call still consumes the provider-reported tokens.
 The experiment ledger records that usage from `LlmResponseError.raw_response.usage` and charges it
-to `max_total_tokens`; response errors must not create unaccounted model calls. If the provider
-reports `finish_reason=length` at exactly the configured output cap, preserve that campaign as an
-audit result and prepare a new campaign instead of resuming or silently changing its manifest.
+to `max_total_tokens`; response errors must not create unaccounted model calls. Authorized
+token-bounded experiments also bind `max_total_tokens_per_call`, a conservative upper bound for the
+**total** provider usage of one call (prompt plus completion). Before every call the runner requires
+the full reservation to fit inside the remaining campaign budget. Known provider usage replaces the
+reservation with the observed total; a timeout/unknown outcome without usage keeps the full
+reservation charged. The public report therefore distinguishes observed `total_tokens` from
+`budget_charged_tokens` and counts calls with unknown usage. A started `outcome_unknown` attempt
+already carries the reservation, so a process restart cannot regain token budget. Historical manifests
+without this field remain readable for audit/reporting but cannot execute or resume.
+
+The reservation must be at least the configured output-token limit. It is an approved experiment
+parameter, not an estimate derived from prior average usage. If a provider reports more total tokens
+than reserved, the attempt becomes a budget-contract violation and the experiment blocks instead of
+continuing under a false hard-budget claim. If the provider reports `finish_reason=length` at exactly
+the configured output cap, preserve that campaign as an audit result and prepare a new campaign
+instead of resuming or silently changing its manifest.
 
 For the bounded Granite continuation diagnosed on 4 October 2026, the 4096-token output limit
 truncated two B0 responses and the earlier token budget was insufficient. The explicitly approved

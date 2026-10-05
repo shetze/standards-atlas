@@ -195,6 +195,7 @@ def test_codex_proposal_stages_only_a_bound_prompt_variant(tmp_path: Path) -> No
         "max_calls": 1,
         "max_retries_per_case": 0,
         "max_total_tokens": None,
+        "max_total_tokens_per_call": None,
         "max_runtime_seconds": None,
     }
     root = tmp_path / receipt["staged_bundle_relative_path"]

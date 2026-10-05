@@ -280,6 +280,18 @@ def test_ap03_preflight_cli_is_model_free_and_text_free(tmp_path: Path) -> None:
     assert payload["release_state"] == "not_ready_for_release"
 
 
+def test_assertion_experiment_and_series_f_expose_total_token_reservation() -> None:
+    from standards_atlas.cli.commands.evaluation_commands import assertion_qualification as cli
+
+    for command in (
+        cli.plan_assertion_experiment_command,
+        cli.prepare_assertion_series_f_command,
+    ):
+        source = inspect.getsource(command)
+        assert 'typer.Option("--max-total-tokens", min=1)' in source
+        assert 'typer.Option("--max-total-tokens-per-call", min=1)' in source
+
+
 def test_assertion_series_h_cli_surface_is_registered() -> None:
     prepare = runner.invoke(app, ["evaluation", "assertion-series-h-campaign-prepare", "--help"])
     assert prepare.exit_code == 0, prepare.output

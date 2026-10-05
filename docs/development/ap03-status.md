@@ -134,6 +134,17 @@ not implement Best-of-N. The freeze binds code, prompt/schema, ontologies, conte
 model/backend, cascade and retry/budget policy, Development Golden, partition/exposure state, evaluator
 and the concrete future Holdout campaign. A functional change after freeze requires a new freeze.
 
+Post-Series-F/G budget-guard correction (2026-10-05): executable token-bounded manifests now bind
+`max_total_tokens_per_call` in addition to the campaign `max_total_tokens`. The runner reserves that
+full prompt-plus-completion amount before each call instead of reserving only `request.max_tokens`.
+Known provider usage replaces the reservation with actual usage; unknown usage conservatively consumes
+the reservation, including persisted `outcome_unknown` attempts across Resume. Provider usage above
+the reservation blocks as a budget-contract violation. Historical manifests without the new field stay
+readable for audit/reporting but cannot be executed/resumed. New comparison reports expose both
+observed tokens and budget-charged tokens plus the number of calls with unknown usage. This correction
+is required before Series-G fresh repetitions; it does not alter historical Series-F attempts or their
+measured results.
+
 The same correction adds model-free builders for `repetitions.json`, the explicit G4/G5 gate profile
 and `freeze.json`. Repetition reports are hashed and cache use is not counted as fresh evidence;
 changed clause outcomes are listed as unstable. Gate numbers and H3 remain explicit human inputs. The

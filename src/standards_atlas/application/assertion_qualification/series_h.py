@@ -840,6 +840,13 @@ def _validate_manifest_for_holdout(
         raise ValueError("Series-H manifest cases differ from Holdout suite")
     if not manifest.bypass_cache_for_repetitions:
         raise ValueError("Series-H Holdout repetitions must bypass result cache")
+    if (
+        manifest.budget.max_total_tokens is not None
+        and manifest.budget.max_total_tokens_per_call is None
+    ):
+        raise ValueError(
+            "Series-H token-bounded manifest lacks max_total_tokens_per_call reservation"
+        )
 
 
 def _metric_gate_result(

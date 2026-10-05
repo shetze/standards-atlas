@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,7 @@ from standards_atlas.application.assertion_qualification.experiment import (
     ExperimentBindingError,
     ExperimentBudget,
     evaluate_assertion_experiment,
+    manifest_sha256,
     plan_assertion_experiment,
 )
 from standards_atlas.application.assertion_qualification.models import (
@@ -224,6 +226,55 @@ def _planned(tmp_path: Path, *, gateway=None, max_calls=1, retries=0, repetition
     return suite, document, manifest, repo, source_repo, service
 
 
+def test_authorized_token_bounded_plan_requires_total_token_reservation(tmp_path: Path) -> None:
+    suite = _suite()
+    document = _document()
+    source_repo = FileSystemContextSourcePackageRepository(tmp_path / ".atlas" / "data")
+
+    with pytest.raises(ValueError, match="require max_total_tokens_per_call"):
+        plan_assertion_experiment(
+            suite,
+            {"TEST": document},
+            experiment_id="exp-missing-reservation",
+            code_revision="sha256:" + "c" * 64,
+            variant_id="B0",
+            prompt_version="ontology-guided-assertions-source-bound-v1",
+            model_route="fake",
+            source_packages=source_repo,
+            requested_model="fake",
+            execution_authorized=True,
+            authorization_reference="synthetic-test-authorization",
+            budget=ExperimentBudget(max_calls=1, max_total_tokens=20),
+        )
+
+
+def test_total_token_reservation_must_cover_output_token_limit(tmp_path: Path) -> None:
+    suite = _suite()
+    document = _document()
+    source_repo = FileSystemContextSourcePackageRepository(tmp_path / ".atlas" / "data")
+
+    with pytest.raises(ValueError, match="at least max_output_tokens_per_call"):
+        plan_assertion_experiment(
+            suite,
+            {"TEST": document},
+            experiment_id="exp-small-reservation",
+            code_revision="sha256:" + "c" * 64,
+            variant_id="B0",
+            prompt_version="ontology-guided-assertions-source-bound-v1",
+            model_route="fake",
+            source_packages=source_repo,
+            requested_model="fake",
+            execution_authorized=True,
+            authorization_reference="synthetic-test-authorization",
+            max_output_tokens_per_call=10,
+            budget=ExperimentBudget(
+                max_calls=1,
+                max_total_tokens=20,
+                max_total_tokens_per_call=9,
+            ),
+        )
+
+
 def test_plan_is_model_free_and_binds_source_package(tmp_path: Path) -> None:
     gateway = _Gateway()
     suite, _, manifest, repo, _, _ = _planned(tmp_path, gateway=gateway)
@@ -288,6 +339,53 @@ def test_budget_is_checked_before_call_and_blocked_cell_is_not_silently_complete
     assert state.blocked_reason
 
 
+def test_success_usage_releases_unused_reservation_but_next_call_still_reserves_full_bound(
+    tmp_path: Path,
+) -> None:
+    document, suite = _two_case_document_and_suite()
+    workspace = tmp_path / ".atlas" / "data"
+    source_repo = FileSystemContextSourcePackageRepository(workspace)
+    manifest = plan_assertion_experiment(
+        suite,
+        {"TEST": document},
+        experiment_id="exp-success-reservation",
+        code_revision="sha256:" + "c" * 64,
+        variant_id="B0",
+        prompt_version="ontology-guided-assertions-source-bound-v1",
+        model_route="fake",
+        source_packages=source_repo,
+        requested_model="fake",
+        execution_authorized=True,
+        authorization_reference="synthetic-test-authorization",
+        budget=ExperimentBudget(
+            max_calls=2,
+            max_total_tokens=14,
+            max_total_tokens_per_call=10,
+        ),
+    )
+    repo = FileSystemAssertionExperimentRepository(tmp_path, workspace)
+    repo.save_manifest(manifest)
+    gateway = _Gateway(["ok", "ok"])
+    service = AssertionExperimentService(
+        repository=repo,
+        source_packages=source_repo,
+        gateway=gateway,
+        extractor_factory=_extractor_factory,
+    )
+
+    state = service.run(manifest, suite, {"TEST": document})
+
+    assert gateway.calls == 1
+    assert [attempt.status for attempt in state.attempts] == [
+        ExperimentAttemptStatus.OK,
+        ExperimentAttemptStatus.BUDGET_BLOCKED,
+    ]
+    assert state.attempts[0].budget_charged_tokens == 5
+    assert state.blocked_reason == (
+        "remaining token budget is below max_total_tokens_per_call reservation"
+    )
+
+
 def test_response_error_usage_is_recorded_and_counts_toward_next_call_budget(
     tmp_path: Path,
 ) -> None:
@@ -306,7 +404,11 @@ def test_response_error_usage_is_recorded_and_counts_toward_next_call_budget(
         requested_model="fake",
         execution_authorized=True,
         authorization_reference="synthetic-test-authorization",
-        budget=ExperimentBudget(max_calls=2, max_total_tokens=9),
+        budget=ExperimentBudget(
+            max_calls=2,
+            max_total_tokens=19,
+            max_total_tokens_per_call=10,
+        ),
     )
     repo = FileSystemAssertionExperimentRepository(tmp_path, workspace)
     repo.save_manifest(manifest)
@@ -329,7 +431,179 @@ def test_response_error_usage_is_recorded_and_counts_toward_next_call_budget(
     assert state.attempts[0].usage.prompt_tokens == 6
     assert state.attempts[0].usage.completion_tokens == 4
     assert state.attempts[0].usage.total_tokens == 10
-    assert state.blocked_reason == "max_total_tokens exhausted before inference"
+    assert state.attempts[0].budget_charged_tokens == 10
+    assert state.blocked_reason == (
+        "remaining token budget is below max_total_tokens_per_call reservation"
+    )
+
+
+def test_unknown_usage_charges_full_reservation_and_resume_cannot_regain_budget(
+    tmp_path: Path,
+) -> None:
+    document, suite = _two_case_document_and_suite()
+    workspace = tmp_path / ".atlas" / "data"
+    source_repo = FileSystemContextSourcePackageRepository(workspace)
+    manifest = plan_assertion_experiment(
+        suite,
+        {"TEST": document},
+        experiment_id="exp-timeout-reservation",
+        code_revision="sha256:" + "c" * 64,
+        variant_id="B0",
+        prompt_version="ontology-guided-assertions-source-bound-v1",
+        model_route="fake",
+        source_packages=source_repo,
+        requested_model="fake",
+        execution_authorized=True,
+        authorization_reference="synthetic-test-authorization",
+        budget=ExperimentBudget(
+            max_calls=3,
+            max_retries_per_case=1,
+            max_total_tokens=19,
+            max_total_tokens_per_call=10,
+        ),
+    )
+    repo = FileSystemAssertionExperimentRepository(tmp_path, workspace)
+    repo.save_manifest(manifest)
+    gateway = _Gateway(["timeout", "ok", "ok"])
+    service = AssertionExperimentService(
+        repository=repo,
+        source_packages=source_repo,
+        gateway=gateway,
+        extractor_factory=_extractor_factory,
+    )
+
+    state = service.run(manifest, suite, {"TEST": document})
+    resumed = service.run(manifest, suite, {"TEST": document}, resume=True)
+
+    assert gateway.calls == 1
+    assert state.attempts[0].status is ExperimentAttemptStatus.TIMEOUT
+    assert state.attempts[0].usage is None
+    assert state.attempts[0].budget_charged_tokens == 10
+    assert state.blocked_reason == (
+        "remaining token budget is below max_total_tokens_per_call reservation"
+    )
+    report = evaluate_assertion_experiment(
+        manifest,
+        state,
+        suite,
+        proposals=(),
+        source_packages=(),
+    )
+    assert report.effort.total_tokens is None
+    assert report.effort.budget_charged_tokens == 10
+    assert report.effort.unknown_usage_calls == 1
+    assert resumed.blocked_reason == state.blocked_reason
+    assert resumed.attempts[-1].status is ExperimentAttemptStatus.BUDGET_BLOCKED
+
+
+def test_provider_usage_above_reservation_blocks_experiment(tmp_path: Path) -> None:
+    suite = _suite()
+    document = _document()
+    workspace = tmp_path / ".atlas" / "data"
+    source_repo = FileSystemContextSourcePackageRepository(workspace)
+    manifest = plan_assertion_experiment(
+        suite,
+        {"TEST": document},
+        experiment_id="exp-reservation-violation",
+        code_revision="sha256:" + "c" * 64,
+        variant_id="B0",
+        prompt_version="ontology-guided-assertions-source-bound-v1",
+        model_route="fake",
+        source_packages=source_repo,
+        requested_model="fake",
+        execution_authorized=True,
+        authorization_reference="synthetic-test-authorization",
+        budget=ExperimentBudget(
+            max_calls=1,
+            max_total_tokens=20,
+            max_total_tokens_per_call=4,
+        ),
+    )
+    repo = FileSystemAssertionExperimentRepository(tmp_path, workspace)
+    repo.save_manifest(manifest)
+    service = AssertionExperimentService(
+        repository=repo,
+        source_packages=source_repo,
+        gateway=_Gateway(["ok"]),
+        extractor_factory=_extractor_factory,
+    )
+
+    state = service.run(manifest, suite, {"TEST": document})
+
+    assert state.attempts[0].status is ExperimentAttemptStatus.BUDGET_VIOLATION
+    assert state.attempts[0].usage is not None
+    assert state.attempts[0].usage.total_tokens == 5
+    assert state.attempts[0].budget_charged_tokens == 5
+    assert state.blocked_reason == (
+        "provider-reported total_tokens exceeded max_total_tokens_per_call reservation"
+    )
+
+
+def test_manifest_hash_preserves_pre_reservation_payload_identity(tmp_path: Path) -> None:
+    suite = _suite()
+    document = _document()
+    source_repo = FileSystemContextSourcePackageRepository(tmp_path / ".atlas" / "data")
+    manifest = plan_assertion_experiment(
+        suite,
+        {"TEST": document},
+        experiment_id="exp-historical-hash",
+        code_revision="sha256:" + "c" * 64,
+        variant_id="B0",
+        prompt_version="ontology-guided-assertions-source-bound-v1",
+        model_route="fake",
+        source_packages=source_repo,
+        requested_model="fake",
+        execution_authorized=False,
+        budget=ExperimentBudget(max_calls=1, max_total_tokens=20),
+    )
+    historical_payload = manifest.model_dump(mode="json")
+    historical_payload["budget"].pop("max_total_tokens_per_call")
+    historical_bytes = json.dumps(
+        historical_payload, sort_keys=True, ensure_ascii=False, separators=(",", ":")
+    ).encode()
+
+    assert manifest_sha256(manifest) == hashlib.sha256(historical_bytes).hexdigest()
+
+
+def test_historical_token_bounded_manifest_without_reservation_is_readable_but_not_executable(
+    tmp_path: Path,
+) -> None:
+    suite = _suite()
+    document = _document()
+    workspace = tmp_path / ".atlas" / "data"
+    source_repo = FileSystemContextSourcePackageRepository(workspace)
+    current = plan_assertion_experiment(
+        suite,
+        {"TEST": document},
+        experiment_id="exp-legacy-budget",
+        code_revision="sha256:" + "c" * 64,
+        variant_id="B0",
+        prompt_version="ontology-guided-assertions-source-bound-v1",
+        model_route="fake",
+        source_packages=source_repo,
+        requested_model="fake",
+        execution_authorized=False,
+        budget=ExperimentBudget(max_calls=1, max_total_tokens=20),
+    )
+    legacy = current.model_copy(
+        update={
+            "execution_authorized": True,
+            "authorization_reference": "historical-authorization",
+        }
+    )
+    repo = FileSystemAssertionExperimentRepository(tmp_path, workspace)
+    repo.save_manifest(legacy)
+    loaded = repo.load_manifest(legacy.experiment_id)
+    service = AssertionExperimentService(
+        repository=repo,
+        source_packages=source_repo,
+        gateway=_Gateway(),
+        extractor_factory=_extractor_factory,
+    )
+
+    assert loaded.budget.max_total_tokens_per_call is None
+    with pytest.raises(ExperimentBindingError, match="lacks max_total_tokens_per_call"):
+        service.run(loaded, suite, {"TEST": document})
 
 
 def test_changed_manifest_prevents_resume_reuse(tmp_path: Path) -> None:
@@ -362,6 +636,8 @@ def test_report_uses_existing_evaluator_and_keeps_failed_coverage_separate(tmp_p
     assert report.stage_failures == {}
     assert report.effort.calls == 1
     assert report.effort.total_tokens == 5
+    assert report.effort.budget_charged_tokens == 5
+    assert report.effort.unknown_usage_calls == 0
     assert report.effort.monetary_cost is None
 
 

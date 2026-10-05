@@ -106,7 +106,10 @@ violation. Otherwise it remains `needs_review` or `failed`. Do not turn this int
 
 Use the existing `assertion-experiment-plan`/`run`/`resume`/`report` path for the selected Finalist and
 any pre-authorized comparison configuration. Repetitions must be new inference attempts with cache
-bypass. Do not choose a best attempt.
+bypass. Do not choose a best attempt. Every newly authorized token-bounded repetition manifest must
+bind both `--max-total-tokens` and `--max-total-tokens-per-call`; the latter is the conservative
+prompt-plus-completion reservation enforced before each call. Historical Series-F manifests without
+the reservation remain valid audit/report inputs but are not executable repetition manifests.
 
 Once the individual repetition `comparison.json` reports exist, materialize their bound evidence:
 

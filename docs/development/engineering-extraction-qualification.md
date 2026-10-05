@@ -55,9 +55,15 @@ not executable by default. `execution_authorized=true` plus a non-empty authoriz
 required before Run/Resume, so the implementation does not manufacture the H1 decision.
 
 Immediately before every model call the gateway wrapper validates the rendered request identity and
-the remaining budget. Every started call gets an immutable attempt ID and an `outcome_unknown`
-ledger entry before delegation. Success, timeout, context-limit, response error, unavailability,
-validation failure, budget blocking and rejected cache replay remain distinguishable. Technical
+the remaining budget. A token-bounded executable manifest must additionally bind a conservative
+`max_total_tokens_per_call` reservation covering prompt plus completion; reserving only the requested
+completion limit is not a hard total-token guard. The full reservation must fit before inference.
+Known provider usage is charged at its observed total, while calls without usable token accounting are
+conservatively charged at the reservation. A provider total above the reservation is a blocking budget
+contract violation. Every started call gets an immutable attempt ID and an `outcome_unknown` ledger
+entry that already carries the reservation before delegation, so Resume cannot regain budget after an
+interrupted remote call. Success, timeout, context-limit, response error, unavailability, validation
+failure, budget blocking/violation and rejected cache replay remain distinguishable. Technical
 timeout/unavailability retries create new attempts; semantic/validation retries are not used to
 search for a better answer. Fresh repetitions reject cached results. Resume skips completed cells
 and never overwrites an interrupted attempt whose remote outcome is unknown.
@@ -73,7 +79,9 @@ unchanged and adds fixed selected/planned/attempted/completed/failed/not-execute
 stage-failure counts, observed effort and separate open diagnostics/review questions. Failed or
 missing cells remain in coverage rather than disappearing from a score denominator. A repetition
 with multiple successful attempts for one cell is rejected instead of choosing the best one.
-Unknown usage or monetary cost stays `null`/unknown.
+Observed token usage remains `null` when any call lacks provider usage; the separate
+`budget_charged_tokens` remains conservative and `unknown_usage_calls` makes that distinction
+explicit. Unknown monetary cost stays unknown.
 
 The implemented CLI surface is `evaluation assertion-experiment-plan`,
 `assertion-experiment-run`, `assertion-experiment-resume` and `assertion-experiment-report`. Series-C
