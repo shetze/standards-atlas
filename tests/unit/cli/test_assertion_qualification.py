@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import json
 from pathlib import Path
 
@@ -317,3 +318,17 @@ def test_assertion_series_g_preparation_commands_are_registered() -> None:
         assert result.exit_code == 0, result.output
         for option in options:
             assert option in result.stdout
+
+
+def test_assertion_experiment_report_uses_comparison_envelope_baseline_loader() -> None:
+    from standards_atlas.application.assertion_qualification import (
+        load_assertion_experiment_baseline_report,
+    )
+    from standards_atlas.cli.commands.evaluation_commands import assertion_qualification as cli
+
+    assert (
+        cli.load_assertion_experiment_baseline_report is load_assertion_experiment_baseline_report
+    )
+    source = inspect.getsource(cli.report_assertion_experiment_command)
+    assert "load_assertion_experiment_baseline_report(baseline_report)" in source
+    assert "load_assertion_qualification_report(baseline_report)" not in source

@@ -25,6 +25,7 @@ from standards_atlas.application.assertion_qualification import (
     golden_suite_sha256,
     load_applicability_selection_corpus,
     load_assertion_auto_adoption_policy,
+    load_assertion_experiment_baseline_report,
     load_assertion_golden_suite,
     load_assertion_qualification_cascade_report,
     load_assertion_qualification_report,
@@ -1028,7 +1029,7 @@ def report_assertion_experiment_command(
             repetition=repetition,
         )
         baseline = (
-            load_assertion_qualification_report(baseline_report)
+            load_assertion_experiment_baseline_report(baseline_report)
             if baseline_report is not None
             else None
         )
