@@ -172,3 +172,156 @@ def test_series_g_readiness_requires_complete_bound_evidence() -> None:
     assert readiness.ready_for_holdout is True
     assert readiness.qualification_claim_permitted is False
     assert readiness.blockers == ()
+
+
+def test_series_g_review_csv_builds_observations_without_exposing_verifier_decision() -> None:
+    import csv
+    import io
+
+    from standards_atlas.application.assertion_qualification import (
+        SeriesGVerifierRun,
+        VerifierRunCandidate,
+        VerifierRunCandidateKind,
+        VerifierRunCase,
+        build_verifier_observations_from_review_csv,
+        render_verifier_review_csv,
+    )
+    from standards_atlas.application.assertion_qualification.cascade_models import (
+        AssertionVerifierProvenance,
+    )
+
+    verification = AssertionClauseVerification(
+        clause_id=ClauseId(value="c1"),
+        entity_reviews=(
+            AssertionCandidateVerification(
+                candidate_id="e1",
+                disposition=AssertionVerificationDisposition.SUPPORTED,
+            ),
+        ),
+        missing_entity_detected=False,
+        missing_assertion_detected=False,
+        source_package_sha256="sha256:" + "a" * 64,
+    )
+    run = SeriesGVerifierRun(
+        campaign_id="g-dev",
+        experiment_id="f-finalist",
+        experiment_manifest_sha256="1" * 64,
+        variant_id="B0-AP02",
+        verifier_provenance=AssertionVerifierProvenance(
+            verifier="test-verifier",
+            verifier_version="1",
+        ),
+        runtime_config_sha256="2" * 64,
+        authorized_max_calls=1,
+        actual_calls=1,
+        authorization_reference="H1-series-g",
+        cases=(
+            VerifierRunCase(
+                case_id="case-1",
+                document_key="DOC",
+                clause_id="c1",
+                source_package_sha256="sha256:" + "a" * 64,
+                candidates=(
+                    VerifierRunCandidate(
+                        candidate_id="e1",
+                        kind=VerifierRunCandidateKind.ENTITY,
+                        summary="WorkProduct | report",
+                    ),
+                ),
+                verification=verification,
+            ),
+        ),
+    )
+
+    prepared = render_verifier_review_csv(run)
+    assert "supported" not in prepared
+    rows = list(csv.DictReader(io.StringIO(prepared)))
+    rows[0]["missing_entity_expected"] = "false"
+    rows[0]["missing_assertion_expected"] = "true"
+    rows[0]["annotation_reference"] = "H2:case-1"
+    rows[1]["expected"] = "supported"
+    stream = io.StringIO(newline="")
+    writer = csv.DictWriter(stream, fieldnames=rows[0].keys(), lineterminator="\n")
+    writer.writeheader()
+    writer.writerows(rows)
+
+    observations = build_verifier_observations_from_review_csv(run, stream.getvalue())
+
+    assert len(observations) == 1
+    assert observations[0].truth.annotation_reference == "H2:case-1"
+    assert observations[0].truth.missing_assertion_expected is True
+    assert observations[0].verification == verification
+
+
+def test_verifier_error_case_reduces_coverage_instead_of_disappearing() -> None:
+    truth = VerifierCaseTruth(
+        case_id="case-error",
+        clause_id="c1",
+        kind=VerifierCaseKind.REAL_ANNOTATED,
+        entity_candidates=(
+            VerifierCandidateTruth(
+                candidate_id="e1",
+                expected=ExpectedCandidateDisposition.SUPPORTED,
+            ),
+        ),
+        missing_entity_expected=True,
+        annotation_reference="H2:case-error",
+    )
+    observation = VerifierCaseObservation(
+        truth=truth,
+        verification_error_type="LlmTimeoutError",
+        verification_error_message="timeout",
+    )
+
+    metrics = evaluate_verifier_quality((observation,))
+
+    assert metrics.verifier_error_cases == 1
+    assert metrics.candidate_support == 1
+    assert metrics.candidate_reviewed == 0
+    assert metrics.coverage == 0.0
+    assert metrics.missing_item_false_negatives == 1
+    assert metrics.missing_item_recall == 0.0
+
+
+def test_build_repetition_evidence_counts_fresh_and_detects_unstable_cases() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.assertion_qualification import build_repetition_evidence
+
+    class FakeCase:
+        source_document_key = "DOC"
+        clause_id = ClauseId(value="c1")
+
+        def __init__(self, exact: bool) -> None:
+            self.exact = exact
+
+        def model_dump(self, *, mode: str, exclude: set[str]):
+            assert mode == "json"
+            assert exclude == {"candidate_sha256", "provenance"}
+            return {"exact": self.exact}
+
+    reports = (
+        SimpleNamespace(
+            experiment_id="rep-1",
+            variant_id="P2",
+            effort=SimpleNamespace(calls=20, cached_calls=0),
+            qualification_report=SimpleNamespace(cases=(FakeCase(True),)),
+        ),
+        SimpleNamespace(
+            experiment_id="rep-2",
+            variant_id="P2",
+            effort=SimpleNamespace(calls=20, cached_calls=0),
+            qualification_report=SimpleNamespace(cases=(FakeCase(False),)),
+        ),
+    )
+
+    evidence = build_repetition_evidence(
+        variant_id="P2",
+        planned_repetitions=2,
+        reports=reports,
+        report_hashes=("1" * 64, "2" * 64),
+    )
+
+    assert evidence.fresh_inference_repetitions == 2
+    assert evidence.cached_repetitions == 0
+    assert evidence.unstable_case_ids == ("DOC:c1",)

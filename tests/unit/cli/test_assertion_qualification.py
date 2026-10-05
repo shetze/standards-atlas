@@ -302,3 +302,18 @@ def test_assertion_series_h_cli_surface_is_registered() -> None:
     assert "--release-decision" in finalize.stdout
     assert "--release-reference" in finalize.stdout
     assert "--qualification-scope" in finalize.stdout
+
+
+def test_assertion_series_g_preparation_commands_are_registered() -> None:
+    commands = {
+        "assertion-series-g-verifier-run": ("--experiment-id", "--max-calls"),
+        "assertion-series-g-verifier-observations-build": ("--verifier-run", "--output"),
+        "assertion-series-g-repetitions-build": ("--variant-id", "--report"),
+        "assertion-series-g-gate-profile-build": ("--output", "--max-false-acceptan"),
+        "assertion-series-g-freeze-build": ("--partition-plan", "--holdout-campaign"),
+    }
+    for command, options in commands.items():
+        result = runner.invoke(app, ["evaluation", command, "--help"])
+        assert result.exit_code == 0, result.output
+        for option in options:
+            assert option in result.stdout

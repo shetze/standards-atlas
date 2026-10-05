@@ -25,7 +25,6 @@ from standards_atlas.application.assertion_qualification import (
     golden_suite_sha256,
     load_applicability_selection_corpus,
     load_assertion_auto_adoption_policy,
-    load_assertion_experiment_baseline_report,
     load_assertion_golden_suite,
     load_assertion_qualification_cascade_report,
     load_assertion_qualification_report,
@@ -1029,7 +1028,7 @@ def report_assertion_experiment_command(
             repetition=repetition,
         )
         baseline = (
-            load_assertion_experiment_baseline_report(baseline_report)
+            load_assertion_qualification_report(baseline_report)
             if baseline_report is not None
             else None
         )
@@ -1557,6 +1556,453 @@ def prepare_assertion_series_f_command(
     typer.echo("Holdout access    : forbidden")
 
 
+@evaluation_app.command("assertion-series-g-verifier-run")
+def run_assertion_series_g_verifier_command(
+    campaign_id: Annotated[str, typer.Option("--campaign-id")],
+    experiment_id: Annotated[str, typer.Option("--experiment-id")],
+    suite: Annotated[Path, typer.Option("--suite", exists=True, dir_okay=False, readable=True)],
+    verifier_model: Annotated[str, typer.Option("--verifier-model")],
+    max_calls: Annotated[int, typer.Option("--max-calls", min=1)],
+    authorization_reference: Annotated[str, typer.Option("--authorization-reference")],
+    authorize_execution: Annotated[
+        bool, typer.Option("--authorize-execution/--do-not-authorize-execution")
+    ] = False,
+    config: Annotated[
+        Path, typer.Option("--config", exists=True, dir_okay=False, readable=True)
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
+    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = (
+        cli_defaults.DEFAULT_WORKSPACE
+    ),
+    project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
+    output: Annotated[Path | None, typer.Option("--output", dir_okay=False)] = None,
+    review_csv: Annotated[Path | None, typer.Option("--review-csv", dir_okay=False)] = None,
+) -> None:
+    """Verify persisted Development candidates once and prepare a blind human review sheet."""
+    from dataclasses import replace
+
+    from standards_atlas.adapters.filesystem import FileSystemAssertionExperimentRepository
+    from standards_atlas.adapters.llm import (
+        LlmConfig,
+        OntologyGuidedAssertionProposalVerifier,
+        OpenAICompatibleLlmGateway,
+    )
+    from standards_atlas.application.assertion_qualification import (
+        SeriesGVerifierRun,
+        VerifierRunCandidate,
+        VerifierRunCandidateKind,
+        VerifierRunCase,
+        manifest_sha256,
+        materialize_experiment_inputs,
+        render_verifier_review_csv,
+        verifier_run_sha256,
+    )
+    from standards_atlas.application.context.input_binding import context_source_package_binding
+    from standards_atlas.application.knowledge_proposal_extraction import (
+        assertion_interpretation_context,
+    )
+    from standards_atlas.application.ports.llm_gateway import LlmGatewayError
+
+    try:
+        if not authorize_execution:
+            raise ValueError("Series-G verifier execution requires --authorize-execution")
+        if not authorization_reference.strip():
+            raise ValueError("Series-G verifier execution requires authorization_reference")
+        golden = load_assertion_golden_suite(suite)
+        if golden.partition is not AssertionGoldenPartition.DEVELOPMENT:
+            raise ValueError("Series-G verifier benchmark accepts Development suites only")
+        repository = FileSystemAssertionExperimentRepository(project_root, workspace)
+        manifest = repository.load_manifest(experiment_id)
+        state = repository.load_state(experiment_id)
+        if state is None:
+            raise ValueError("Series-G verifier benchmark requires a completed experiment state")
+        if manifest.partition != AssertionGoldenPartition.DEVELOPMENT.value:
+            raise ValueError("Series-G verifier benchmark accepts Development experiments only")
+        proposals, packages = materialize_experiment_inputs(
+            repository,
+            FileSystemContextSourcePackageRepository(workspace),
+            manifest,
+            state,
+        )
+        if not packages:
+            raise ValueError("Series-G verifier benchmark has no successful native candidates")
+        if len(packages) > max_calls:
+            raise ValueError(
+                "Series-G verifier benchmark requires "
+                f"{len(packages)} calls, above max_calls={max_calls}"
+            )
+        proposals_by_document = {item.source_document_key: item for item in proposals}
+        documents_repo = FileSystemEngineeringDocumentRepository(workspace)
+        documents = {
+            key: documents_repo.load(DocumentKey(value=key))
+            for key in sorted({package.document_key for package in packages})
+        }
+
+        base_config = LlmConfig.load(config)
+        benchmark_config = replace(base_config, cache_directory=None)
+        gateway = OpenAICompatibleLlmGateway(benchmark_config)
+        verifier = OntologyGuidedAssertionProposalVerifier(
+            gateway,
+            model=verifier_model,
+            provider=gateway.provider,
+        )
+        cases = []
+        for package in packages:
+            document = documents[package.document_key]
+            clause = next(
+                item for item in document.clauses if item.id.value == package.target_clause_id
+            )
+            proposal = proposals_by_document[package.document_key]
+            entities = tuple(
+                item for item in proposal.entity_proposals if clause.id in item.proposal_clause_ids
+            )
+            assertions = tuple(
+                item for item in proposal.assertion_proposals if item.source_clause_id == clause.id
+            )
+            candidates = tuple(
+                VerifierRunCandidate(
+                    candidate_id=item.id,
+                    kind=VerifierRunCandidateKind.ENTITY,
+                    summary=f"{item.class_iri} | {item.normalized_label}",
+                )
+                for item in entities
+            ) + tuple(
+                VerifierRunCandidate(
+                    candidate_id=item.id,
+                    kind=VerifierRunCandidateKind.ASSERTION,
+                    summary=(
+                        f"{item.predicate} | {item.subject_id} -> "
+                        f"{
+                            json.dumps(
+                                item.object.model_dump(mode='json'),
+                                ensure_ascii=False,
+                                sort_keys=True,
+                            )
+                        } "
+                        f"| force={item.normative_force.value}"
+                    ),
+                )
+                for item in assertions
+            )
+            verification = None
+            error_type = None
+            error_message = None
+            try:
+                verification = verifier.verify(
+                    clause,
+                    document_key=document.key.value,
+                    ontology_versions=manifest.ontology_versions,
+                    evidence_anchors=proposal.evidence_anchors,
+                    entity_proposals=entities,
+                    assertion_proposals=assertions,
+                    source_package=package,
+                    interpretation_context=assertion_interpretation_context(document, clause),
+                )
+            except (LlmGatewayError, ValueError) as exc:
+                error_type = type(exc).__name__
+                error_message = str(exc)
+            case_digest = hashlib.sha256(
+                (
+                    f"{campaign_id}\0{experiment_id}\0{package.document_key}\0"
+                    f"{package.target_clause_id}"
+                ).encode()
+            ).hexdigest()[:24]
+            cases.append(
+                VerifierRunCase(
+                    case_id=f"verifier-{case_digest}",
+                    document_key=package.document_key,
+                    clause_id=package.target_clause_id,
+                    source_package_sha256=context_source_package_binding(package).package_sha256,
+                    candidates=candidates,
+                    verification=verification,
+                    verification_error_type=error_type,
+                    verification_error_message=error_message,
+                )
+            )
+        run = SeriesGVerifierRun(
+            campaign_id=campaign_id,
+            experiment_id=experiment_id,
+            experiment_manifest_sha256=manifest_sha256(manifest),
+            variant_id=manifest.variant_id,
+            verifier_provenance=verifier.provenance(),
+            runtime_config_sha256=_series_g_identity_sha256(
+                {
+                    "base_url": benchmark_config.base_url,
+                    "configured_model": benchmark_config.model,
+                    "verifier_model": verifier_model,
+                    "timeout_seconds": benchmark_config.timeout_seconds,
+                    "cache_directory": None,
+                }
+            ),
+            cache_bypassed=True,
+            authorized_max_calls=max_calls,
+            actual_calls=len(cases),
+            authorization_reference=authorization_reference,
+            cases=tuple(cases),
+        )
+        root = project_root / "local" / "evaluation" / "assertions" / "ap03" / campaign_id
+        target = output or (root / "verifier-run.json")
+        review_target = review_csv or (root / "verifier-review.csv")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        review_target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(run.model_dump_json(indent=2) + "\n", encoding="utf-8")
+        review_target.write_text(render_verifier_review_csv(run), encoding="utf-8")
+    except (OSError, StopIteration, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    errors = sum(item.verification is None for item in run.cases)
+    typer.echo(f"Verifier campaign        : {campaign_id}")
+    typer.echo(f"Candidate experiment     : {experiment_id}")
+    typer.echo(f"Verifier calls           : {run.actual_calls}/{run.authorized_max_calls}")
+    typer.echo(f"Verifier errors          : {errors}")
+    typer.echo(f"Verifier run SHA-256     : {verifier_run_sha256(run)}")
+    typer.echo(f"Verifier run             : {target}")
+    typer.echo(f"Blind review CSV         : {review_target}")
+    typer.echo("Golden mutation          : forbidden")
+
+
+@evaluation_app.command("assertion-series-g-verifier-observations-build")
+def build_assertion_series_g_verifier_observations_command(
+    verifier_run: Annotated[
+        Path, typer.Option("--verifier-run", exists=True, dir_okay=False, readable=True)
+    ],
+    reviewed_csv: Annotated[
+        Path, typer.Option("--reviewed-csv", exists=True, dir_okay=False, readable=True)
+    ],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+) -> None:
+    """Bind completed human CSV decisions to hidden verifier outcomes."""
+    from pydantic import TypeAdapter
+
+    from standards_atlas.application.assertion_qualification import (
+        SeriesGVerifierRun,
+        VerifierCaseObservation,
+        build_verifier_observations_from_review_csv,
+    )
+
+    try:
+        run = SeriesGVerifierRun.model_validate_json(verifier_run.read_bytes())
+        observations = build_verifier_observations_from_review_csv(
+            run,
+            reviewed_csv.read_text(encoding="utf-8"),
+        )
+        output.parent.mkdir(parents=True, exist_ok=True)
+        adapter = TypeAdapter(tuple[VerifierCaseObservation, ...])
+        output.write_text(
+            json.dumps(adapter.dump_python(observations, mode="json"), indent=2, ensure_ascii=False)
+            + "\n",
+            encoding="utf-8",
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"Annotated cases          : {len(observations)}")
+    typer.echo(f"Observations             : {output}")
+    typer.echo("Human decisions          : required; never synthesized")
+
+
+@evaluation_app.command("assertion-series-g-repetitions-build")
+def build_assertion_series_g_repetitions_command(
+    variant_id: Annotated[str, typer.Option("--variant-id")],
+    planned_repetitions: Annotated[int, typer.Option("--planned-repetitions", min=1)],
+    report: Annotated[
+        list[Path], typer.Option("--report", exists=True, dir_okay=False, readable=True)
+    ],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+) -> None:
+    """Materialize repetition evidence from already-generated experiment reports."""
+    from standards_atlas.application.assertion_qualification import (
+        AssertionExperimentReport,
+        build_repetition_evidence,
+    )
+
+    try:
+        reports = tuple(
+            AssertionExperimentReport.model_validate_json(path.read_bytes()) for path in report
+        )
+        hashes = tuple(hashlib.sha256(path.read_bytes()).hexdigest() for path in report)
+        evidence = build_repetition_evidence(
+            variant_id=variant_id,
+            planned_repetitions=planned_repetitions,
+            reports=reports,
+            report_hashes=hashes,
+        )
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(evidence.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"Completed repetitions    : {evidence.completed_repetitions}")
+    typer.echo(f"Fresh repetitions        : {evidence.fresh_inference_repetitions}")
+    typer.echo(f"Cached repetitions       : {evidence.cached_repetitions}")
+    typer.echo(f"Unstable cases           : {len(evidence.unstable_case_ids)}")
+    typer.echo(f"Repetition evidence      : {output}")
+
+
+@evaluation_app.command("assertion-series-g-gate-profile-build")
+def build_assertion_series_g_gate_profile_command(
+    max_false_acceptance_rate: Annotated[
+        float, typer.Option("--max-false-acceptance-rate", min=0.0, max=1.0)
+    ],
+    max_false_rejection_rate: Annotated[
+        float, typer.Option("--max-false-rejection-rate", min=0.0, max=1.0)
+    ],
+    min_missing_item_recall: Annotated[
+        float, typer.Option("--min-missing-item-recall", min=0.0, max=1.0)
+    ],
+    min_verifier_coverage: Annotated[
+        float, typer.Option("--min-verifier-coverage", min=0.0, max=1.0)
+    ],
+    min_real_annotated_cases: Annotated[int, typer.Option("--min-real-annotated-cases", min=1)],
+    min_candidate_support: Annotated[int, typer.Option("--min-candidate-support", min=1)],
+    required_fresh_repetitions: Annotated[int, typer.Option("--required-fresh-repetitions", min=1)],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+    max_cached_repetitions: Annotated[int, typer.Option("--max-cached-repetitions", min=0)] = 0,
+    human_confirmation_reference: Annotated[
+        str | None, typer.Option("--human-confirmation-reference")
+    ] = None,
+) -> None:
+    """Create explicit G4/G5 gates; threshold values are never inferred from measured results."""
+    from standards_atlas.application.assertion_qualification import SeriesGGateProfile
+
+    try:
+        profile = SeriesGGateProfile(
+            max_false_acceptance_rate=max_false_acceptance_rate,
+            max_false_rejection_rate=max_false_rejection_rate,
+            min_missing_item_recall=min_missing_item_recall,
+            min_verifier_coverage=min_verifier_coverage,
+            min_real_annotated_cases=min_real_annotated_cases,
+            min_candidate_support=min_candidate_support,
+            required_fresh_repetitions=required_fresh_repetitions,
+            max_cached_repetitions=max_cached_repetitions,
+            human_confirmed=human_confirmation_reference is not None,
+            human_confirmation_reference=human_confirmation_reference,
+        )
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(profile.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo("Gates explicitly defined : True")
+    typer.echo(f"Human H3 confirmed       : {profile.human_confirmed}")
+    typer.echo(f"Gate profile             : {output}")
+
+
+def _series_g_identity_sha256(value: object) -> str:
+    payload = json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()
+    return hashlib.sha256(payload).hexdigest()
+
+
+@evaluation_app.command("assertion-series-g-freeze-build")
+def build_assertion_series_g_freeze_command(
+    freeze_id: Annotated[str, typer.Option("--freeze-id")],
+    finalist_experiment: Annotated[str, typer.Option("--finalist-experiment")],
+    partition_plan: Annotated[
+        Path, typer.Option("--partition-plan", exists=True, dir_okay=False, readable=True)
+    ],
+    holdout_campaign: Annotated[
+        Path, typer.Option("--holdout-campaign", exists=True, dir_okay=False, readable=True)
+    ],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+    verify_escalation: Annotated[
+        bool, typer.Option("--verify-escalation/--leave-escalation-unverified")
+    ] = False,
+    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = (
+        cli_defaults.DEFAULT_WORKSPACE
+    ),
+    project_root: Annotated[Path, typer.Option("--project-root", file_okay=False)] = Path("."),
+) -> None:
+    """Materialize the Series-G freeze from bound manifests/plans without manual hash upkeep."""
+    from standards_atlas.adapters.filesystem import FileSystemAssertionExperimentRepository
+    from standards_atlas.application.assertion_qualification import (
+        ASSERTION_EVALUATION_CONTRACT,
+        SeriesGFreeze,
+        SeriesHHoldoutCampaign,
+        series_h_campaign_sha256,
+    )
+    from standards_atlas.application.assertion_qualification.reference_corpus import (
+        ReferenceCorpusPlan,
+    )
+
+    try:
+        repository = FileSystemAssertionExperimentRepository(project_root, workspace)
+        manifest = repository.load_manifest(finalist_experiment)
+        if manifest.partition != AssertionGoldenPartition.DEVELOPMENT.value:
+            raise ValueError("Series-G Finalist freeze requires a Development experiment")
+        partition = ReferenceCorpusPlan.model_validate_json(partition_plan.read_bytes())
+        campaign = SeriesHHoldoutCampaign.model_validate_json(holdout_campaign.read_bytes())
+        code_revision = _ap03_code_revision(project_root)
+        case_bindings = [
+            {
+                "document_key": item.document_key,
+                "clause_id": item.clause_id,
+                "source_package_sha256": item.source_package_sha256,
+                "rendered_request_sha256": item.rendered_request_sha256,
+            }
+            for item in manifest.cases
+        ]
+        freeze = SeriesGFreeze(
+            freeze_id=freeze_id,
+            code_revision=code_revision,
+            prompt_bundle_sha256=_series_g_identity_sha256(
+                {
+                    "prompt_version": manifest.prompt_version,
+                    "variant_id": manifest.variant_id,
+                    "rendered_requests": [
+                        item["rendered_request_sha256"] for item in case_bindings
+                    ],
+                }
+            ),
+            task_schema_sha256=_series_g_identity_sha256(
+                {
+                    "task_schema_version": manifest.task_schema_version,
+                    "code_revision": code_revision,
+                }
+            ),
+            ontology_fingerprint=_series_g_identity_sha256(
+                {"ontology_versions": manifest.ontology_versions}
+            ),
+            source_context_policy_sha256=_series_g_identity_sha256(
+                {"data_route": manifest.data_route, "cases": case_bindings}
+            ),
+            model_backend_sha256=_series_g_identity_sha256(
+                {
+                    "model_route": manifest.model_route,
+                    "runtime_config_sha256": manifest.runtime_config_sha256,
+                    "requested_model": manifest.requested_model,
+                    "temperature": manifest.temperature,
+                    "seed": manifest.seed,
+                    "max_output_tokens_per_call": manifest.max_output_tokens_per_call,
+                    "reasoning_enabled": manifest.reasoning_enabled,
+                }
+            ),
+            cascade_policy_sha256=_series_g_identity_sha256(
+                {"verify_escalation": verify_escalation, "code_revision": code_revision}
+            ),
+            retry_budget_policy_sha256=_series_g_identity_sha256(
+                {
+                    "budget": manifest.budget.model_dump(mode="json"),
+                    "repetitions": manifest.repetitions,
+                    "bypass_cache_for_repetitions": manifest.bypass_cache_for_repetitions,
+                }
+            ),
+            development_golden_sha256=manifest.golden_suite_sha256,
+            partition_exposure_sha256=partition.plan_sha256,
+            evaluator_sha256=_series_g_identity_sha256(
+                {
+                    "evaluation_contract": ASSERTION_EVALUATION_CONTRACT,
+                    "code_revision": code_revision,
+                }
+            ),
+            holdout_campaign_sha256=series_h_campaign_sha256(campaign),
+            canonical_adoption_enabled=False,
+        )
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(freeze.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"Freeze id                : {freeze.freeze_id}")
+    typer.echo(f"Code revision            : {freeze.code_revision}")
+    typer.echo(f"Holdout campaign SHA-256 : {freeze.holdout_campaign_sha256}")
+    typer.echo("Canonical adoption       : disabled")
+    typer.echo(f"Freeze                   : {output}")
+
+
 @evaluation_app.command("assertion-series-g-verifier-evaluate")
 def evaluate_assertion_series_g_verifier_command(
     observations: Annotated[
@@ -1583,6 +2029,7 @@ def evaluate_assertion_series_g_verifier_command(
     typer.echo(f"Annotated cases          : {metrics.annotated_cases}")
     typer.echo(f"Real annotated cases     : {metrics.real_annotated_cases}")
     typer.echo(f"Synthetic cases          : {metrics.synthetic_cases}")
+    typer.echo(f"Verifier errors          : {metrics.verifier_error_cases}")
     typer.echo(f"Candidate support        : {metrics.candidate_support}")
     typer.echo(f"Metrics                  : {output}")
 

@@ -113,6 +113,14 @@ synthetic mutations are counted separately. Synthetic-only evidence cannot satis
 `assertion-series-g-verifier-evaluate` consumes explicit annotated observations; it does not create or
 modify Golden truth.
 
+Post-Series-H correction (2026-10-05): the previously missing preparation path is now explicit.
+`assertion-series-g-verifier-run` reuses persisted successful Development experiment candidates and
+runs only the verifier with result-cache reuse disabled. It writes a hidden verifier outcome artifact
+and a blind flat review CSV. `assertion-series-g-verifier-observations-build` accepts only complete
+human candidate/missing-item decisions bound to that run and then creates `verifier-observations.json`.
+Verifier-call errors remain in the observations and reduce coverage instead of disappearing. Golden
+content is neither rewritten nor inferred from the verifier.
+
 S14 adds fresh-repetition evidence, an explicit G4/G5 gate profile, complete pre-Holdout freeze
 identity and a readiness decision. Gate thresholds and support minima have no qualifying defaults.
 Missing real annotated support, incomplete fresh inference repetitions, cached repetitions beyond the
@@ -125,6 +133,19 @@ Repetitions must use cache bypass and every fresh run must remain bound by repor
 not implement Best-of-N. The freeze binds code, prompt/schema, ontologies, context/source policy,
 model/backend, cascade and retry/budget policy, Development Golden, partition/exposure state, evaluator
 and the concrete future Holdout campaign. A functional change after freeze requires a new freeze.
+
+The same correction adds model-free builders for `repetitions.json`, the explicit G4/G5 gate profile
+and `freeze.json`. Repetition reports are hashed and cache use is not counted as fresh evidence;
+changed clause outcomes are listed as unstable. Gate numbers and H3 remain explicit human inputs. The
+freeze builder derives bound identities from the selected Finalist manifest, current code revision,
+partition/exposure plan and preplanned Series-H campaign, avoiding manual hash transcription.
+
+Correction verification in this environment: the complete assertion-qualification unit area plus
+assertion CLI and architecture tests completed as **318 passed**; all existing assertion-qualification
+integration tests completed as **3 passed**. The focused Series-G preparation/unit tests are included
+in those counts. `uv run --offline ruff check ...` was attempted but uv could not resolve `jsonschema`
+from its offline cache, so Ruff did not start. No real verifier/model, Holdout or human-review decision
+was executed while implementing this correction.
 
 Implementation verification in this environment: assertion-qualification plus assertion CLI and
 architecture tests completed as **304 passed** before the final documentation-only changes. The focused
