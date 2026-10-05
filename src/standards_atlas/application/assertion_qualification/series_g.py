@@ -18,7 +18,7 @@ from standards_atlas.application.assertion_qualification.cascade_models import (
 )
 
 AP03_SERIES_G_CONTRACT = "ap03-series-g-verifier-freeze-v1"
-AP03_SERIES_G_VERIFIER_RUN_CONTRACT = "ap03-series-g-verifier-run-v2"
+AP03_SERIES_G_VERIFIER_RUN_CONTRACT = "ap03-series-g-verifier-run-v3"
 SERIES_G_VERIFIER_PROMPT_VERSION = "ontology-guided-assertion-verifier-source-bound-v2"
 SERIES_G_VERIFIER_VERSION = "2.1.0"
 VERIFIER_REVIEW_COLUMNS = (
@@ -198,6 +198,8 @@ class SeriesGVerifierRun(BaseModel):
     variant_id: str = Field(min_length=1)
     verifier_provenance: AssertionVerifierProvenance
     runtime_config_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    timeout_seconds: float | None = Field(default=None, gt=0.0)
+    timeout_override_seconds: float | None = Field(default=None, gt=0.0)
     cache_bypassed: bool = True
     authorized_max_calls: int = Field(ge=1)
     actual_calls: int = Field(ge=0)
@@ -214,6 +216,11 @@ class SeriesGVerifierRun(BaseModel):
     def run_is_bounded(self) -> SeriesGVerifierRun:
         if not self.cache_bypassed:
             raise ValueError("Series-G verifier benchmark must bypass result cache")
+        if self.timeout_override_seconds is not None:
+            if self.timeout_seconds is None:
+                raise ValueError("verifier timeout override requires an effective timeout")
+            if self.timeout_override_seconds != self.timeout_seconds:
+                raise ValueError("verifier timeout override must equal the effective timeout")
         if self.actual_calls > self.authorized_max_calls:
             raise ValueError("verifier run exceeds its authorized max_calls")
         ids = [item.case_id for item in self.cases]

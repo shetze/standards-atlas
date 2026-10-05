@@ -322,6 +322,7 @@ def test_assertion_series_g_preparation_commands_are_registered() -> None:
         "assertion-series-g-verifier-run": (
             "--experiment-id",
             "--max-calls",
+            "--timeout",
             "--retry-errors-",
         ),
         "assertion-series-g-verifier-observations-build": ("--verifier-run", "--output"),
@@ -340,6 +341,45 @@ def test_assertion_series_g_preparation_commands_are_registered() -> None:
         assert result.exit_code == 0, result.output
         for option in options:
             assert option in result.stdout
+
+
+def test_series_g_timeout_override_is_general_and_retry_inherits_parent() -> None:
+    from standards_atlas.cli.commands.evaluation_commands.assertion_qualification import (
+        _series_g_effective_timeout_seconds,
+    )
+
+    assert (
+        _series_g_effective_timeout_seconds(
+            configured_timeout_seconds=300.0,
+            requested_timeout_seconds=None,
+            parent_timeout_seconds=None,
+        )
+        == 300.0
+    )
+    assert (
+        _series_g_effective_timeout_seconds(
+            configured_timeout_seconds=300.0,
+            requested_timeout_seconds=600.0,
+            parent_timeout_seconds=None,
+        )
+        == 600.0
+    )
+    assert (
+        _series_g_effective_timeout_seconds(
+            configured_timeout_seconds=300.0,
+            requested_timeout_seconds=None,
+            parent_timeout_seconds=600.0,
+        )
+        == 600.0
+    )
+    assert (
+        _series_g_effective_timeout_seconds(
+            configured_timeout_seconds=300.0,
+            requested_timeout_seconds=900.0,
+            parent_timeout_seconds=600.0,
+        )
+        == 900.0
+    )
 
 
 def test_assertion_experiment_report_uses_comparison_envelope_baseline_loader() -> None:

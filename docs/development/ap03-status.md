@@ -143,6 +143,23 @@ verification unchanged, and writes a complete merged run with parent SHA-256, re
 inherited-case count and the actual number of new model calls. This is not semantic resampling and cannot
 replace a valid verifier decision with a luckier later one.
 
+Post-r3 retry-timeout correction (2026-10-05): the first targeted technical retry correctly called only
+the single timed-out r3 case and inherited the other 15 verifier outcomes, but it necessarily repeated the
+same configured 300-second timeout and timed out again. `assertion-series-g-verifier-run` therefore now
+exposes a general `--timeout <seconds>` per-request transport override for both fresh and retry runs. The
+configured runtime identity remains separately bound; the effective timeout and explicit CLI override are
+recorded in the verifier-run artifact and therefore its SHA-256. Retry chains inherit a previously recorded
+effective timeout when `--timeout` is omitted, while an explicit new value replaces it only for the newly
+executed technical-error calls. Valid parent verifier outcomes remain immutable, so changing a retry timeout
+does not create semantic resampling or Best-of-N.
+
+Timeout-override correction verification in this environment: the assertion-qualification unit area,
+assertion CLI and architecture tests completed as **334 passed**; the assertion-qualification plus AP02
+source-bound integration set completed as **4 passed**. `python -m compileall` succeeded. A full `pytest`
+run was started and showed no failure before the 120-second environment limit interrupted it at roughly
+6% progress. Ruff is not installed in the execution environment, so no Ruff success is claimed. No real
+verifier call was executed while implementing this correction.
+
 The verifier evaluator no longer maps a transport/response error to `missing_*_detected=false`. Error
 cases reduce explicit case/candidate/missing-item coverage but do not enter false-acceptance,
 false-rejection or missing-item false-negative numerators/denominators. Metrics now expose reviewed
@@ -208,10 +225,12 @@ human-attestation run was executed.
 ### Exact continuation point
 
 1. Apply this delta and run local `uv run ruff check .` plus full `uv run pytest`.
-2. For the existing r3 verifier run, retry only its technical error with a new campaign ID using
-   `assertion-series-g-verifier-run --retry-errors-from <r3/verifier-run.json>` and an authorization whose
-   `max_calls` covers only the failed cases. Do not rerun the 15 valid r3 verifier outcomes. If the merged
-   retry run still has an error, it remains a coverage limitation rather than a semantic false negative.
+2. For the existing r3/retry1 verifier chain, retry only its remaining technical error with a new campaign
+   ID using `assertion-series-g-verifier-run --retry-errors-from <parent/verifier-run.json> --timeout 600`
+   (or another explicitly authorized bounded timeout) and an authorization whose `max_calls` covers only the
+   failed cases. Do not rerun the 15 valid r3 verifier outcomes. If the merged retry run still has an error,
+   it remains a coverage limitation rather than a semantic false negative; do not continue an unbounded
+   timeout-escalation loop.
    If source-package hashes and candidate IDs are unchanged, rebind the already completed human candidate
    truth to the new blind CSV; do not redo or alter Golden decisions. Then build observations and run
    `assertion-series-g-verifier-evaluate`. Synthetic mutations may augment but not replace real annotations.

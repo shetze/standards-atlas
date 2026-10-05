@@ -37,6 +37,7 @@ uv run standards-atlas evaluation assertion-series-g-verifier-run \
   --verifier-model <verifier-model-id> \
   --max-calls <authorized-call-limit> \
   --authorization-reference <H1-or-approved-series-g-reference> \
+  --timeout <optional-request-timeout-seconds> \
   --authorize-execution \
   --config <same-approved-llm-config.yaml> \
   --workspace .atlas/data \
@@ -59,7 +60,9 @@ there is no positional fallback, silent repair or invented candidate mapping.
 
 A verifier transport/response failure is retained in `verifier-run.json`; it is not silently removed
 from later coverage. Candidate-ID contract failures likewise remain explicit verifier errors rather than
-being coerced into reviews.
+being coerced into reviews. `--timeout <seconds>` is a general per-request transport override for this
+command, not a retry-only option. The run records both the effective timeout and whether an explicit CLI
+override supplied it. Omitting `--timeout` uses the configured LLM timeout on a fresh run.
 
 If a completed verifier run contains only technical verifier errors for a subset of cases, do not rerun
 the successful cases. Retry only those errors with a **new campaign ID** and the same bound experiment,
@@ -73,6 +76,7 @@ uv run standards-atlas evaluation assertion-series-g-verifier-run \
   --verifier-model <same-verifier-model-id> \
   --max-calls <authorized-retry-call-limit> \
   --authorization-reference <approved-retry-reference> \
+  --timeout <optional-request-timeout-seconds> \
   --authorize-execution \
   --retry-errors-from local/evaluation/assertions/ap03/<parent-campaign>/verifier-run.json \
   --config <same-approved-llm-config.yaml> \
@@ -80,13 +84,16 @@ uv run standards-atlas evaluation assertion-series-g-verifier-run \
   --project-root .
 ```
 
-The retry command verifies that the parent manifest, variant, verifier provenance, runtime identity,
-source-package hashes and candidate IDs/summaries still match. It then performs model calls **only** for
-parent cases whose `verification` is absent and a verifier error is present. Existing valid verifications
-are inherited unchanged. The merged retry artifact contains the complete case set, records its parent run
-SHA-256, the retried case IDs and the inherited-case count, while `actual_calls` counts only the newly
-executed retry calls. A parent with no technical verifier errors is rejected. This is a transport/response
-retry, not semantic resampling or Best-of-N.
+The retry command verifies that the parent manifest, variant, verifier provenance, configured runtime
+identity, source-package hashes and candidate IDs/summaries still match. It then performs model calls
+**only** for parent cases whose `verification` is absent and a verifier error is present. Existing valid
+verifications are inherited unchanged. `--timeout` may change only the per-request transport timeout for
+the newly executed calls; when it is omitted, a timeout recorded by the parent retry/run is inherited,
+otherwise the configured timeout applies. This technical override does not relax the configured runtime,
+model, prompt, source or candidate identity checks. The merged retry artifact contains the complete case
+set, records its parent run SHA-256, effective/overridden timeout, retried case IDs and inherited-case count,
+while `actual_calls` counts only the newly executed retry calls. A parent with no technical verifier errors
+is rejected. This is a transport/response retry, not semantic resampling or Best-of-N.
 
 The retry produces a new blind CSV bound to the merged run hash. If source packages and candidate
 identities are unchanged, previously completed human truth may be deterministically rebound to that CSV;

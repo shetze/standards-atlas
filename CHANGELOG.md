@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — AP03 Series-G verifier timeout override (2026-10-05)
+
+- Add a general `--timeout` option to the Series-G verifier command for bounded per-request transport
+  overrides on both fresh runs and technical-error retries.
+- Keep the configured runtime identity separately bound while recording the effective and explicitly
+  overridden timeout in the verifier-run artifact and its hash.
+- Inherit a parent run's recorded timeout across retry chains when no new override is supplied, without
+  re-running already valid verifier outcomes or weakening source/candidate identity checks.
+- Document the bounded 600-second continuation for the remaining real r3 timeout and add CLI/contract
+  regression coverage.
+
 ## Unreleased — AP03 Series-G verifier response-contract correction (2026-10-05)
 
 - Preserve the frozen post-AP02/B0 verifier prompt and add a separately versioned Series-G verifier

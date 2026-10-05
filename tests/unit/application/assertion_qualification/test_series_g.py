@@ -384,6 +384,48 @@ def test_series_g_retry_run_counts_only_retried_calls_and_preserves_full_case_se
     assert run.inherited_case_count == 1
 
 
+def test_series_g_verifier_run_records_effective_timeout_and_override() -> None:
+    from standards_atlas.application.assertion_qualification import (
+        SeriesGVerifierRun,
+        VerifierRunCase,
+    )
+    from standards_atlas.application.assertion_qualification.cascade_models import (
+        AssertionVerifierProvenance,
+    )
+
+    run = SeriesGVerifierRun(
+        campaign_id="g-timeout",
+        experiment_id="f-finalist",
+        experiment_manifest_sha256="1" * 64,
+        variant_id="B0-AP02",
+        verifier_provenance=AssertionVerifierProvenance(
+            verifier="test-verifier",
+            verifier_version="2.1.0",
+        ),
+        runtime_config_sha256="2" * 64,
+        timeout_seconds=600.0,
+        timeout_override_seconds=600.0,
+        authorized_max_calls=1,
+        actual_calls=1,
+        authorization_reference="H1-timeout",
+        cases=(
+            VerifierRunCase(
+                case_id="case-timeout",
+                document_key="DOC",
+                clause_id="c1",
+                source_package_sha256="sha256:" + "a" * 64,
+                verification=AssertionClauseVerification(
+                    clause_id=ClauseId(value="c1"),
+                    source_package_sha256="sha256:" + "a" * 64,
+                ),
+            ),
+        ),
+    )
+
+    assert run.timeout_seconds == 600.0
+    assert run.timeout_override_seconds == 600.0
+
+
 def test_verifier_error_case_reduces_coverage_instead_of_disappearing() -> None:
     truth = VerifierCaseTruth(
         case_id="case-error",

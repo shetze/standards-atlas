@@ -1580,6 +1580,17 @@ def run_assertion_series_g_verifier_command(
     verifier_model: Annotated[str, typer.Option("--verifier-model")],
     max_calls: Annotated[int, typer.Option("--max-calls", min=1)],
     authorization_reference: Annotated[str, typer.Option("--authorization-reference")],
+    timeout: Annotated[
+        float | None,
+        typer.Option(
+            "--timeout",
+            min=0.001,
+            help=(
+                "Per-request verifier timeout in seconds. Overrides the configured timeout for "
+                "this run; retry runs inherit the parent timeout when omitted."
+            ),
+        ),
+    ] = None,
     authorize_execution: Annotated[
         bool, typer.Option("--authorize-execution/--do-not-authorize-execution")
     ] = False,
@@ -1597,7 +1608,7 @@ def run_assertion_series_g_verifier_command(
         typer.Option("--retry-errors-from", exists=True, dir_okay=False, readable=True),
     ] = None,
 ) -> None:
-    """Verify Development candidates once, or retry only technical errors from a bound run."""
+    """Verify Development candidates once, or retry technical errors with an optional timeout."""
     from dataclasses import replace
 
     from standards_atlas.adapters.filesystem import FileSystemAssertionExperimentRepository
@@ -1655,8 +1666,31 @@ def run_assertion_series_g_verifier_command(
             for key in sorted({package.document_key for package in packages})
         }
 
+        parent_run = (
+            SeriesGVerifierRun.model_validate_json(retry_errors_from.read_bytes())
+            if retry_errors_from is not None
+            else None
+        )
         base_config = LlmConfig.load(config)
-        benchmark_config = replace(base_config, cache_directory=None)
+        runtime_config_sha256 = _series_g_identity_sha256(
+            {
+                "base_url": base_config.base_url,
+                "configured_model": base_config.model,
+                "verifier_model": verifier_model,
+                "timeout_seconds": base_config.timeout_seconds,
+                "cache_directory": None,
+            }
+        )
+        effective_timeout_seconds = _series_g_effective_timeout_seconds(
+            configured_timeout_seconds=base_config.timeout_seconds,
+            requested_timeout_seconds=timeout,
+            parent_timeout_seconds=(parent_run.timeout_seconds if parent_run is not None else None),
+        )
+        benchmark_config = replace(
+            base_config,
+            cache_directory=None,
+            timeout_seconds=effective_timeout_seconds,
+        )
         gateway = OpenAICompatibleLlmGateway(benchmark_config)
         verifier = OntologyGuidedAssertionProposalVerifier(
             gateway,
@@ -1666,15 +1700,6 @@ def run_assertion_series_g_verifier_command(
             verifier_version=SERIES_G_VERIFIER_VERSION,
         )
         verifier_provenance = verifier.provenance()
-        runtime_config_sha256 = _series_g_identity_sha256(
-            {
-                "base_url": benchmark_config.base_url,
-                "configured_model": benchmark_config.model,
-                "verifier_model": verifier_model,
-                "timeout_seconds": benchmark_config.timeout_seconds,
-                "cache_directory": None,
-            }
-        )
         prepared_cases = []
         for package in packages:
             document = documents[package.document_key]
@@ -1726,11 +1751,9 @@ def run_assertion_series_g_verifier_command(
                 )
             )
 
-        parent_run = None
         parent_by_key = {}
         retry_keys = set()
-        if retry_errors_from is not None:
-            parent_run = SeriesGVerifierRun.model_validate_json(retry_errors_from.read_bytes())
+        if parent_run is not None:
             if parent_run.campaign_id == campaign_id:
                 raise ValueError("Series-G verifier retry requires a new campaign_id")
             if parent_run.experiment_id != experiment_id:
@@ -1851,6 +1874,8 @@ def run_assertion_series_g_verifier_command(
             variant_id=manifest.variant_id,
             verifier_provenance=verifier_provenance,
             runtime_config_sha256=runtime_config_sha256,
+            timeout_seconds=benchmark_config.timeout_seconds,
+            timeout_override_seconds=timeout,
             cache_bypassed=True,
             authorized_max_calls=max_calls,
             actual_calls=required_calls,
@@ -1881,6 +1906,7 @@ def run_assertion_series_g_verifier_command(
         typer.echo(f"Retried technical errors : {len(run.retried_case_ids)}")
         typer.echo(f"Retry parent SHA-256     : {run.retry_of_verifier_run_sha256}")
     typer.echo(f"Verifier prompt          : {run.verifier_provenance.prompt_version}")
+    typer.echo(f"Verifier timeout         : {run.timeout_seconds:g}s")
     typer.echo(f"Verifier errors          : {errors}")
     typer.echo(f"Verifier run SHA-256     : {verifier_run_sha256(run)}")
     typer.echo(f"Verifier run             : {target}")
@@ -2022,6 +2048,19 @@ def build_assertion_series_g_gate_profile_command(
     typer.echo("Gates explicitly defined : True")
     typer.echo(f"Human H3 confirmed       : {profile.human_confirmed}")
     typer.echo(f"Gate profile             : {output}")
+
+
+def _series_g_effective_timeout_seconds(
+    *,
+    configured_timeout_seconds: float,
+    requested_timeout_seconds: float | None,
+    parent_timeout_seconds: float | None,
+) -> float:
+    if requested_timeout_seconds is not None:
+        return requested_timeout_seconds
+    if parent_timeout_seconds is not None:
+        return parent_timeout_seconds
+    return configured_timeout_seconds
 
 
 def _series_g_identity_sha256(value: object) -> str:
