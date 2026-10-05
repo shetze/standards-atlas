@@ -1,0 +1,7 @@
+{
+  "baseline_id": "B0-AP02",
+  "description": "Series-G source-bound verifier with an explicit candidate-identity response contract.",
+  "task": "formal-semantic-assertion-verification",
+  "task_schema_version": "1.0.0",
+  "version": "ontology-guided-assertion-verifier-source-bound-v2"
+}

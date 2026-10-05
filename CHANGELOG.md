@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — AP03 Series-G verifier response-contract correction (2026-10-05)
+
+- Preserve the frozen post-AP02/B0 verifier prompt and add a separately versioned Series-G verifier
+  prompt with an explicit exact-candidate response contract.
+- Bind the effective Series-G verifier JSON schema per request to the supplied entity/assertion
+  candidate counts and allowed candidate IDs while retaining strict post-response ID validation.
+- Preflight the configured LLM endpoint before authorized verifier calls so an unavailable endpoint
+  fails before a whole campaign is consumed by repeated connection errors.
+- Add regression coverage for empty, single-entity and multi-entity/no-assertion verifier cases and
+  document the corrected Series-G rerun procedure.
+
 ## Unreleased — Assertion auto-adoption policy Slice 7C (2026-09-15)
 
 - Add schema-1 Development/Holdout assertion auto-adoption policy with explicit minimum quality

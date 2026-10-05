@@ -163,6 +163,8 @@ from .review_pilot_models import (
 from .series_g import (
     AP03_SERIES_G_CONTRACT,
     AP03_SERIES_G_VERIFIER_RUN_CONTRACT,
+    SERIES_G_VERIFIER_PROMPT_VERSION,
+    SERIES_G_VERIFIER_VERSION,
     ExpectedCandidateDisposition,
     RepetitionEvidence,
     SeriesGFreeze,
@@ -245,6 +247,8 @@ __all__ = [
     "validate_series_h_campaign",
     "AP03_SERIES_G_CONTRACT",
     "AP03_SERIES_G_VERIFIER_RUN_CONTRACT",
+    "SERIES_G_VERIFIER_PROMPT_VERSION",
+    "SERIES_G_VERIFIER_VERSION",
     "ExpectedCandidateDisposition",
     "RepetitionEvidence",
     "SeriesGFreeze",

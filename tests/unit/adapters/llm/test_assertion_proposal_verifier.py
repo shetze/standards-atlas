@@ -251,3 +251,92 @@ def test_p1_verifier_uses_shared_policy_and_can_report_important_omissions() -> 
         "important omitted source-extractable entities or assertions"
         in gateway.request.system_prompt
     )
+
+
+@pytest.mark.parametrize(
+    ("entity_count", "expected_ids"),
+    (
+        (0, ()),
+        (1, ("e-review",)),
+        (2, ("e-review", "e-criteria")),
+    ),
+)
+def test_series_g_v2_binds_review_schema_to_supplied_candidate_ids(
+    entity_count: int,
+    expected_ids: tuple[str, ...],
+) -> None:
+    target, package, anchors, entities, _assertion, _parent_ref, _body_ref = _fixture()
+    selected_entities = entities[:entity_count]
+    gateway = _Gateway(
+        {
+            "entity_reviews": [
+                {"candidate_id": item.id, "disposition": "supported", "rationale": None}
+                for item in selected_entities
+            ],
+            "assertion_reviews": [],
+            "missing_entity_detected": False,
+            "missing_assertion_detected": False,
+            "missing_rationale": None,
+        }
+    )
+
+    OntologyGuidedAssertionProposalVerifier(
+        gateway,
+        prompt_version="ontology-guided-assertion-verifier-source-bound-v2",
+    ).verify(
+        target,
+        document_key="TEST",
+        ontology_versions=ONTOLOGIES,
+        evidence_anchors=anchors,
+        entity_proposals=selected_entities,
+        assertion_proposals=(),
+        source_package=package,
+    )
+
+    assert gateway.request is not None
+    schema = gateway.request.output_schema
+    entity_reviews = schema["properties"]["entity_reviews"]
+    assertion_reviews = schema["properties"]["assertion_reviews"]
+    assert entity_reviews["minItems"] == entity_reviews["maxItems"] == entity_count
+    assert assertion_reviews["minItems"] == assertion_reviews["maxItems"] == 0
+    if expected_ids:
+        assert entity_reviews["items"]["properties"]["candidate_id"]["enum"] == list(expected_ids)
+    else:
+        assert "enum" not in entity_reviews["items"]["properties"]["candidate_id"]
+    assert "enum" not in assertion_reviews["items"]["properties"]["candidate_id"]
+    assert gateway.request.metadata["candidate_response_contract"] == (
+        "exact-supplied-candidate-ids-v1"
+    )
+    assert len(gateway.request.metadata["effective_output_schema_sha256"]) == 64
+    assert "If assertion_candidates is empty, assertion_reviews MUST be []" in (
+        gateway.request.system_prompt
+    )
+
+
+def test_series_g_v2_keeps_strict_post_response_candidate_id_validation() -> None:
+    target, package, anchors, entities, _assertion, _parent_ref, _body_ref = _fixture()
+    gateway = _Gateway(
+        {
+            "entity_reviews": [
+                {"candidate_id": "invented", "disposition": "supported", "rationale": None}
+            ],
+            "assertion_reviews": [],
+            "missing_entity_detected": False,
+            "missing_assertion_detected": False,
+            "missing_rationale": None,
+        }
+    )
+
+    with pytest.raises(ValueError, match="exactly the supplied entity candidate ids"):
+        OntologyGuidedAssertionProposalVerifier(
+            gateway,
+            prompt_version="ontology-guided-assertion-verifier-source-bound-v2",
+        ).verify(
+            target,
+            document_key="TEST",
+            ontology_versions=ONTOLOGIES,
+            evidence_anchors=anchors,
+            entity_proposals=(entities[0],),
+            assertion_proposals=(),
+            source_package=package,
+        )

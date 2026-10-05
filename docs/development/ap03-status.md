@@ -121,6 +121,18 @@ human candidate/missing-item decisions bound to that run and then creates `verif
 Verifier-call errors remain in the observations and reduce coverage instead of disappearing. Golden
 content is neither rewritten nor inferred from the verifier.
 
+Post-real-run verifier-contract correction (2026-10-05): the first reachable Series-G verifier run
+showed that the local Granite verifier frequently returned review entries for candidate kinds that were
+empty or changed supplied candidate IDs. The strict post-response ID check correctly rejected those
+responses, so this was not treated as semantic verifier evidence. Series G now uses the separately
+versioned `ontology-guided-assertion-verifier-source-bound-v2`; the frozen B0/v1 verifier resource is
+unchanged. V2 makes the candidate identity rule explicit in the prompt and narrows the effective JSON
+schema per request to the exact candidate cardinalities and allowed IDs. The existing exact-ID set check
+remains the final guard. The verifier-run CLI also performs an endpoint health preflight before the first
+authorized call, preventing a known-unavailable endpoint from consuming a whole campaign as repeated
+connection errors. No Golden, evaluator, source policy or semantic verifier rule is changed by this
+correction.
+
 S14 adds fresh-repetition evidence, an explicit G4/G5 gate profile, complete pre-Holdout freeze
 identity and a readiness decision. Gate thresholds and support minima have no qualifying defaults.
 Missing real annotated support, incomplete fresh inference repetitions, cached repetitions beyond the
@@ -168,9 +180,12 @@ human-attestation run was executed.
 ### Exact continuation point
 
 1. Apply this delta and run local `uv run ruff check .` plus full `uv run pytest`.
-2. Restore/register the completed Series-F Development reports and an actually annotated verifier
-   check set. Evaluate it with `assertion-series-g-verifier-evaluate`; synthetic mutations may augment
-   but not replace real annotations.
+2. Start/check the approved LLM endpoint, rerun `assertion-series-g-verifier-run` with a new campaign
+   ID and confirm that the v2 candidate-identity contract no longer produces systematic response errors.
+   If source-package hashes and candidate IDs are unchanged, the already completed human candidate truth
+   may be rebound to the new blind CSV; do not redo or alter Golden decisions. Then build observations and
+   run `assertion-series-g-verifier-evaluate`. Synthetic mutations may augment but not replace real
+   annotations.
 3. If the bounded second-verifier factor is to be compared, run the same Development cascade once
    without and once with `--verify-escalation`; account for the extra verifier calls explicitly.
 4. Prepare the approved Finalist/B0 repetition experiments with the existing bounded experiment

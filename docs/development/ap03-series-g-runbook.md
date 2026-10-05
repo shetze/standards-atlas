@@ -8,9 +8,20 @@ optimization client, publish canonical knowledge or claim qualification.
 ## 1. Run the verifier on the chosen Development candidate set
 
 After Series F has a chosen Finalist/B0 experiment, reuse its persisted native candidates. Do **not**
-rerun the extractor merely to create verifier observations. The command below loads the successful
-candidate cells from the bound Development experiment, disables LLM result-cache reuse for the
-verifier benchmark, runs exactly one verifier call per candidate clause, and writes two artifacts:
+rerun the extractor merely to create verifier observations. Before authorizing calls, make the approved
+LLM endpoint available and check it with the same runtime configuration, for example:
+
+```bash
+uv run standards-atlas llm status --config <same-approved-llm-config.yaml>
+# if required:
+uv run standards-atlas llm start --config <same-approved-llm-config.yaml>
+uv run standards-atlas llm status --config <same-approved-llm-config.yaml>
+```
+
+The verifier command itself also performs a read-only endpoint health preflight and aborts before the
+first verifier call when the endpoint is unavailable. It loads the successful candidate cells from the
+bound Development experiment, disables LLM result-cache reuse for the verifier benchmark, runs exactly
+one verifier call per candidate clause, and writes two artifacts:
 
 - `verifier-run.json`: actual verifier outcomes; keep this away from the reviewer while annotating;
 - `verifier-review.csv`: blind, flat candidate review sheet with no verifier dispositions.
@@ -39,8 +50,16 @@ local/evaluation/assertions/ap03/<series-g-campaign>/verifier-run.json
 local/evaluation/assertions/ap03/<series-g-campaign>/verifier-review.csv
 ```
 
+Series G uses `ontology-guided-assertion-verifier-source-bound-v2` for this benchmark. The frozen
+post-AP02/B0 verifier bundle `...source-bound-v1` remains byte-identical audit material. V2 changes only
+the technical response contract: `entity_reviews` and `assertion_reviews` are schema-bound per request to
+the supplied candidate counts and IDs, and the prompt requires byte-for-byte ID copying. Empty candidate
+lists therefore require empty review lists. The existing post-response exact-ID validation remains active;
+there is no positional fallback, silent repair or invented candidate mapping.
+
 A verifier transport/response failure is retained in `verifier-run.json`; it is not silently removed
-from later coverage.
+from later coverage. Candidate-ID contract failures likewise remain explicit verifier errors rather than
+being coerced into reviews.
 
 ## 2. Human candidate truth and `verifier-observations.json`
 

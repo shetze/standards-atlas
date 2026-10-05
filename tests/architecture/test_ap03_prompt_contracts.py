@@ -42,6 +42,10 @@ def test_current_assertion_prompt_bundles_are_discoverable_and_task_schema_bound
             "formal-semantic-assertion-verification",
             "ontology-guided-assertion-verifier-source-bound-v1",
         ),
+        (
+            "formal-semantic-assertion-verification",
+            "ontology-guided-assertion-verifier-source-bound-v2",
+        ),
     ):
         assert (task, version) in discovered
         definition = catalog.load_prompt(task, version)

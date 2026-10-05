@@ -1603,6 +1603,8 @@ def run_assertion_series_g_verifier_command(
         OpenAICompatibleLlmGateway,
     )
     from standards_atlas.application.assertion_qualification import (
+        SERIES_G_VERIFIER_PROMPT_VERSION,
+        SERIES_G_VERIFIER_VERSION,
         SeriesGVerifierRun,
         VerifierRunCandidate,
         VerifierRunCandidateKind,
@@ -1656,10 +1658,16 @@ def run_assertion_series_g_verifier_command(
         base_config = LlmConfig.load(config)
         benchmark_config = replace(base_config, cache_directory=None)
         gateway = OpenAICompatibleLlmGateway(benchmark_config)
+        health = gateway.health()
+        if not health.available:
+            detail = f": {health.detail}" if health.detail else ""
+            raise ValueError(f"Series-G verifier endpoint preflight failed{detail}")
         verifier = OntologyGuidedAssertionProposalVerifier(
             gateway,
             model=verifier_model,
             provider=gateway.provider,
+            prompt_version=SERIES_G_VERIFIER_PROMPT_VERSION,
+            verifier_version=SERIES_G_VERIFIER_VERSION,
         )
         cases = []
         for package in packages:
@@ -1768,6 +1776,7 @@ def run_assertion_series_g_verifier_command(
     typer.echo(f"Verifier campaign        : {campaign_id}")
     typer.echo(f"Candidate experiment     : {experiment_id}")
     typer.echo(f"Verifier calls           : {run.actual_calls}/{run.authorized_max_calls}")
+    typer.echo(f"Verifier prompt          : {run.verifier_provenance.prompt_version}")
     typer.echo(f"Verifier errors          : {errors}")
     typer.echo(f"Verifier run SHA-256     : {verifier_run_sha256(run)}")
     typer.echo(f"Verifier run             : {target}")

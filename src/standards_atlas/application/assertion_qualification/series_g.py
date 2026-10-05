@@ -19,6 +19,8 @@ from standards_atlas.application.assertion_qualification.cascade_models import (
 
 AP03_SERIES_G_CONTRACT = "ap03-series-g-verifier-freeze-v1"
 AP03_SERIES_G_VERIFIER_RUN_CONTRACT = "ap03-series-g-verifier-run-v1"
+SERIES_G_VERIFIER_PROMPT_VERSION = "ontology-guided-assertion-verifier-source-bound-v2"
+SERIES_G_VERIFIER_VERSION = "2.1.0"
 VERIFIER_REVIEW_COLUMNS = (
     "verifier_run_sha256",
     "row_kind",

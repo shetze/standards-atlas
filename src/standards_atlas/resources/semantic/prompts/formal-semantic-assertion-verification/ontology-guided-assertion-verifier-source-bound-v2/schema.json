@@ -1,0 +1,87 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "assertion_reviews": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "type": "string"
+          },
+          "disposition": {
+            "enum": [
+              "supported",
+              "rejected",
+              "uncertain"
+            ],
+            "type": "string"
+          },
+          "rationale": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "candidate_id",
+          "disposition",
+          "rationale"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "entity_reviews": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "type": "string"
+          },
+          "disposition": {
+            "enum": [
+              "supported",
+              "rejected",
+              "uncertain"
+            ],
+            "type": "string"
+          },
+          "rationale": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "candidate_id",
+          "disposition",
+          "rationale"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "missing_assertion_detected": {
+      "type": "boolean"
+    },
+    "missing_entity_detected": {
+      "type": "boolean"
+    },
+    "missing_rationale": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "entity_reviews",
+    "assertion_reviews",
+    "missing_entity_detected",
+    "missing_assertion_detected",
+    "missing_rationale"
+  ],
+  "type": "object"
+}

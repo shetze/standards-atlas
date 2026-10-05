@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import copy
+import hashlib
+import json
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 
 from standards_atlas.application.assertion_qualification.cascade_models import (
     AssertionCandidateVerification,
@@ -35,6 +39,8 @@ from standards_atlas.domain.model import (
     KnowledgeEntityProposal,
     NormativeAssertionProposal,
 )
+
+_CANDIDATE_BOUND_PROMPT_VERSIONS = frozenset({"ontology-guided-assertion-verifier-source-bound-v2"})
 
 
 class OntologyGuidedAssertionProposalVerifier:
@@ -122,6 +128,24 @@ class OntologyGuidedAssertionProposalVerifier:
                 "request_contract_id": ASSERTION_VERIFIER_REQUEST_CONTRACT,
             },
         )
+        if self._prompt_version in _CANDIDATE_BOUND_PROMPT_VERSIONS:
+            effective_schema = _candidate_bound_response_schema(
+                request.output_schema,
+                entity_ids=tuple(item.id for item in entity_proposals),
+                assertion_ids=tuple(item.id for item in assertion_proposals),
+            )
+            metadata = dict(request.metadata)
+            metadata.update(
+                {
+                    "candidate_response_contract": "exact-supplied-candidate-ids-v1",
+                    "effective_output_schema_sha256": _schema_sha256(effective_schema),
+                }
+            )
+            request = replace(
+                request,
+                output_schema=effective_schema,
+                metadata=metadata,
+            )
         result = self._gateway.generate_structured(request)
         payload = dict(result.value)
         verification = AssertionClauseVerification(
@@ -141,6 +165,58 @@ class OntologyGuidedAssertionProposalVerifier:
             assertion_ids={item.id for item in assertion_proposals},
         )
         return verification
+
+
+def _candidate_bound_response_schema(
+    base_schema: Mapping[str, object],
+    *,
+    entity_ids: Sequence[str],
+    assertion_ids: Sequence[str],
+) -> dict[str, object]:
+    """Bind verifier review arrays to the supplied candidate cardinality and IDs.
+
+    The task-owned schema remains unchanged and versioned.  Series-G verifier v2 narrows that schema
+    per request so a strict JSON-schema provider cannot invent a review for an absent candidate type
+    or substitute an unrelated candidate ID.  The post-response set equality check remains the final
+    guard against duplicates or providers that do not enforce the request schema completely.
+    """
+
+    schema = copy.deepcopy(dict(base_schema))
+    properties = schema.get("properties")
+    if not isinstance(properties, dict):
+        raise ValueError("assertion verifier output schema is missing properties")
+    for field, candidate_ids in (
+        ("entity_reviews", tuple(entity_ids)),
+        ("assertion_reviews", tuple(assertion_ids)),
+    ):
+        review_array = properties.get(field)
+        if not isinstance(review_array, dict):
+            raise ValueError(f"assertion verifier output schema is missing {field}")
+        review_array["minItems"] = len(candidate_ids)
+        review_array["maxItems"] = len(candidate_ids)
+        items = review_array.get("items")
+        if not isinstance(items, dict):
+            raise ValueError(f"assertion verifier output schema {field} is missing items")
+        item_properties = items.get("properties")
+        if not isinstance(item_properties, dict):
+            raise ValueError(
+                f"assertion verifier output schema {field} items are missing properties"
+            )
+        candidate_id = item_properties.get("candidate_id")
+        if not isinstance(candidate_id, dict):
+            raise ValueError(f"assertion verifier output schema {field} is missing candidate_id")
+        if candidate_ids:
+            candidate_id["enum"] = list(candidate_ids)
+        else:
+            candidate_id.pop("enum", None)
+    return schema
+
+
+def _schema_sha256(schema: Mapping[str, object]) -> str:
+    payload = json.dumps(
+        dict(schema), sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _entity_payload(
